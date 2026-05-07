@@ -3,11 +3,26 @@ import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
 import formbody from '@fastify/formbody';
 import { loadConfig, type AppConfig } from './config.js';
+import { getDb, createTestDb, type AegisDb } from './db/index.js';
+import authPlugin from './auth/plugin.js';
 import { healthRoutes } from './routes/health.js';
+import { authRoutes } from './routes/auth.js';
 
-export async function buildApp(overrides: Partial<AppConfig> = {}) {
+declare module 'fastify' {
+  interface FastifyInstance {
+    config: AppConfig;
+    db: AegisDb;
+    requireAuth: (req: import('fastify').FastifyRequest, reply: import('fastify').FastifyReply) => Promise<void>;
+  }
+}
+
+export async function buildApp(overrides: Partial<AppConfig & { dbPath: string }> = {}) {
   const config = loadConfig(overrides);
   const app = Fastify({ logger: !config.testing });
+
+  const db = config.testing && overrides.dbPath === ':memory:'
+    ? createTestDb()
+    : getDb(config.dbPath);
 
   await app.register(cookie, { secret: config.secretKey });
   await app.register(cors, {
@@ -17,8 +32,16 @@ export async function buildApp(overrides: Partial<AppConfig> = {}) {
   await app.register(formbody);
 
   app.decorate('config', config);
+  app.decorate('db', db);
 
+  await app.register(authPlugin);
   await app.register(healthRoutes);
+  await app.register(authRoutes);
+
+  if (config.testing && overrides.dbPath === ':memory:') {
+    const { migrate } = await import('drizzle-orm/better-sqlite3/migrator');
+    migrate(db, { migrationsFolder: './drizzle' });
+  }
 
   return app;
 }
