@@ -7,6 +7,7 @@ import { getDb, createTestDb, type AegisDb } from './db/index.js';
 import authPlugin from './auth/plugin.js';
 import { healthRoutes } from './routes/health.js';
 import { authRoutes } from './routes/auth.js';
+import { estateRoutes } from './routes/estate.js';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -37,6 +38,7 @@ export async function buildApp(overrides: Partial<AppConfig & { dbPath: string }
   await app.register(authPlugin);
   await app.register(healthRoutes);
   await app.register(authRoutes);
+  await app.register(estateRoutes);
 
   if (config.testing && overrides.dbPath === ':memory:') {
     const { migrate } = await import('drizzle-orm/better-sqlite3/migrator');
