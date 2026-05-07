@@ -2,6 +2,10 @@ import Fastify from 'fastify';
 import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
 import formbody from '@fastify/formbody';
+import fastifyStatic from '@fastify/static';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { existsSync } from 'fs';
 import { loadConfig, type AppConfig } from './config.js';
 import { getDb, createTestDb, type AegisDb } from './db/index.js';
 import authPlugin from './auth/plugin.js';
@@ -45,6 +49,23 @@ export async function buildApp(overrides: Partial<AppConfig & { dbPath: string }
   if (config.testing && overrides.dbPath === ':memory:') {
     const { migrate } = await import('drizzle-orm/better-sqlite3/migrator');
     migrate(db, { migrationsFolder: './drizzle' });
+  }
+
+  const __dirname = dirname(fileURLToPath(import.meta.url));
+  const staticDir = resolve(__dirname, '../static');
+  if (existsSync(staticDir)) {
+    await app.register(fastifyStatic, {
+      root: staticDir,
+      prefix: '/',
+      wildcard: false,
+    });
+
+    app.setNotFoundHandler(async (req, reply) => {
+      if (req.url.startsWith('/api/') || req.url === '/health') {
+        return reply.status(404).send({ error: 'Not found' });
+      }
+      return reply.sendFile('index.html');
+    });
   }
 
   return app;
