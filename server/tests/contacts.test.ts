@@ -4,6 +4,7 @@ import { buildApp } from '../src/index.js';
 describe('Contact CRUD', () => {
   let app: Awaited<ReturnType<typeof buildApp>>;
   let cookies: string;
+  let csrfToken: string;
 
   beforeAll(async () => {
     app = await buildApp({ testing: true, dbPath: ':memory:' });
@@ -16,6 +17,12 @@ describe('Contact CRUD', () => {
       payload: { password: 'testpass123' },
     });
     cookies = String(loginRes.headers['set-cookie']);
+
+    const csrfRes = await app.inject({
+      method: 'GET', url: '/api/csrf',
+      headers: { cookie: cookies },
+    });
+    csrfToken = JSON.parse(csrfRes.payload).csrfToken;
   });
 
   afterAll(async () => { await app.close(); });
@@ -30,7 +37,7 @@ describe('Contact CRUD', () => {
     for (const contact of contacts) {
       const res = await app.inject({
         method: 'POST', url: '/api/contacts',
-        headers: { cookie: cookies },
+        headers: { cookie: cookies, 'x-csrf-token': csrfToken },
         payload: contact,
       });
       expect(res.statusCode).toBe(201);
@@ -53,7 +60,7 @@ describe('Contact CRUD', () => {
   it('reorders contacts', async () => {
     const res = await app.inject({
       method: 'PUT', url: '/api/contacts/reorder',
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
       payload: { order: [3, 1, 2] },
     });
     expect(res.statusCode).toBe(200);
@@ -70,7 +77,7 @@ describe('Contact CRUD', () => {
   it('deletes a contact', async () => {
     const res = await app.inject({
       method: 'DELETE', url: '/api/contacts/2',
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
     });
     expect(res.statusCode).toBe(204);
 

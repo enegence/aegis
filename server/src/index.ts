@@ -20,6 +20,7 @@ declare module 'fastify' {
     config: AppConfig;
     db: AegisDb;
     requireAuth: (req: import('fastify').FastifyRequest, reply: import('fastify').FastifyReply) => Promise<void>;
+    requireCsrf: (req: import('fastify').FastifyRequest, reply: import('fastify').FastifyReply) => Promise<void>;
   }
 }
 

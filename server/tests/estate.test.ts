@@ -4,6 +4,7 @@ import { buildApp } from '../src/index.js';
 describe('Estate Item CRUD', () => {
   let app: Awaited<ReturnType<typeof buildApp>>;
   let cookies: string;
+  let csrfToken: string;
 
   beforeAll(async () => {
     app = await buildApp({ testing: true, dbPath: ':memory:' });
@@ -18,6 +19,12 @@ describe('Estate Item CRUD', () => {
       payload: { password: 'testpass123' },
     });
     cookies = String(loginRes.headers['set-cookie']);
+
+    const csrfRes = await app.inject({
+      method: 'GET', url: '/api/csrf',
+      headers: { cookie: cookies },
+    });
+    csrfToken = JSON.parse(csrfRes.payload).csrfToken;
   });
 
   afterAll(async () => { await app.close(); });
@@ -25,7 +32,7 @@ describe('Estate Item CRUD', () => {
   it('creates an estate item', async () => {
     const res = await app.inject({
       method: 'POST', url: '/api/estate-items',
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
       payload: {
         category: 'Financial',
         title: 'Chase Checking',
@@ -54,7 +61,7 @@ describe('Estate Item CRUD', () => {
   it('updates an estate item', async () => {
     const res = await app.inject({
       method: 'PUT', url: '/api/estate-items/1',
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
       payload: { title: 'Chase Checking Updated' },
     });
     expect(res.statusCode).toBe(200);
@@ -64,7 +71,7 @@ describe('Estate Item CRUD', () => {
   it('deletes an estate item', async () => {
     const res = await app.inject({
       method: 'DELETE', url: '/api/estate-items/1',
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
     });
     expect(res.statusCode).toBe(204);
   });

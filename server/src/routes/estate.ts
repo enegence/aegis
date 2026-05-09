@@ -59,7 +59,7 @@ export async function estateRoutes(app: FastifyInstance) {
   });
 
   app.post('/api/estate-items', {
-    preHandler: [app.requireAuth],
+    preHandler: [app.requireAuth, app.requireCsrf],
   }, async (req, reply) => {
     const body = createSchema.parse(req.body);
     const now = new Date();
@@ -83,7 +83,7 @@ export async function estateRoutes(app: FastifyInstance) {
   });
 
   app.put('/api/estate-items/:id', {
-    preHandler: [app.requireAuth],
+    preHandler: [app.requireAuth, app.requireCsrf],
   }, async (req, reply) => {
     const { id } = req.params as { id: string };
     const body = updateSchema.parse(req.body);
@@ -111,7 +111,7 @@ export async function estateRoutes(app: FastifyInstance) {
   });
 
   app.delete('/api/estate-items/:id', {
-    preHandler: [app.requireAuth],
+    preHandler: [app.requireAuth, app.requireCsrf],
   }, async (req, reply) => {
     const { id } = req.params as { id: string };
     const deleted = await app.db.delete(estateItems)

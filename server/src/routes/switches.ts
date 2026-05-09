@@ -67,7 +67,7 @@ export async function switchRoutes(app: FastifyInstance) {
 
   // POST /api/switches — create switch
   app.post('/api/switches', {
-    preHandler: [app.requireAuth],
+    preHandler: [app.requireAuth, app.requireCsrf],
   }, async (req, reply) => {
     let body: ReturnType<typeof CreateSwitchInputSchema.parse>;
     try {
@@ -96,7 +96,7 @@ export async function switchRoutes(app: FastifyInstance) {
 
   // PUT /api/switches/:id — update switch (cannot set status directly)
   app.put('/api/switches/:id', {
-    preHandler: [app.requireAuth],
+    preHandler: [app.requireAuth, app.requireCsrf],
   }, async (req, reply) => {
     const { id } = req.params as { id: string };
 
@@ -134,7 +134,7 @@ export async function switchRoutes(app: FastifyInstance) {
 
   // DELETE /api/switches/:id — delete switch
   app.delete('/api/switches/:id', {
-    preHandler: [app.requireAuth],
+    preHandler: [app.requireAuth, app.requireCsrf],
   }, async (req, reply) => {
     const { id } = req.params as { id: string };
     const sw = await getSwitchById(app.db, parseInt(id));
@@ -162,7 +162,7 @@ export async function switchRoutes(app: FastifyInstance) {
 
   // POST /api/switches/:id/arm — arm switch
   app.post('/api/switches/:id/arm', {
-    preHandler: [app.requireAuth],
+    preHandler: [app.requireAuth, app.requireCsrf],
   }, async (req, reply) => {
     const { id } = req.params as { id: string };
     try {
@@ -179,7 +179,7 @@ export async function switchRoutes(app: FastifyInstance) {
 
   // POST /api/switches/:id/pause — pause switch
   app.post('/api/switches/:id/pause', {
-    preHandler: [app.requireAuth],
+    preHandler: [app.requireAuth, app.requireCsrf],
   }, async (req, reply) => {
     const { id } = req.params as { id: string };
     try {
@@ -196,7 +196,7 @@ export async function switchRoutes(app: FastifyInstance) {
 
   // POST /api/switches/:id/cancel — cancel switch
   app.post('/api/switches/:id/cancel', {
-    preHandler: [app.requireAuth],
+    preHandler: [app.requireAuth, app.requireCsrf],
   }, async (req, reply) => {
     const { id } = req.params as { id: string };
     try {
@@ -213,7 +213,7 @@ export async function switchRoutes(app: FastifyInstance) {
 
   // POST /api/switches/:id/check-in — check in
   app.post('/api/switches/:id/check-in', {
-    preHandler: [app.requireAuth],
+    preHandler: [app.requireAuth, app.requireCsrf],
   }, async (req, reply) => {
     const { id } = req.params as { id: string };
     try {
@@ -230,7 +230,7 @@ export async function switchRoutes(app: FastifyInstance) {
 
   // POST /api/switches/:id/evaluate — manual evaluate/transition
   app.post('/api/switches/:id/evaluate', {
-    preHandler: [app.requireAuth],
+    preHandler: [app.requireAuth, app.requireCsrf],
   }, async (req, reply) => {
     const { id } = req.params as { id: string };
     try {

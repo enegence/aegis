@@ -4,6 +4,7 @@ import { buildApp } from '../src/index.js';
 describe('Switch CRUD and Actions', () => {
   let app: Awaited<ReturnType<typeof buildApp>>;
   let cookies: string;
+  let csrfToken: string;
   let contactId: number;
 
   beforeAll(async () => {
@@ -23,11 +24,19 @@ describe('Switch CRUD and Actions', () => {
     });
     cookies = String(loginRes.headers['set-cookie']);
 
+    // Fetch CSRF token
+    const csrfRes = await app.inject({
+      method: 'GET',
+      url: '/api/csrf',
+      headers: { cookie: cookies },
+    });
+    csrfToken = JSON.parse(csrfRes.payload).csrfToken;
+
     // Create a contact so arm readiness check passes
     const contactRes = await app.inject({
       method: 'POST',
       url: '/api/contacts',
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
       payload: {
         fullName: 'Alice Smith',
         email: 'alice@test.com',
@@ -58,6 +67,22 @@ describe('Switch CRUD and Actions', () => {
     expect(JSON.parse(res.payload)).toEqual([]);
   });
 
+  // ─── CSRF guard ───────────────────────────────────────────────────────────────
+
+  it('POST /api/switches without CSRF token returns 403', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/switches',
+      headers: { cookie: cookies },
+      payload: {
+        name: 'No CSRF Switch',
+        mode: 'heartbeat',
+        heartbeatIntervalDays: 30,
+      },
+    });
+    expect(res.statusCode).toBe(403);
+  });
+
   // ─── Create ────────────────────────────────────────────────────────────────────
 
   it('POST /api/switches — missing auth returns 401', async () => {
@@ -77,7 +102,7 @@ describe('Switch CRUD and Actions', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/switches',
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
       payload: {
         name: 'Heartbeat Switch',
         mode: 'heartbeat',
@@ -104,7 +129,7 @@ describe('Switch CRUD and Actions', () => {
     const createRes = await app.inject({
       method: 'POST',
       url: '/api/switches',
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
       payload: { name: 'Named Switch', mode: 'heartbeat', heartbeatIntervalDays: 7 },
     });
     const created = JSON.parse(createRes.payload);
@@ -135,7 +160,7 @@ describe('Switch CRUD and Actions', () => {
     const createRes = await app.inject({
       method: 'POST',
       url: '/api/switches',
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
       payload: { name: 'Original Name', mode: 'heartbeat', heartbeatIntervalDays: 14 },
     });
     const created = JSON.parse(createRes.payload);
@@ -143,7 +168,7 @@ describe('Switch CRUD and Actions', () => {
     const res = await app.inject({
       method: 'PUT',
       url: `/api/switches/${created.id}`,
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
       payload: { name: 'Updated Name' },
     });
     expect(res.statusCode).toBe(200);
@@ -154,7 +179,7 @@ describe('Switch CRUD and Actions', () => {
     const createRes = await app.inject({
       method: 'POST',
       url: '/api/switches',
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
       payload: { name: 'Status Test', mode: 'heartbeat', heartbeatIntervalDays: 14 },
     });
     const created = JSON.parse(createRes.payload);
@@ -164,7 +189,7 @@ describe('Switch CRUD and Actions', () => {
     const res = await app.inject({
       method: 'PUT',
       url: `/api/switches/${created.id}`,
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
       payload: { status: 'armed', name: 'Status Test' },
     });
     expect(res.statusCode).toBe(200);
@@ -176,7 +201,7 @@ describe('Switch CRUD and Actions', () => {
     const res = await app.inject({
       method: 'PUT',
       url: '/api/switches/99999',
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
       payload: { name: 'Ghost' },
     });
     expect(res.statusCode).toBe(404);
@@ -188,7 +213,7 @@ describe('Switch CRUD and Actions', () => {
     const createRes = await app.inject({
       method: 'POST',
       url: '/api/switches',
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
       payload: { name: 'To Delete', mode: 'heartbeat', heartbeatIntervalDays: 7 },
     });
     const created = JSON.parse(createRes.payload);
@@ -196,7 +221,7 @@ describe('Switch CRUD and Actions', () => {
     const deleteRes = await app.inject({
       method: 'DELETE',
       url: `/api/switches/${created.id}`,
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
     });
     expect(deleteRes.statusCode).toBe(204);
 
@@ -213,7 +238,7 @@ describe('Switch CRUD and Actions', () => {
     const createRes = await app.inject({
       method: 'POST',
       url: '/api/switches',
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
       payload: {
         name: 'Triggered Switch',
         mode: 'heartbeat',
@@ -227,7 +252,7 @@ describe('Switch CRUD and Actions', () => {
     await app.inject({
       method: 'POST',
       url: `/api/switches/${created.id}/arm`,
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
     });
 
     // Force evaluate with past time so it triggers
@@ -249,7 +274,7 @@ describe('Switch CRUD and Actions', () => {
     const res = await app.inject({
       method: 'DELETE',
       url: `/api/switches/${created.id}`,
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
     });
     expect(res.statusCode).toBe(400);
     expect(JSON.parse(res.payload).error).toContain('Cannot delete active switch');
@@ -261,7 +286,7 @@ describe('Switch CRUD and Actions', () => {
     const createRes = await app.inject({
       method: 'POST',
       url: '/api/switches',
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
       payload: { name: 'Readiness Check', mode: 'heartbeat', heartbeatIntervalDays: 7 },
     });
     const created = JSON.parse(createRes.payload);
@@ -286,7 +311,7 @@ describe('Switch CRUD and Actions', () => {
     const createRes = await app.inject({
       method: 'POST',
       url: '/api/switches',
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
       payload: { name: 'No Contacts Switch', mode: 'heartbeat', heartbeatIntervalDays: 7 },
     });
     const created = JSON.parse(createRes.payload);
@@ -294,7 +319,7 @@ describe('Switch CRUD and Actions', () => {
     const res = await app.inject({
       method: 'POST',
       url: `/api/switches/${created.id}/arm`,
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
     });
     expect(res.statusCode).toBe(400);
     expect(JSON.parse(res.payload).error).toContain('not ready');
@@ -304,7 +329,7 @@ describe('Switch CRUD and Actions', () => {
     const createRes = await app.inject({
       method: 'POST',
       url: '/api/switches',
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
       payload: {
         name: 'Ready Heartbeat Switch',
         mode: 'heartbeat',
@@ -317,7 +342,7 @@ describe('Switch CRUD and Actions', () => {
     const res = await app.inject({
       method: 'POST',
       url: `/api/switches/${created.id}/arm`,
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
     });
     expect(res.statusCode).toBe(200);
     expect(JSON.parse(res.payload).status).toBe('armed');
@@ -329,7 +354,7 @@ describe('Switch CRUD and Actions', () => {
     const createRes = await app.inject({
       method: 'POST',
       url: '/api/switches',
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
       payload: {
         name: 'Pause Test',
         mode: 'heartbeat',
@@ -343,13 +368,13 @@ describe('Switch CRUD and Actions', () => {
     await app.inject({
       method: 'POST',
       url: `/api/switches/${created.id}/arm`,
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
     });
 
     const res = await app.inject({
       method: 'POST',
       url: `/api/switches/${created.id}/pause`,
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
     });
     expect(res.statusCode).toBe(200);
     expect(JSON.parse(res.payload).status).toBe('paused');
@@ -359,7 +384,7 @@ describe('Switch CRUD and Actions', () => {
     const createRes = await app.inject({
       method: 'POST',
       url: '/api/switches',
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
       payload: { name: 'Draft Pause', mode: 'heartbeat', heartbeatIntervalDays: 7 },
     });
     const created = JSON.parse(createRes.payload);
@@ -367,7 +392,7 @@ describe('Switch CRUD and Actions', () => {
     const res = await app.inject({
       method: 'POST',
       url: `/api/switches/${created.id}/pause`,
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
     });
     expect(res.statusCode).toBe(400);
   });
@@ -378,7 +403,7 @@ describe('Switch CRUD and Actions', () => {
     const createRes = await app.inject({
       method: 'POST',
       url: '/api/switches',
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
       payload: {
         name: 'Cancel Test',
         mode: 'heartbeat',
@@ -392,13 +417,13 @@ describe('Switch CRUD and Actions', () => {
     await app.inject({
       method: 'POST',
       url: `/api/switches/${created.id}/arm`,
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
     });
 
     const res = await app.inject({
       method: 'POST',
       url: `/api/switches/${created.id}/cancel`,
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
     });
     expect(res.statusCode).toBe(200);
     expect(JSON.parse(res.payload).status).toBe('cancelled');
@@ -410,7 +435,7 @@ describe('Switch CRUD and Actions', () => {
     const createRes = await app.inject({
       method: 'POST',
       url: '/api/switches',
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
       payload: {
         name: 'Check-in Test',
         mode: 'heartbeat',
@@ -424,13 +449,13 @@ describe('Switch CRUD and Actions', () => {
     await app.inject({
       method: 'POST',
       url: `/api/switches/${created.id}/arm`,
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
     });
 
     const res = await app.inject({
       method: 'POST',
       url: `/api/switches/${created.id}/check-in`,
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
     });
     expect(res.statusCode).toBe(200);
     const body = JSON.parse(res.payload);
@@ -442,7 +467,7 @@ describe('Switch CRUD and Actions', () => {
     const createRes = await app.inject({
       method: 'POST',
       url: '/api/switches',
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
       payload: { name: 'Draft Check-in', mode: 'heartbeat', heartbeatIntervalDays: 7 },
     });
     const created = JSON.parse(createRes.payload);
@@ -450,7 +475,7 @@ describe('Switch CRUD and Actions', () => {
     const res = await app.inject({
       method: 'POST',
       url: `/api/switches/${created.id}/check-in`,
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
     });
     expect(res.statusCode).toBe(400);
   });
@@ -461,7 +486,7 @@ describe('Switch CRUD and Actions', () => {
     const createRes = await app.inject({
       method: 'POST',
       url: '/api/switches',
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
       payload: {
         name: 'Evaluate Test',
         mode: 'heartbeat',
@@ -475,13 +500,13 @@ describe('Switch CRUD and Actions', () => {
     await app.inject({
       method: 'POST',
       url: `/api/switches/${created.id}/arm`,
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
     });
 
     const res = await app.inject({
       method: 'POST',
       url: `/api/switches/${created.id}/evaluate`,
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
     });
     expect(res.statusCode).toBe(200);
     const body = JSON.parse(res.payload);
