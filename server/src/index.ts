@@ -13,6 +13,7 @@ import { healthRoutes } from './routes/health.js';
 import { authRoutes } from './routes/auth.js';
 import { estateRoutes } from './routes/estate.js';
 import { contactRoutes } from './routes/contacts.js';
+import { switchRoutes } from './routes/switches.js';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -45,6 +46,7 @@ export async function buildApp(overrides: Partial<AppConfig & { dbPath: string }
   await app.register(authRoutes);
   await app.register(estateRoutes);
   await app.register(contactRoutes);
+  await app.register(switchRoutes);
 
   if (config.testing && overrides.dbPath === ':memory:') {
     const { migrate } = await import('drizzle-orm/better-sqlite3/migrator');
