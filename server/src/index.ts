@@ -15,6 +15,7 @@ import { estateRoutes } from './routes/estate.js';
 import { contactRoutes } from './routes/contacts.js';
 import { switchRoutes } from './routes/switches.js';
 import { settingsRoutes } from './routes/settings.js';
+import { startWorker, type WorkerHandle } from './worker/index.js';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -80,6 +81,8 @@ async function start() {
   const app = await buildApp();
   const config = loadConfig();
 
+  let workerHandle: WorkerHandle | null = null;
+
   try {
     await app.listen({ port: config.port, host: config.host });
     console.log(`Aegis server listening on ${config.host}:${config.port}`);
@@ -87,6 +90,23 @@ async function start() {
     app.log.error(err);
     process.exit(1);
   }
+
+  if (process.env.AEGIS_WORKER_ENABLED === 'true') {
+    workerHandle = startWorker(app.db);
+    console.log('[worker] started');
+  }
+
+  const shutdown = async () => {
+    if (workerHandle) {
+      await workerHandle.stop();
+      console.log('[worker] stopped');
+    }
+    await app.close();
+    process.exit(0);
+  };
+
+  process.once('SIGTERM', shutdown);
+  process.once('SIGINT', shutdown);
 }
 
 const isDirectRun = import.meta.url === `file://${process.argv[1]}`;
