@@ -1,5 +1,6 @@
 export type SwitchMode = 'trip' | 'heartbeat';
-export type DeploymentMode = 'local_only' | 'dead_drop' | 'relay';
+export type DeploymentMode = 'vault' | 'dead_drop' | 'relay_monitoring' | 'relay_escrow' | 'hosted';
+export type ReadinessStatus = 'ready' | 'not_ready' | 'warning';
 export type SwitchStatus =
   | 'draft' | 'armed' | 'warning' | 'triggered'
   | 'cascade_active' | 'completed' | 'cancelled' | 'paused' | 'failed';
@@ -22,7 +23,9 @@ export type AuditEventType =
   | 'trigger_reached' | 'contact_notified' | 'contact_opened_claim'
   | 'contact_verified' | 'contact_accepted' | 'packet_downloaded'
   | 'key_viewed' | 'claim_acknowledged' | 'contact_escalated'
-  | 'cascade_completed' | 'relay_heartbeat_sent' | 'relay_offline_warning';
+  | 'cascade_completed' | 'relay_heartbeat_sent' | 'relay_offline_warning'
+  | 'warning_started' | 'release_run_created' | 'trigger_suppressed_by_active_release_run'
+  | 'notification_sent' | 'notification_failed';
 
 export interface EstateItem {
   id: number;
@@ -69,6 +72,11 @@ export interface Switch {
   warningWindowDays: number;
   lastCheckInAt: string | null;
   lastPacketSyncAt: string | null;
+  lastReminderSentAt: string | null;
+  lastWarningSentAt: string | null;
+  lastEvaluatedAt: string | null;
+  selectedContactIds: number[];
+  selectedEstateItemIds: number[];
   createdAt: string;
   updatedAt: string;
 }
@@ -91,4 +99,32 @@ export interface HealthStatus {
   relay: 'ok' | 'error' | 'not_configured';
   uptime: number;
   version: string;
+}
+
+export interface ReadinessCheck {
+  id: string;
+  label: string;
+  status: ReadinessStatus;
+  required: boolean;
+  message: string;
+  resolutionHint?: string;
+}
+
+export interface SwitchReadiness {
+  switchId?: number;
+  status: ReadinessStatus;
+  checks: ReadinessCheck[];
+}
+
+export interface DashboardSummary {
+  ownerName: string;
+  activeSwitchCount: number;
+  warningSwitchCount: number;
+  triggeredSwitchCount: number;
+  nextSwitch: Switch | null;
+  nextActionAt: string | null;
+  notificationsConfigured: boolean;
+  relayConfigured: boolean;
+  storageConfigured: boolean;
+  health: HealthStatus;
 }
