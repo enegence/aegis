@@ -7,6 +7,7 @@ import {
   type SwitchRecord,
 } from './switch-repository.js';
 import { writeAuditEvent } from './audit.js';
+import { assertReadyToArm } from './readiness.js';
 
 // ─── Pure helpers ──────────────────────────────────────────────────────────────
 
@@ -127,6 +128,8 @@ export async function armSwitch(db: AegisDb, id: number): Promise<SwitchRecord> 
       `Cannot arm switch in status '${sw.status}'. Expected 'draft' or 'paused'.`,
     );
   }
+
+  await assertReadyToArm(db, sw);
 
   const now = new Date();
   const schedule = calculateInitialSchedule(
