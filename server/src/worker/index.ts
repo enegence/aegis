@@ -12,6 +12,7 @@ import {
   setActivePacket,
 } from '../repositories/release-run-repository.js';
 import { writeAuditEvent } from '../services/audit.js';
+import { purgeExpiredIdempotencyKeys } from '../services/idempotency-keys.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -95,16 +96,21 @@ export async function recoverActiveReleaseRuns(db: AegisDb): Promise<number> {
 
   if (rows.length === 0) return 0;
 
+  const runIds = rows.map((r) => r.id);
+
   await writeAuditEvent(db, {
     eventType: 'worker_recovery_started',
     actorType: 'system',
-    metadata: { activeRunCount: rows.length },
+    metadata: { activeRunCount: rows.length, runIds },
   });
+
+  // The worker tick loop naturally picks up active/cascade_active runs
+  // via loadActiveReleaseRuns() on the next tick — no explicit re-queue needed.
 
   await writeAuditEvent(db, {
     eventType: 'worker_recovery_completed',
     actorType: 'system',
-    metadata: { activeRunCount: rows.length },
+    metadata: { activeRunCount: rows.length, runIds },
   });
 
   return rows.length;
@@ -249,6 +255,8 @@ export function startWorker(db: AegisDb, options?: WorkerOptions): WorkerHandle 
 
   const syncConfig = options?.syncConfig;
   let running = true;
+  let tickCount = 0;
+  const PURGE_INTERVAL_TICKS = 100;
 
   // Recovery: on startup, find and log any in-flight release runs so the worker
   // can resume from current state without restarting from scratch.
@@ -264,6 +272,12 @@ export function startWorker(db: AegisDb, options?: WorkerOptions): WorkerHandle 
     if (!running) return;
     try {
       await runWorkerOnce(db, new Date(), syncConfig);
+      tickCount += 1;
+      if (tickCount % PURGE_INTERVAL_TICKS === 0) {
+        purgeExpiredIdempotencyKeys(db).catch((err) =>
+          console.error('[worker] purge idempotency keys error:', err),
+        );
+      }
     } catch (err) {
       console.error('[worker] tick error:', err);
     }
