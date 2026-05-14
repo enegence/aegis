@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { post } from '../lib/api';
+import { apiFetch } from '../lib/api';
 
 interface LoginProps {
   onAuth: () => void;
@@ -19,9 +19,9 @@ export default function Login({ onAuth, mode }: LoginProps) {
     setError('');
     try {
       if (mode === 'setup') {
-        await post('/api/auth/setup', { displayName, email, password, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone });
+        await apiFetch('/api/auth/setup', { method: 'POST', body: JSON.stringify({ displayName, email, password, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone }) });
       } else {
-        await post('/api/auth/login', { password });
+        await apiFetch('/api/auth/login', { method: 'POST', body: JSON.stringify({ password }) });
       }
       onAuth();
       navigate('/dashboard');

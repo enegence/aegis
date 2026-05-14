@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { post } from '../../lib/api';
+import { testNotification } from '../../lib/settings';
 
 const T = {
   ink: '#0B1C2C', accent: '#1A6B9A', border: '#8AAAC8',
@@ -15,8 +15,11 @@ export default function TestNotificationPanel() {
     setSending(true);
     setResult(null);
     try {
-      await post('/api/settings/notifications/test', { channel });
-      setResult({ ok: true, message: `Test ${channel} sent successfully.` });
+      const response = await testNotification({ channel });
+      setResult({
+        ok: response.ok,
+        message: response.message ?? `Test ${channel} sent successfully.`,
+      });
     } catch (e) {
       setResult({ ok: false, message: e instanceof Error ? e.message : 'Send failed' });
     } finally {

@@ -62,8 +62,18 @@ export default function SwitchForm({ existing, onSaved, onCancel }: Props) {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    get<{ contacts: Contact[] }>('/api/contacts').then(r => setContacts(r.contacts)).catch(() => {});
-    get<{ items: EstateItem[] }>('/api/estate-items').then(r => setEstateItems(r.items)).catch(() => {});
+    Promise.all([
+      get<Contact[]>('/api/contacts'),
+      get<EstateItem[]>('/api/estate-items'),
+    ])
+      .then(([contactRows, estateRows]) => {
+        setContacts(Array.isArray(contactRows) ? contactRows : []);
+        setEstateItems(Array.isArray(estateRows) ? estateRows : []);
+      })
+      .catch(() => {
+        setContacts([]);
+        setEstateItems([]);
+      });
   }, []);
 
   function toggleId<T extends number>(ids: T[], id: T): T[] {
@@ -78,7 +88,10 @@ export default function SwitchForm({ existing, onSaved, onCancel }: Props) {
       name,
       mode,
       deploymentMode,
-      triggerAt: mode === 'trip' && triggerAt ? triggerAt : undefined,
+      triggerAt:
+        mode === 'trip' && triggerAt
+          ? new Date(triggerAt).toISOString()
+          : undefined,
       heartbeatIntervalDays: mode === 'heartbeat' ? parseInt(heartbeatIntervalDays) : undefined,
       warningWindowDays: parseInt(warningWindowDays),
       gracePeriodHours: parseInt(gracePeriodHours),
@@ -155,7 +168,7 @@ export default function SwitchForm({ existing, onSaved, onCancel }: Props) {
         </div>
         <div>
           <label style={labelStyle}>Grace period (hours)</label>
-          <input style={inputStyle} type="number" min={0} value={gracePeriodHours}
+          <input style={inputStyle} type="number" min={1} value={gracePeriodHours}
             onChange={e => setGracePeriodHours(e.target.value)} />
         </div>
       </div>

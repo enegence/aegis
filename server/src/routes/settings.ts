@@ -73,14 +73,25 @@ export async function settingsRoutes(app: FastifyInstance) {
     const body = SmtpSettingsInputSchema.parse(req.body);
     const db = app.db;
     const key = app.config.fieldEncryptionKey;
+    const existingPasswordRow = await getSettingRow(db, 'smtp.password');
+    const shouldKeepExistingPassword =
+      body.password.length === 0 &&
+      existingPasswordRow != null &&
+      existingPasswordRow.value != null;
+
+    if (body.password.length === 0 && !shouldKeepExistingPassword) {
+      return reply.status(400).send({ error: 'SMTP password is required' });
+    }
 
     await upsertSetting(db, 'smtp.host', body.host, false);
     await upsertSetting(db, 'smtp.port', String(body.port), false);
     await upsertSetting(db, 'smtp.user', body.user, false);
     await upsertSetting(db, 'smtp.fromEmail', body.fromEmail, false);
     await upsertSetting(db, 'smtp.secure', String(body.secure), false);
-    const encryptedPassword = encryptField(body.password, key)!;
-    await upsertSetting(db, 'smtp.password', encryptedPassword, true);
+    if (!shouldKeepExistingPassword) {
+      const encryptedPassword = encryptField(body.password, key)!;
+      await upsertSetting(db, 'smtp.password', encryptedPassword, true);
+    }
 
     await writeAuditEvent(db, {
       eventType: 'notification_settings_updated',
@@ -107,10 +118,21 @@ export async function settingsRoutes(app: FastifyInstance) {
     const body = TelegramSettingsInputSchema.parse(req.body);
     const db = app.db;
     const key = app.config.fieldEncryptionKey;
+    const existingTokenRow = await getSettingRow(db, 'telegram.botToken');
+    const shouldKeepExistingToken =
+      body.botToken.length === 0 &&
+      existingTokenRow != null &&
+      existingTokenRow.value != null;
+
+    if (body.botToken.length === 0 && !shouldKeepExistingToken) {
+      return reply.status(400).send({ error: 'Telegram bot token is required' });
+    }
 
     await upsertSetting(db, 'telegram.chatId', body.chatId, false);
-    const encryptedToken = encryptField(body.botToken, key)!;
-    await upsertSetting(db, 'telegram.botToken', encryptedToken, true);
+    if (!shouldKeepExistingToken) {
+      const encryptedToken = encryptField(body.botToken, key)!;
+      await upsertSetting(db, 'telegram.botToken', encryptedToken, true);
+    }
 
     await writeAuditEvent(db, {
       eventType: 'notification_settings_updated',

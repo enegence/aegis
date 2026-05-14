@@ -22,7 +22,9 @@ interface Props {
 }
 
 export default function CountdownCard({ nextSwitch, nextActionAt }: Props) {
-  const [remaining, setRemaining] = useState<number>(0);
+  const [remaining, setRemaining] = useState<number>(() =>
+    nextActionAt ? new Date(nextActionAt).getTime() - Date.now() : 0
+  );
 
   useEffect(() => {
     if (!nextActionAt) return;
@@ -49,6 +51,12 @@ export default function CountdownCard({ nextSwitch, nextActionAt }: Props) {
 
   const isPast = remaining <= 0;
   const accentColor = nextSwitch.status === 'warning' ? '#8B6914' : T.accent;
+  const label =
+    nextSwitch.mode === 'heartbeat'
+      ? nextSwitch.status === 'warning'
+        ? 'Grace expires'
+        : 'Check-in due'
+      : 'Trigger';
 
   return (
     <div style={{
@@ -58,7 +66,7 @@ export default function CountdownCard({ nextSwitch, nextActionAt }: Props) {
       marginBottom: '20px', textAlign: 'center',
     }}>
       <div style={{ fontFamily: 'monospace', fontSize: '0.7rem', color: T.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>
-        {nextSwitch.status === 'warning' ? 'Warning expires' : nextSwitch.mode === 'heartbeat' ? 'Check-in due' : 'Trigger'}
+        {label}
       </div>
       <div style={{
         fontFamily: "'Courier New', monospace", fontSize: '2.8rem', fontWeight: 'bold',

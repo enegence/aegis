@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { get } from '../lib/api';
 import type { DashboardSummary } from '@aegis/shared';
+import { getDashboard } from '../lib/dashboard';
 import CountdownCard from '../components/dashboard/CountdownCard';
 import SystemHealthCard from '../components/dashboard/SystemHealthCard';
 import SwitchSummaryCards from '../components/dashboard/SwitchSummaryCards';
@@ -19,8 +19,9 @@ export default function Dashboard() {
 
   async function load() {
     try {
-      const data = await get<DashboardSummary>('/dashboard');
+      const data = await getDashboard();
       setSummary(data);
+      setError('');
     } catch {
       setError('Failed to load dashboard');
     }

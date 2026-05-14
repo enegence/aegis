@@ -42,6 +42,6 @@ export async function saveTelegramSettings(input: Record<string, unknown>): Prom
 export async function testNotification(input: { channel: 'email' | 'telegram' }): Promise<{ ok: boolean; message?: string }> {
   return csrfFetch<{ ok: boolean; message?: string }>('/api/settings/notifications/test', {
     method: 'POST',
-    body: JSON.stringify(input),
+    body: JSON.stringify({ ...input, purpose: 'test' }),
   });
 }

@@ -4,7 +4,7 @@ export const SmtpSettingsInputSchema = z.object({
   host: z.string().min(1),
   port: z.number().int().min(1).max(65535),
   user: z.string().min(1),
-  password: z.string().min(1),
+  password: z.string(),
   fromEmail: z.string().email(),
   secure: z.boolean().default(false),
 });
@@ -20,7 +20,7 @@ export const SmtpSettingsResponseSchema = z.object({
 });
 
 export const TelegramSettingsInputSchema = z.object({
-  botToken: z.string().min(1),
+  botToken: z.string(),
   chatId: z.string().min(1),
 });
 
@@ -32,7 +32,7 @@ export const TelegramSettingsResponseSchema = z.object({
 
 export const TestNotificationInputSchema = z.object({
   channel: z.enum(['email', 'telegram']),
-  purpose: z.literal('test'),
+  purpose: z.literal('test').default('test'),
 });
 
 export const NotificationChannelPreferenceSchema = z.object({

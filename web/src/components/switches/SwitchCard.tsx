@@ -24,6 +24,14 @@ interface Props {
   onSelect: () => void;
 }
 
+function getNextActionDate(sw: Switch): string | null {
+  if (sw.mode === 'heartbeat' && sw.status === 'warning' && sw.nextCheckInDueAt) {
+    const graceEnd = new Date(sw.nextCheckInDueAt).getTime() + sw.gracePeriodHours * 3600000;
+    return new Date(graceEnd).toISOString();
+  }
+  return sw.triggerAt ?? sw.nextCheckInDueAt;
+}
+
 export default function SwitchCard({ sw, selected, onSelect }: Props) {
   const statusColor = STATUS_COLOR[sw.status] ?? T.muted;
   return (
@@ -62,7 +70,7 @@ export default function SwitchCard({ sw, selected, onSelect }: Props) {
         display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
         gap: '4px', marginTop: '6px',
       }}>
-        <Stat label="Next action" value={fmt(sw.triggerAt ?? sw.nextCheckInDueAt)} />
+        <Stat label="Next action" value={fmt(getNextActionDate(sw))} />
         <Stat label="Last check-in" value={fmt(sw.lastCheckInAt)} />
         <Stat label="Contacts" value={String(sw.selectedContactIds.length)} />
         <Stat label="Estate items" value={String(sw.selectedEstateItemIds.length)} />

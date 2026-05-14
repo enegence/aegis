@@ -40,12 +40,12 @@ function switchRecordToSwitch(sw: SwitchRecord): Switch {
  */
 function getSwitchActionDate(sw: SwitchRecord): Date | null {
   if (sw.mode === 'heartbeat') {
+    if (sw.status === 'warning' && sw.nextCheckInDueAt) {
+      return new Date(sw.nextCheckInDueAt.getTime() + sw.gracePeriodHours * 3600000);
+    }
     return sw.nextCheckInDueAt ?? null;
   }
-  // trip mode
-  if (sw.status === 'warning' && sw.warningStartsAt) {
-    return sw.warningStartsAt;
-  }
+
   return sw.triggerAt ?? null;
 }
 

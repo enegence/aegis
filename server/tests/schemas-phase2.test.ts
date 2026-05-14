@@ -189,6 +189,17 @@ describe('SmtpSettingsInputSchema', () => {
     const result = SmtpSettingsInputSchema.safeParse({ host: 'smtp.example.com' });
     expect(result.success).toBe(false);
   });
+
+  it('accepts empty password so the API can keep an existing secret', () => {
+    const result = SmtpSettingsInputSchema.safeParse({
+      host: 'smtp.example.com',
+      port: 587,
+      user: 'user@example.com',
+      password: '',
+      fromEmail: 'noreply@example.com',
+    });
+    expect(result.success).toBe(true);
+  });
 });
 
 describe('TelegramSettingsInputSchema', () => {
@@ -210,12 +221,12 @@ describe('TelegramSettingsInputSchema', () => {
     expect(result.success).toBe(false);
   });
 
-  it('rejects empty botToken', () => {
+  it('accepts empty botToken so the API can keep an existing secret', () => {
     const result = TelegramSettingsInputSchema.safeParse({
       botToken: '',
       chatId: '-100123',
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 });
 

@@ -201,6 +201,78 @@ describe('Dashboard API', () => {
     const body = JSON.parse(res.payload);
     expect(body.warningSwitchCount).toBe(1);
     expect(body.activeSwitchCount).toBe(1); // warning counts as active
+    expect(Math.abs(Date.parse(body.nextActionAt) - Date.parse(futureDate))).toBeLessThan(1000);
+
+    await localApp.close();
+  });
+
+  it('GET /api/dashboard — heartbeat warning countdown uses grace expiry, not missed check-in time', async () => {
+    const localApp = await buildApp({ testing: true, dbPath: ':memory:' });
+
+    await localApp.inject({
+      method: 'POST',
+      url: '/api/auth/setup',
+      payload: { displayName: 'Heartbeat Warning Owner', email: 'hbwarn@test.com', password: 'testpass123', timezone: 'UTC' },
+    });
+
+    const loginRes = await localApp.inject({
+      method: 'POST',
+      url: '/api/auth/login',
+      payload: { password: 'testpass123' },
+    });
+    const localCookies = String(loginRes.headers['set-cookie']);
+
+    const csrfRes = await localApp.inject({
+      method: 'GET',
+      url: '/api/csrf',
+      headers: { cookie: localCookies },
+    });
+    const localCsrf = JSON.parse(csrfRes.payload).csrfToken;
+
+    const contactRes = await localApp.inject({
+      method: 'POST',
+      url: '/api/contacts',
+      headers: { cookie: localCookies, 'x-csrf-token': localCsrf },
+      payload: { fullName: 'Grace Period Contact', email: 'grace@test.com', priorityOrder: 1 },
+    });
+    const contactId = JSON.parse(contactRes.payload).id;
+
+    const createRes = await localApp.inject({
+      method: 'POST',
+      url: '/api/switches',
+      headers: { cookie: localCookies, 'x-csrf-token': localCsrf },
+      payload: {
+        name: 'Heartbeat Warning Switch',
+        mode: 'heartbeat',
+        heartbeatIntervalDays: 7,
+        gracePeriodHours: 48,
+        selectedContactIds: [contactId],
+      },
+    });
+    const sw = JSON.parse(createRes.payload);
+
+    await localApp.inject({
+      method: 'POST',
+      url: `/api/switches/${sw.id}/arm`,
+      headers: { cookie: localCookies, 'x-csrf-token': localCsrf },
+    });
+
+    const nextCheckInDueAt = new Date('2030-01-01T12:00:00.000Z');
+    const expectedExpiry = new Date(nextCheckInDueAt.getTime() + 48 * 3600000).toISOString();
+
+    await localApp.db
+      .update((await import('../src/db/schema.js')).switches)
+      .set({ status: 'warning', nextCheckInDueAt })
+      .where((await import('drizzle-orm')).eq((await import('../src/db/schema.js')).switches.id, sw.id));
+
+    const res = await localApp.inject({
+      method: 'GET',
+      url: '/api/dashboard',
+      headers: { cookie: localCookies },
+    });
+    expect(res.statusCode).toBe(200);
+    const body = JSON.parse(res.payload);
+    expect(body.nextActionAt).toBe(expectedExpiry);
 
     await localApp.close();
   });

@@ -211,6 +211,19 @@ describe('Notification Settings Routes', () => {
     expect(body.ok).toBe(true);
   });
 
+  it('POST /api/settings/notifications/test — defaults purpose to test when omitted', async () => {
+    mockSendMail.mockResolvedValueOnce({ messageId: '<default-purpose@example.com>' });
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/settings/notifications/test',
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
+      payload: { channel: 'email' },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(JSON.parse(res.payload).ok).toBe(true);
+  });
+
   // ─── 9. POST test telegram with no config returns ok=false ───────────────────
 
   it('POST /api/settings/notifications/test — telegram channel, no config, ok=false with message', async () => {
@@ -273,5 +286,56 @@ describe('Notification Settings Routes', () => {
     expect(meta.channel).toBe('smtp');
     // Must not contain password
     expect(settingsEvent!.metadata).not.toContain('password');
+  });
+
+  it('PUT /api/settings/notifications/smtp — blank password keeps existing secret', async () => {
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/api/settings/notifications/smtp',
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
+      payload: {
+        host: 'smtp-kept.example.com',
+        port: 2525,
+        user: 'updated@example.com',
+        password: '',
+        fromEmail: 'updated@example.com',
+        secure: true,
+      },
+    });
+    expect(res.statusCode).toBe(200);
+
+    mockSendMail.mockResolvedValueOnce({ messageId: '<kept-password@example.com>' });
+    const testRes = await app.inject({
+      method: 'POST',
+      url: '/api/settings/notifications/test',
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
+      payload: { channel: 'email' },
+    });
+    expect(testRes.statusCode).toBe(200);
+    expect(JSON.parse(testRes.payload).ok).toBe(true);
+  });
+
+  it('PUT /api/settings/notifications/telegram — blank bot token keeps existing secret', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ ok: true, result: { message_id: 123 } }),
+    });
+
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/api/settings/notifications/telegram',
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
+      payload: { botToken: '', chatId: '111222333' },
+    });
+    expect(res.statusCode).toBe(200);
+
+    const testRes = await app.inject({
+      method: 'POST',
+      url: '/api/settings/notifications/test',
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
+      payload: { channel: 'telegram' },
+    });
+    expect(testRes.statusCode).toBe(200);
+    expect(JSON.parse(testRes.payload).ok).toBe(true);
   });
 });
