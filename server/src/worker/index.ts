@@ -1,16 +1,19 @@
 import { inArray } from 'drizzle-orm';
-import { switches } from '../db/schema.js';
+import { switches, releaseRuns } from '../db/schema.js';
 import type { AegisDb } from '../db/index.js';
 import type { SwitchRecord } from '../services/switch-repository.js';
 import { evaluateAndTransition } from '../services/switch-engine.js';
 import { processRemindersForSwitch } from '../services/reminders.js';
 import { syncPacketForSwitch } from '../services/dead-drop-sync.js';
+import { startCascade, checkAndEscalate, type CascadeConfig } from '../services/cascade.js';
+import type { ReleaseRunRecord } from '../repositories/release-run-repository.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface WorkerSyncConfig {
   fieldEncryptionKey: string;
   dataDir: string;
+  appUrl?: string;
 }
 
 export interface WorkerOptions {
@@ -69,6 +72,67 @@ async function loadEvaluableSwitches(db: AegisDb): Promise<SwitchRecord[]> {
   }));
 }
 
+// ─── Release run cascade helpers ──────────────────────────────────────────────
+
+async function loadActiveReleaseRuns(db: AegisDb): Promise<ReleaseRunRecord[]> {
+  const rows = await db
+    .select()
+    .from(releaseRuns)
+    .where(inArray(releaseRuns.status, ['active', 'cascade_active']));
+
+  return rows.map((r) => ({
+    id: r.id,
+    triggeringSwitchId: r.triggeringSwitchId,
+    status: r.status,
+    activePacketId: r.activePacketId ?? null,
+    currentContactClaimId: r.currentContactClaimId ?? null,
+    suppressedSwitchIds: (() => {
+      try { return JSON.parse(r.suppressedSwitchIds ?? '[]') as number[]; }
+      catch { return []; }
+    })(),
+    metadata: (() => {
+      try { return JSON.parse(r.metadata ?? '{}') as Record<string, unknown>; }
+      catch { return {}; }
+    })(),
+    startedAt: r.startedAt,
+    completedAt: r.completedAt ?? null,
+    cancelledAt: r.cancelledAt ?? null,
+    createdAt: r.createdAt,
+    updatedAt: r.updatedAt,
+  }));
+}
+
+async function progressReleaseRuns(
+  db: AegisDb,
+  now: Date,
+  syncConfig: WorkerSyncConfig,
+): Promise<void> {
+  const activeRuns = await loadActiveReleaseRuns(db);
+  if (activeRuns.length === 0) return;
+
+  const cascadeConfig: CascadeConfig = {
+    appUrl: syncConfig.appUrl ?? 'http://localhost:8000',
+    fieldEncryptionKey: syncConfig.fieldEncryptionKey,
+  };
+
+  for (const run of activeRuns) {
+    try {
+      if (run.activePacketId == null) continue; // no packet yet, skip
+
+      // Start cascade if not yet started
+      if (run.currentContactClaimId == null) {
+        await startCascade(db, cascadeConfig, run.id);
+        continue; // escalation check on next tick
+      }
+
+      // Check and escalate timed-out claims
+      await checkAndEscalate(db, cascadeConfig, run.id, now);
+    } catch (err) {
+      console.error(`[worker] error in cascade for release run ${run.id}:`, err);
+    }
+  }
+}
+
 // ─── runWorkerOnce ─────────────────────────────────────────────────────────────
 
 export async function runWorkerOnce(
@@ -114,6 +178,11 @@ export async function runWorkerOnce(
       console.error(`[worker] error processing switch ${sw.id}:`, err);
       result.errors += 1;
     }
+  }
+
+  // 4. Progress active release runs (cascade loop)
+  if (syncConfig?.fieldEncryptionKey) {
+    await progressReleaseRuns(db, now, syncConfig);
   }
 
   return result;
