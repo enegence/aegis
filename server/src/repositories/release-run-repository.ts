@@ -124,3 +124,21 @@ export async function cancelReleaseRun(db: AegisDb, runId: number): Promise<void
     .set({ status: 'cancelled', cancelledAt: new Date(), updatedAt: new Date() })
     .where(eq(releaseRuns.id, runId));
 }
+
+export async function activateRunCascade(
+  db: AegisDb,
+  runId: number,
+  claimId: number,
+): Promise<void> {
+  await db
+    .update(releaseRuns)
+    .set({ status: 'cascade_active', currentContactClaimId: claimId, updatedAt: new Date() })
+    .where(eq(releaseRuns.id, runId));
+}
+
+export async function failReleaseRun(db: AegisDb, runId: number): Promise<void> {
+  await db
+    .update(releaseRuns)
+    .set({ status: 'failed', updatedAt: new Date() })
+    .where(eq(releaseRuns.id, runId));
+}

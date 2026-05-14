@@ -3,6 +3,7 @@ export interface TemplateData {
   switchName?: string;
   mode?: string;
   nextActionAt?: string;
+  claimUrl?: string;
 }
 
 export type TemplatePurpose =
@@ -10,7 +11,8 @@ export type TemplatePurpose =
   | 'owner_trip_reminder'
   | 'owner_heartbeat_reminder'
   | 'owner_warning_started'
-  | 'owner_trigger_reached_local_only';
+  | 'owner_trigger_reached_local_only'
+  | 'contact_claim_notification';
 
 export function renderTemplate(
   purpose: TemplatePurpose,
@@ -49,6 +51,20 @@ export function renderTemplate(
       return {
         subject: `Aegis: Switch '${switchName}' has been triggered`,
         body: `'${switchName}' has been triggered. Aegis is preparing to notify your contacts (packet/release in Phase 3).`,
+      };
+
+    case 'contact_claim_notification':
+      return {
+        subject: 'Aegis: You have been designated as a trusted contact',
+        body: [
+          `You have been designated as a trusted contact for a dead man's switch.`,
+          ``,
+          `Please visit the following secure link to review and acknowledge your responsibilities:`,
+          ``,
+          data.claimUrl ?? '(claim link unavailable)',
+          ``,
+          `This link will expire. If you received this message in error, you may ignore it.`,
+        ].join('\n'),
       };
   }
 }
