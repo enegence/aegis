@@ -1,3 +1,7 @@
+export type PacketStatus = 'draft' | 'generated' | 'uploaded' | 'verified' | 'deleted' | 'failed';
+export type StorageProvider = 's3';
+export type ReleaseRunStatus = 'active' | 'cascade_active' | 'completed' | 'cancelled' | 'failed';
+
 export type SwitchMode = 'trip' | 'heartbeat';
 export type DeploymentMode = 'vault' | 'dead_drop' | 'relay_monitoring' | 'relay_escrow' | 'hosted';
 export type ReadinessStatus = 'ready' | 'not_ready' | 'warning';
@@ -127,4 +131,44 @@ export interface DashboardSummary {
   relayConfigured: boolean;
   storageConfigured: boolean;
   health: HealthStatus;
+}
+
+export interface PacketSummary {
+  id: number;
+  switchId: number;
+  releaseRunId: number | null;
+  version: number;
+  schemaVersion: string;
+  contentHash: string;
+  encryptedObjectHash: string | null;
+  storageProvider: StorageProvider | null;
+  storageBucket: string | null;
+  storageObjectKey: string | null;
+  lastVerifiedAt: string | null;
+  expiresAt: string | null;
+  createdAt: string;
+}
+
+export interface ReleaseRunSummary {
+  id: number;
+  triggeringSwitchId: number;
+  status: ReleaseRunStatus;
+  activePacketId: number | null;
+  currentContactClaimId: number | null;
+  suppressedSwitchIds: number[];
+  startedAt: string;
+  completedAt: string | null;
+  cancelledAt: string | null;
+}
+
+export interface ClaimPublicSummary {
+  status: ClaimStatus;
+  ownerDisplayName: string;
+  contactDisplayName: string | null;
+  switchName: string;
+  expiresAt: string;
+  acceptedAt: string | null;
+  packetDownloadedAt: string | null;
+  keyViewedAt: string | null;
+  acknowledgedAt: string | null;
 }
