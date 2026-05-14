@@ -218,3 +218,15 @@ export const localAcknowledgements = sqliteTable('local_acknowledgements', {
   version: text('version').notNull(),          // terms/policy version string
   acknowledgedAt: integer('acknowledged_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
+
+// worker_heartbeats: single-row upsert table (singleton id = 'singleton').
+// Records last tick time, last success, last error for operational health checks.
+// lastErrorRedacted stores error type/code only — no stack traces, no user data.
+export const workerHeartbeats = sqliteTable('worker_heartbeats', {
+  id: text('id').primaryKey().default('singleton'),
+  lastTickAt: integer('last_tick_at', { mode: 'timestamp' }),
+  lastSuccessAt: integer('last_success_at', { mode: 'timestamp' }),
+  lastErrorAt: integer('last_error_at', { mode: 'timestamp' }),
+  lastErrorRedacted: text('last_error_redacted'),
+  tickDurationMs: integer('tick_duration_ms'),
+});

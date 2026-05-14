@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url';
 import { existsSync } from 'fs';
 import { loadConfig, type AppConfig } from './config.js';
 import { getDb, createTestDb, type AegisDb } from './db/index.js';
+import { createLoggerConfig } from './logger.js';
 import authPlugin from './auth/plugin.js';
 import { healthRoutes } from './routes/health.js';
 import { authRoutes } from './routes/auth.js';
@@ -35,7 +36,8 @@ declare module 'fastify' {
 
 export async function buildApp(overrides: Partial<AppConfig & { dbPath: string }> = {}) {
   const config = loadConfig(overrides);
-  const app = Fastify({ logger: !config.testing });
+  const loggerConfig = createLoggerConfig({ testing: !!config.testing });
+  const app = Fastify({ logger: loggerConfig as any });
 
   const db = config.testing && overrides.dbPath === ':memory:'
     ? createTestDb()

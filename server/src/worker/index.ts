@@ -1,5 +1,5 @@
-import { inArray } from 'drizzle-orm';
-import { switches, releaseRuns } from '../db/schema.js';
+import { inArray, eq } from 'drizzle-orm';
+import { switches, releaseRuns, workerHeartbeats } from '../db/schema.js';
 import type { AegisDb } from '../db/index.js';
 import type { SwitchRecord } from '../services/switch-repository.js';
 import { evaluateAndTransition } from '../services/switch-engine.js';
@@ -191,6 +191,50 @@ async function progressReleaseRuns(
   }
 }
 
+// ─── Heartbeat persistence ─────────────────────────────────────────────────────
+
+async function upsertHeartbeatTick(db: AegisDb, now: Date): Promise<void> {
+  try {
+    await db
+      .insert(workerHeartbeats)
+      .values({ id: 'singleton', lastTickAt: now })
+      .onConflictDoUpdate({
+        target: workerHeartbeats.id,
+        set: { lastTickAt: now },
+      });
+  } catch {
+    // Non-fatal — heartbeat table may not exist yet (pre-migration)
+  }
+}
+
+async function upsertHeartbeatSuccess(db: AegisDb, now: Date, durationMs: number): Promise<void> {
+  try {
+    await db
+      .insert(workerHeartbeats)
+      .values({ id: 'singleton', lastTickAt: now, lastSuccessAt: now, tickDurationMs: durationMs })
+      .onConflictDoUpdate({
+        target: workerHeartbeats.id,
+        set: { lastSuccessAt: now, tickDurationMs: durationMs },
+      });
+  } catch {
+    // Non-fatal
+  }
+}
+
+async function upsertHeartbeatError(db: AegisDb, now: Date, errorRedacted: string): Promise<void> {
+  try {
+    await db
+      .insert(workerHeartbeats)
+      .values({ id: 'singleton', lastTickAt: now, lastErrorAt: now, lastErrorRedacted: errorRedacted })
+      .onConflictDoUpdate({
+        target: workerHeartbeats.id,
+        set: { lastErrorAt: now, lastErrorRedacted: errorRedacted },
+      });
+  } catch {
+    // Non-fatal
+  }
+}
+
 // ─── runWorkerOnce ─────────────────────────────────────────────────────────────
 
 export async function runWorkerOnce(
@@ -270,8 +314,13 @@ export function startWorker(db: AegisDb, options?: WorkerOptions): WorkerHandle 
 
   const timer = setInterval(async () => {
     if (!running) return;
+    const tickStart = Date.now();
+    const now = new Date();
+    await upsertHeartbeatTick(db, now);
     try {
-      await runWorkerOnce(db, new Date(), syncConfig);
+      await runWorkerOnce(db, now, syncConfig);
+      const durationMs = Date.now() - tickStart;
+      await upsertHeartbeatSuccess(db, now, durationMs);
       tickCount += 1;
       if (tickCount % PURGE_INTERVAL_TICKS === 0) {
         purgeExpiredIdempotencyKeys(db).catch((err) =>
@@ -279,6 +328,8 @@ export function startWorker(db: AegisDb, options?: WorkerOptions): WorkerHandle 
         );
       }
     } catch (err) {
+      const errorRedacted = err instanceof Error ? err.constructor.name : 'UnknownError';
+      await upsertHeartbeatError(db, now, errorRedacted);
       console.error('[worker] tick error:', err);
     }
   }, intervalMs);
