@@ -90,6 +90,15 @@ export default function Dashboard() {
         <h1 style={{ fontFamily: "'Caveat', cursive, sans-serif", fontSize: '2rem', fontWeight: 'bold', color: T.ink, marginBottom: '4px' }}>
           Welcome back, {summary.ownerName}
         </h1>
+        {/* Alpha warning */}
+        <div style={{
+          fontFamily: 'monospace', fontSize: '0.75rem', color: '#8B6914',
+          background: '#FFFBEB', border: '1px solid #F0C040',
+          borderRadius: '4px', padding: '8px 12px', marginBottom: '16px', lineHeight: 1.5,
+        }}>
+          <strong>Alpha release.</strong> Verify your deployment, backups, notifications, and packet sync before relying on this system for critical information delivery.
+        </div>
+
         {error && (
           <div style={{ fontFamily: 'monospace', fontSize: '0.82rem', color: '#C0392B', marginBottom: '12px' }}>{error}</div>
         )}

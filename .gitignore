@@ -3,6 +3,9 @@ dist/
 .env
 *.db
 *.db-journal
+*.db-shm
+*.db-wal
+data/
 .DS_Store
 server/static/
 .worktrees/

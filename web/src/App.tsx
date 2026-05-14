@@ -2,6 +2,7 @@ import { Routes, Route, Navigate, NavLink, useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react';
 import { get, post, invalidateCsrfToken } from './lib/api';
 import Login from './pages/Login';
+import Setup from './pages/Setup';
 import Dashboard from './pages/Dashboard';
 import Switches from './pages/Switches';
 import Settings from './pages/Settings';
@@ -113,15 +114,14 @@ export default function App() {
     );
   }
 
+  if (authStatus === 'setup') {
+    return <Setup onSetupComplete={() => setAuthStatus('authenticated')} />;
+  }
+
   if (authStatus !== 'authenticated') {
     return (
       <Routes>
-        <Route path="*" element={
-          <Login
-            onAuth={() => setAuthStatus('authenticated')}
-            mode={authStatus === 'setup' ? 'setup' : 'login'}
-          />
-        } />
+        <Route path="*" element={<Login onAuth={() => setAuthStatus('authenticated')} />} />
       </Routes>
     );
   }

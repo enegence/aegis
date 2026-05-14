@@ -1,0 +1,390 @@
+import { useState } from 'react';
+import { apiFetch } from '../lib/api';
+
+const T = {
+  bg: '#DDE8F4', ink: '#0B1C2C', accent: '#1A6B9A',
+  surface: '#C8D9ED', border: '#8AAAC8', muted: '#4A6B8A',
+  warn: '#7a3c00',
+};
+
+const DEPLOYMENT_MODES = [
+  {
+    id: 'vault',
+    label: 'Vault Mode',
+    description: 'Store and organize your legacy information locally. Notifications are sent when the switch triggers.',
+    limitation: 'Vault Mode is local planning and storage. If this machine is offline, destroyed, or inaccessible at trigger time, automated release may not occur.',
+  },
+  {
+    id: 'dead_drop',
+    label: 'Dead Drop',
+    description: 'Encrypted packets are uploaded to S3-compatible storage so contacts can download them even if your server is offline.',
+    limitation: 'Contacts can download encrypted packets from S3, but cannot decrypt them if the decryption key is unavailable (server offline with no relay escrow).',
+  },
+  {
+    id: 'relay_monitoring',
+    label: 'Relay Monitoring',
+    description: 'An Aegis Relay service monitors your heartbeat and alerts if it stops. Does not provide automated release.',
+    limitation: 'Relay Monitoring tracks heartbeats only. It does not execute release or provide key escrow.',
+  },
+  {
+    id: 'relay_escrow',
+    label: 'Relay Escrow',
+    description: 'Encrypted key material is held by an Aegis Relay service and released to contacts on trigger.',
+    limitation: 'Relay Escrow requires a configured and trusted Relay provider. Your security depends on the Relay operator.',
+  },
+] as const;
+
+type DeploymentMode = typeof DEPLOYMENT_MODES[number]['id'];
+
+interface SetupData {
+  displayName: string;
+  email: string;
+  phone: string;
+  timezone: string;
+  password: string;
+  confirmPassword: string;
+  deploymentMode: DeploymentMode;
+  acknowledgedGeneral: boolean;
+  acknowledgedMode: boolean;
+}
+
+interface SetupProps {
+  onSetupComplete: () => void;
+}
+
+function FieldError({ msg }: { msg: string }) {
+  return msg ? <p style={{ color: '#c0392b', fontSize: '0.78rem', margin: '4px 0 0' }}>{msg}</p> : null;
+}
+
+function Label({ children }: { children: React.ReactNode }) {
+  return <label style={{ fontSize: '0.82rem', color: T.muted, display: 'block', marginBottom: 4 }}>{children}</label>;
+}
+
+function Input({ value, onChange, type = 'text', placeholder }: {
+  value: string; onChange: (v: string) => void; type?: string; placeholder?: string;
+}) {
+  return (
+    <input
+      type={type}
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      placeholder={placeholder}
+      style={{
+        width: '100%', boxSizing: 'border-box', padding: '8px 10px',
+        fontFamily: 'monospace', fontSize: '0.85rem',
+        border: `1.5px solid ${T.border}`, borderRadius: 4,
+        background: '#fff', color: T.ink, outline: 'none',
+      }}
+    />
+  );
+}
+
+function Btn({ onClick, disabled, children, secondary }: {
+  onClick?: () => void; disabled?: boolean; children: React.ReactNode; secondary?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        padding: '9px 20px', fontFamily: 'monospace', fontSize: '0.85rem',
+        background: secondary ? 'transparent' : (disabled ? '#8AAAC8' : T.accent),
+        color: secondary ? T.muted : '#fff',
+        border: secondary ? `1px solid ${T.border}` : 'none',
+        borderRadius: 4, cursor: disabled ? 'not-allowed' : 'pointer',
+        marginRight: 8,
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+export default function Setup({ onSetupComplete }: SetupProps) {
+  const [step, setStep] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  const [data, setData] = useState<SetupData>({
+    displayName: '',
+    email: '',
+    phone: '',
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+    password: '',
+    confirmPassword: '',
+    deploymentMode: 'vault',
+    acknowledgedGeneral: false,
+    acknowledgedMode: false,
+  });
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof SetupData, string>>>({});
+
+  function set<K extends keyof SetupData>(k: K, v: SetupData[K]) {
+    setData(d => ({ ...d, [k]: v }));
+    setFieldErrors(e => ({ ...e, [k]: '' }));
+  }
+
+  const selectedMode = DEPLOYMENT_MODES.find(m => m.id === data.deploymentMode)!;
+
+  // ─── Step validation ────────────────────────────────────────────────────────
+
+  function validateProfile(): boolean {
+    const errs: Partial<Record<keyof SetupData, string>> = {};
+    if (!data.displayName.trim()) errs.displayName = 'Name is required';
+    if (!data.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) errs.email = 'Valid email required';
+    setFieldErrors(errs);
+    return Object.keys(errs).length === 0;
+  }
+
+  function validateSecurity(): boolean {
+    const errs: Partial<Record<keyof SetupData, string>> = {};
+    if (data.password.length < 12) errs.password = 'Password must be at least 12 characters';
+    if (data.password !== data.confirmPassword) errs.confirmPassword = 'Passwords do not match';
+    setFieldErrors(errs);
+    return Object.keys(errs).length === 0;
+  }
+
+  function validateAck(): boolean {
+    const errs: Partial<Record<keyof SetupData, string>> = {};
+    if (!data.acknowledgedGeneral) errs.acknowledgedGeneral = 'You must acknowledge this before continuing';
+    if (!data.acknowledgedMode) errs.acknowledgedMode = 'You must acknowledge the deployment mode limitation';
+    setFieldErrors(errs);
+    return Object.keys(errs).length === 0;
+  }
+
+  function nextStep() {
+    setError('');
+    if (step === 1 && !validateProfile()) return;
+    if (step === 2 && !validateSecurity()) return;
+    if (step === 4 && !validateAck()) return;
+    setStep(s => s + 1);
+  }
+
+  async function submit() {
+    if (!validateAck()) return;
+    setSubmitting(true);
+    setError('');
+    try {
+      await apiFetch('/api/setup', {
+        method: 'POST',
+        body: JSON.stringify({
+          displayName: data.displayName,
+          email: data.email,
+          phone: data.phone || undefined,
+          password: data.password,
+          timezone: data.timezone,
+          deploymentMode: data.deploymentMode,
+        }),
+        headers: { 'Content-Type': 'application/json' },
+      });
+      onSetupComplete();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Setup failed. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const steps = ['Welcome', 'Profile', 'Security', 'Deployment', 'Acknowledge', 'Review'];
+
+  return (
+    <div style={{ minHeight: '100vh', background: T.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <div style={{ width: '100%', maxWidth: 520, background: T.surface, border: `2px solid ${T.border}`, borderRadius: '4px 12px 4px 12px / 12px 4px 12px 4px', padding: 32 }}>
+
+        {/* Header */}
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ fontFamily: "'Caveat', cursive, sans-serif", fontSize: '1.8rem', fontWeight: 'bold', color: T.ink, marginBottom: 4 }}>
+            Aegis Setup
+          </div>
+          <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+            {steps.map((s, i) => (
+              <div key={s} style={{
+                height: 4, flex: 1, borderRadius: 2,
+                background: i <= step ? T.accent : T.border,
+                transition: 'background 0.2s',
+              }} />
+            ))}
+          </div>
+          <p style={{ fontSize: '0.78rem', color: T.muted, marginTop: 6 }}>
+            Step {step + 1} of {steps.length}: {steps[step]}
+          </p>
+        </div>
+
+        {/* ── Step 0: Welcome ─────────────────────────────────────────────── */}
+        {step === 0 && (
+          <div>
+            <h2 style={{ fontSize: '1.1rem', color: T.ink, marginTop: 0 }}>Welcome to Aegis Core</h2>
+            <p style={{ fontSize: '0.85rem', color: T.ink, lineHeight: 1.6 }}>
+              Aegis is a self-hosted dead man's switch and digital legacy system. When you don't check in,
+              it triggers a release process that notifies your designated contacts and gives them access
+              to the information you've prepared.
+            </p>
+            <div style={{ background: '#fff', border: `1px solid ${T.border}`, borderRadius: 4, padding: 14, margin: '16px 0', fontSize: '0.82rem', color: T.muted, lineHeight: 1.6 }}>
+              <strong style={{ color: T.ink }}>Aegis is not:</strong>
+              <ul style={{ margin: '6px 0 0', paddingLeft: 18 }}>
+                <li>A will or legal document</li>
+                <li>A password manager</li>
+                <li>A guarantee of delivery under all conditions</li>
+                <li>A professional estate planning service</li>
+              </ul>
+            </div>
+            <p style={{ fontSize: '0.82rem', color: T.muted }}>
+              This wizard takes about 2 minutes. You'll create your owner account, choose a deployment mode,
+              and acknowledge the system's limitations.
+            </p>
+            <Btn onClick={nextStep}>Get started →</Btn>
+          </div>
+        )}
+
+        {/* ── Step 1: Profile ─────────────────────────────────────────────── */}
+        {step === 1 && (
+          <div>
+            <h2 style={{ fontSize: '1.1rem', color: T.ink, marginTop: 0 }}>Owner Profile</h2>
+            <div style={{ marginBottom: 14 }}>
+              <Label>Display name *</Label>
+              <Input value={data.displayName} onChange={v => set('displayName', v)} placeholder="Your name" />
+              <FieldError msg={fieldErrors.displayName ?? ''} />
+            </div>
+            <div style={{ marginBottom: 14 }}>
+              <Label>Email *</Label>
+              <Input value={data.email} onChange={v => set('email', v)} type="email" placeholder="you@example.com" />
+              <FieldError msg={fieldErrors.email ?? ''} />
+            </div>
+            <div style={{ marginBottom: 14 }}>
+              <Label>Phone (optional)</Label>
+              <Input value={data.phone} onChange={v => set('phone', v)} type="tel" placeholder="+1 555 000 0000" />
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              <Label>Timezone</Label>
+              <Input value={data.timezone} onChange={v => set('timezone', v)} placeholder="UTC" />
+            </div>
+            <Btn secondary onClick={() => setStep(s => s - 1)}>← Back</Btn>
+            <Btn onClick={nextStep}>Next →</Btn>
+          </div>
+        )}
+
+        {/* ── Step 2: Security ────────────────────────────────────────────── */}
+        {step === 2 && (
+          <div>
+            <h2 style={{ fontSize: '1.1rem', color: T.ink, marginTop: 0 }}>Security</h2>
+            <p style={{ fontSize: '0.82rem', color: T.muted, marginTop: 0 }}>
+              Choose a strong password. Aegis does not have password recovery — if you lose it, you'll need
+              to reset the database. We recommend a passphrase of 4+ random words.
+            </p>
+            <div style={{ marginBottom: 14 }}>
+              <Label>Password (min 12 characters) *</Label>
+              <Input value={data.password} onChange={v => set('password', v)} type="password" placeholder="••••••••••••" />
+              <FieldError msg={fieldErrors.password ?? ''} />
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              <Label>Confirm password *</Label>
+              <Input value={data.confirmPassword} onChange={v => set('confirmPassword', v)} type="password" placeholder="••••••••••••" />
+              <FieldError msg={fieldErrors.confirmPassword ?? ''} />
+            </div>
+            <Btn secondary onClick={() => setStep(s => s - 1)}>← Back</Btn>
+            <Btn onClick={nextStep}>Next →</Btn>
+          </div>
+        )}
+
+        {/* ── Step 3: Deployment mode ─────────────────────────────────────── */}
+        {step === 3 && (
+          <div>
+            <h2 style={{ fontSize: '1.1rem', color: T.ink, marginTop: 0 }}>Deployment Mode</h2>
+            <p style={{ fontSize: '0.82rem', color: T.muted, marginTop: 0 }}>
+              Choose how Aegis releases your information. You can change this later in Settings.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {DEPLOYMENT_MODES.map(mode => (
+                <div
+                  key={mode.id}
+                  onClick={() => set('deploymentMode', mode.id)}
+                  style={{
+                    padding: '12px 14px', borderRadius: 4, cursor: 'pointer',
+                    border: `2px solid ${data.deploymentMode === mode.id ? T.accent : T.border}`,
+                    background: data.deploymentMode === mode.id ? '#e8f0f8' : '#fff',
+                  }}
+                >
+                  <div style={{ fontSize: '0.88rem', fontWeight: 600, color: T.ink }}>{mode.label}</div>
+                  <div style={{ fontSize: '0.8rem', color: T.muted, marginTop: 4 }}>{mode.description}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ marginTop: 20 }}>
+              <Btn secondary onClick={() => setStep(s => s - 1)}>← Back</Btn>
+              <Btn onClick={nextStep}>Next →</Btn>
+            </div>
+          </div>
+        )}
+
+        {/* ── Step 4: Acknowledgements ─────────────────────────────────────── */}
+        {step === 4 && (
+          <div>
+            <h2 style={{ fontSize: '1.1rem', color: T.ink, marginTop: 0 }}>Acknowledgements</h2>
+
+            <div style={{ background: '#fff3cd', border: '1px solid #f0c040', borderRadius: 4, padding: 14, marginBottom: 16, fontSize: '0.82rem', color: T.warn }}>
+              <strong>Selected: {selectedMode.label}</strong>
+              <p style={{ margin: '6px 0 0' }}>{selectedMode.limitation}</p>
+            </div>
+
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 14, cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={data.acknowledgedGeneral}
+                onChange={e => set('acknowledgedGeneral', e.target.checked)}
+                style={{ marginTop: 2, flexShrink: 0 }}
+              />
+              <span style={{ fontSize: '0.82rem', color: T.ink, lineHeight: 1.5 }}>
+                I understand Aegis is not a will, legal service, password manager, or guarantee of delivery.
+                Release reliability depends on the deployment mode and configured services.
+              </span>
+            </label>
+            <FieldError msg={fieldErrors.acknowledgedGeneral ?? ''} />
+
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 20, cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={data.acknowledgedMode}
+                onChange={e => set('acknowledgedMode', e.target.checked)}
+                style={{ marginTop: 2, flexShrink: 0 }}
+              />
+              <span style={{ fontSize: '0.82rem', color: T.ink, lineHeight: 1.5 }}>
+                I understand the limitations of {selectedMode.label} described above.
+              </span>
+            </label>
+            <FieldError msg={fieldErrors.acknowledgedMode ?? ''} />
+
+            <Btn secondary onClick={() => setStep(s => s - 1)}>← Back</Btn>
+            <Btn onClick={nextStep}>Next →</Btn>
+          </div>
+        )}
+
+        {/* ── Step 5: Review + Submit ──────────────────────────────────────── */}
+        {step === 5 && (
+          <div>
+            <h2 style={{ fontSize: '1.1rem', color: T.ink, marginTop: 0 }}>Review & Create Account</h2>
+            <div style={{ background: '#fff', border: `1px solid ${T.border}`, borderRadius: 4, padding: 14, fontSize: '0.82rem', color: T.ink, marginBottom: 20 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '6px 0', lineHeight: 1.6 }}>
+                <span style={{ color: T.muted }}>Name</span><span>{data.displayName}</span>
+                <span style={{ color: T.muted }}>Email</span><span>{data.email}</span>
+                {data.phone && <><span style={{ color: T.muted }}>Phone</span><span>{data.phone}</span></>}
+                <span style={{ color: T.muted }}>Timezone</span><span>{data.timezone}</span>
+                <span style={{ color: T.muted }}>Password</span><span>{'•'.repeat(Math.min(data.password.length, 12))}</span>
+                <span style={{ color: T.muted }}>Mode</span><span>{selectedMode.label}</span>
+              </div>
+            </div>
+
+            {error && (
+              <div style={{ background: '#fde', border: '1px solid #c0392b', borderRadius: 4, padding: 10, marginBottom: 14, fontSize: '0.82rem', color: '#c0392b' }}>
+                {error}
+              </div>
+            )}
+
+            <Btn secondary onClick={() => setStep(s => s - 1)}>← Back</Btn>
+            <Btn onClick={submit} disabled={submitting}>
+              {submitting ? 'Creating account…' : 'Create account →'}
+            </Btn>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

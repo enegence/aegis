@@ -20,6 +20,7 @@ import { packetRoutes } from './routes/packets.js';
 import { claimRoutes } from './routes/claim.js';
 import { releaseRoutes } from './routes/release.js';
 import { auditRoutes } from './routes/audit.js';
+import { securityRoutes } from './routes/security.js';
 import { startWorker, type WorkerHandle } from './worker/index.js';
 
 declare module 'fastify' {
@@ -61,6 +62,7 @@ export async function buildApp(overrides: Partial<AppConfig & { dbPath: string }
   await app.register(claimRoutes);
   await app.register(releaseRoutes);
   await app.register(auditRoutes);
+  await app.register(securityRoutes);
 
   if (config.testing && overrides.dbPath === ':memory:') {
     const { migrate } = await import('drizzle-orm/better-sqlite3/migrator');
@@ -90,6 +92,16 @@ export async function buildApp(overrides: Partial<AppConfig & { dbPath: string }
 async function start() {
   const app = await buildApp();
   const config = loadConfig();
+
+  // Ensure data directory exists
+  const { mkdirSync } = await import('fs');
+  const { join: pathJoin } = await import('path');
+  try {
+    mkdirSync(pathJoin(config.dataDir, 'packets'), { recursive: true });
+  } catch (err) {
+    console.error(`FATAL: cannot create data directory at ${config.dataDir}/packets:`, err);
+    process.exit(1);
+  }
 
   let workerHandle: WorkerHandle | null = null;
 

@@ -14,13 +14,13 @@ describe('Switch CRUD and Actions', () => {
     await app.inject({
       method: 'POST',
       url: '/api/auth/setup',
-      payload: { displayName: 'Test Owner', email: 'owner@test.com', password: 'testpass123', timezone: 'UTC' },
+      payload: { displayName: 'Test Owner', email: 'owner@test.com', password: 'testpass1234', timezone: 'UTC' },
     });
 
     const loginRes = await app.inject({
       method: 'POST',
       url: '/api/auth/login',
-      payload: { password: 'testpass123' },
+      payload: { password: 'testpass1234' },
     });
     cookies = String(loginRes.headers['set-cookie']);
 

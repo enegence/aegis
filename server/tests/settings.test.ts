@@ -50,13 +50,13 @@ describe('Notification Settings Routes', () => {
     await app.inject({
       method: 'POST',
       url: '/api/auth/setup',
-      payload: { displayName: 'Settings Owner', email: 'settings@test.com', password: 'testpass123', timezone: 'UTC' },
+      payload: { displayName: 'Settings Owner', email: 'settings@test.com', password: 'testpass1234', timezone: 'UTC' },
     });
 
     const loginRes = await app.inject({
       method: 'POST',
       url: '/api/auth/login',
-      payload: { password: 'testpass123' },
+      payload: { password: 'testpass1234' },
     });
     cookies = String(loginRes.headers['set-cookie']);
 
@@ -232,12 +232,12 @@ describe('Notification Settings Routes', () => {
     await freshApp.inject({
       method: 'POST',
       url: '/api/auth/setup',
-      payload: { displayName: 'Fresh Owner', email: 'fresh@test.com', password: 'testpass123', timezone: 'UTC' },
+      payload: { displayName: 'Fresh Owner', email: 'fresh@test.com', password: 'testpass1234', timezone: 'UTC' },
     });
     const loginRes = await freshApp.inject({
       method: 'POST',
       url: '/api/auth/login',
-      payload: { password: 'testpass123' },
+      payload: { password: 'testpass1234' },
     });
     const freshCookies = String(loginRes.headers['set-cookie']);
     const csrfRes = await freshApp.inject({

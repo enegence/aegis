@@ -4,63 +4,85 @@ import { apiFetch } from '../lib/api';
 
 interface LoginProps {
   onAuth: () => void;
-  mode: 'setup' | 'login';
 }
 
-export default function Login({ onAuth, mode }: LoginProps) {
+export default function Login({ onAuth }: LoginProps) {
   const navigate = useNavigate();
-  const [displayName, setDisplayName] = useState('');
-  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [totpCode, setTotpCode] = useState('');
+  const [requiresTotp, setRequiresTotp] = useState(false);
   const [error, setError] = useState('');
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
     try {
-      if (mode === 'setup') {
-        await apiFetch('/api/auth/setup', { method: 'POST', body: JSON.stringify({ displayName, email, password, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone }) });
-      } else {
-        await apiFetch('/api/auth/login', { method: 'POST', body: JSON.stringify({ password }) });
-      }
+      await apiFetch('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ password, ...(requiresTotp ? { totpCode } : {}) }),
+        headers: { 'Content-Type': 'application/json' },
+      });
       onAuth();
       navigate('/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed');
+      const msg = err instanceof Error ? err.message : 'Login failed';
+      if (msg.toLowerCase().includes('totp') || msg.toLowerCase().includes('2fa')) {
+        setRequiresTotp(true);
+        setError('TOTP code required');
+      } else {
+        setError(msg);
+      }
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6" style={{ background: '#DDE8F4' }}>
-      <form onSubmit={handleSubmit} className="w-full max-w-md p-8" style={{
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, background: '#DDE8F4' }}>
+      <form onSubmit={handleSubmit} style={{
+        width: '100%', maxWidth: 380, padding: 32,
         background: '#C8D9ED', border: '2px solid #8AAAC8',
         borderRadius: '3px 10px 3px 10px / 10px 3px 10px 3px',
       }}>
-        <h1 className="font-hand text-4xl font-bold mb-6" style={{ color: '#0B1C2C' }}>
-          {mode === 'setup' ? 'Set Up Aegis' : 'Welcome Back'}
+        <h1 style={{ fontFamily: "'Caveat', cursive, sans-serif", fontSize: '2rem', fontWeight: 'bold', color: '#0B1C2C', marginTop: 0, marginBottom: 24 }}>
+          Welcome Back
         </h1>
 
-        {mode === 'setup' && (
-          <>
-            <input type="text" placeholder="Your name" value={displayName} onChange={e => setDisplayName(e.target.value)}
-              className="w-full font-mono text-sm p-3 mb-3 rounded border outline-none" style={{ background: '#DDE8F4', borderColor: '#8AAAC8', color: '#0B1C2C' }} />
-            <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)}
-              className="w-full font-mono text-sm p-3 mb-3 rounded border outline-none" style={{ background: '#DDE8F4', borderColor: '#8AAAC8', color: '#0B1C2C' }} />
-          </>
+        <input
+          type="password"
+          placeholder="Passphrase"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          style={{
+            width: '100%', boxSizing: 'border-box', padding: '10px 12px', marginBottom: 12,
+            fontFamily: 'monospace', fontSize: '0.88rem',
+            background: '#DDE8F4', border: '1.5px solid #8AAAC8', borderRadius: 4, color: '#0B1C2C', outline: 'none',
+          }}
+        />
+
+        {requiresTotp && (
+          <input
+            type="text"
+            placeholder="6-digit TOTP code"
+            value={totpCode}
+            onChange={e => setTotpCode(e.target.value)}
+            maxLength={6}
+            style={{
+              width: '100%', boxSizing: 'border-box', padding: '10px 12px', marginBottom: 12,
+              fontFamily: 'monospace', fontSize: '0.88rem', letterSpacing: 4,
+              background: '#DDE8F4', border: '1.5px solid #8AAAC8', borderRadius: 4, color: '#0B1C2C', outline: 'none',
+            }}
+          />
         )}
 
-        <input type="password" placeholder="Passphrase" value={password} onChange={e => setPassword(e.target.value)}
-          className="w-full font-mono text-sm p-3 mb-4 rounded border outline-none" style={{ background: '#DDE8F4', borderColor: '#8AAAC8', color: '#0B1C2C' }} />
+        {error && <div style={{ fontFamily: 'monospace', fontSize: '0.82rem', color: '#C0392B', marginBottom: 10 }}>{error}</div>}
 
-        {error && <div className="font-mono text-sm mb-3" style={{ color: '#C0392B' }}>{error}</div>}
-
-        <button type="submit" className="w-full font-hand text-xl font-bold p-3 cursor-pointer transition-all" style={{
+        <button type="submit" style={{
+          width: '100%', padding: '12px 0',
+          fontFamily: "'Caveat', cursive, sans-serif", fontSize: '1.2rem', fontWeight: 'bold',
           background: '#0B1C2C', color: '#DDE8F4',
-          border: '2px solid #0B1C2C',
-          borderRadius: '3px 8px 3px 8px / 8px 3px 8px 3px',
-          boxShadow: '3px 3px 0 #1A6B9A66',
+          border: '2px solid #0B1C2C', borderRadius: '3px 8px 3px 8px / 8px 3px 8px 3px',
+          cursor: 'pointer',
         }}>
-          {mode === 'setup' ? 'Create Account →' : 'Log In →'}
+          Log In →
         </button>
       </form>
     </div>

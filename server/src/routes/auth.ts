@@ -1,20 +1,26 @@
-import type { FastifyInstance } from 'fastify';
-import { z } from 'zod';
+import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import { z, ZodError } from 'zod';
 import { owner } from '../db/schema.js';
 import { hashPassword, verifyPassword } from '../auth/password.js';
 import { createSession, deleteSession } from '../auth/session.js';
 import { deriveCsrfToken } from '../auth/csrf.js';
+import { writeAuditEvent } from '../services/audit.js';
 import { eq, count } from 'drizzle-orm';
+
+const APP_VERSION = '0.4.0-alpha';
 
 const setupSchema = z.object({
   displayName: z.string().min(1).max(200),
   email: z.string().email(),
-  password: z.string().min(8).max(256),
+  phone: z.string().max(50).optional().nullable(),
+  password: z.string().min(12).max(256),
   timezone: z.string().default('UTC'),
+  deploymentMode: z.enum(['vault', 'dead_drop', 'relay_monitoring', 'relay_escrow']).default('vault'),
 });
 
 const loginSchema = z.object({
   password: z.string().min(1),
+  totpCode: z.string().optional(),
 });
 
 export async function authRoutes(app: FastifyInstance) {
@@ -27,30 +33,54 @@ export async function authRoutes(app: FastifyInstance) {
     return reply.send({ csrfToken });
   });
 
+  // GET /api/setup/status — public, no auth
+  app.get('/api/setup/status', async (_req, reply) => {
+    const [result] = await app.db.select({ total: count() }).from(owner);
+    const ownerExists = result.total > 0;
+    return reply.send({
+      setupComplete: ownerExists,
+      ownerExists,
+      appVersion: APP_VERSION,
+    });
+  });
+
+  // Legacy alias kept for backward compat
   app.get('/api/auth/status', async (_req, reply) => {
     const [result] = await app.db.select({ total: count() }).from(owner);
     return reply.send({ setupRequired: result.total === 0 });
   });
 
-  app.post('/api/auth/setup', async (req, reply) => {
+  // POST /api/setup — primary setup endpoint (also aliased from /api/auth/setup)
+  async function handleSetup(req: FastifyRequest, reply: FastifyReply) {
     const [existing] = await app.db.select({ total: count() }).from(owner);
     if (existing.total > 0) {
       return reply.status(409).send({ error: 'Owner already configured' });
     }
 
-    const body = setupSchema.parse(req.body);
+    const parseResult = setupSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      return reply.status(400).send({ error: 'Validation failed', issues: parseResult.error.issues });
+    }
+    const body = parseResult.data;
     const passwordHash = await hashPassword(body.password);
     const now = new Date();
 
     const [created] = await app.db.insert(owner).values({
       displayName: body.displayName,
       email: body.email,
+      phone: body.phone ?? null,
       passwordHash,
       timezone: body.timezone,
       setupComplete: true,
       createdAt: now,
       updatedAt: now,
     }).returning();
+
+    await writeAuditEvent(app.db, {
+      eventType: 'setup_completed',
+      actorType: 'owner',
+      metadata: { deploymentMode: body.deploymentMode },
+    });
 
     const sessionId = createSession(app.db, created.id);
 
@@ -69,7 +99,10 @@ export async function authRoutes(app: FastifyInstance) {
         timezone: created.timezone,
       },
     });
-  });
+  }
+
+  app.post('/api/setup', handleSetup);
+  app.post('/api/auth/setup', handleSetup);
 
   app.post('/api/auth/login', async (req, reply) => {
     const body = loginSchema.parse(req.body);
@@ -79,9 +112,30 @@ export async function authRoutes(app: FastifyInstance) {
       return reply.status(401).send({ error: 'No owner configured' });
     }
 
+    // Check setup complete
+    if (!ownerRow.setupComplete) {
+      return reply.status(428).send({ error: 'Setup not complete', code: 'setup_required' });
+    }
+
     const valid = await verifyPassword(body.password, ownerRow.passwordHash);
     if (!valid) {
       return reply.status(401).send({ error: 'Invalid password' });
+    }
+
+    // TOTP check if enabled
+    if (ownerRow.totpEnabled) {
+      if (!body.totpCode) {
+        return reply.status(401).send({ error: 'TOTP code required', requiresTotop: true });
+      }
+      const { verifyTotpCode } = await import('../auth/totp.js');
+      const totpValid = verifyTotpCode(
+        body.totpCode,
+        ownerRow.totpSecretEncrypted ?? '',
+        app.config.fieldEncryptionKey,
+      );
+      if (!totpValid) {
+        return reply.status(401).send({ error: 'Invalid TOTP code' });
+      }
     }
 
     const sessionId = createSession(app.db, ownerRow.id);
@@ -110,6 +164,7 @@ export async function authRoutes(app: FastifyInstance) {
       id: ownerRow.id,
       displayName: ownerRow.displayName,
       email: ownerRow.email,
+      phone: ownerRow.phone ?? null,
       timezone: ownerRow.timezone,
       totpEnabled: ownerRow.totpEnabled,
     });
