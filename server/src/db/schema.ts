@@ -57,7 +57,7 @@ export const switches = sqliteTable('switches', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name').notNull(),
   mode: text('mode').notNull(),
-  deploymentMode: text('deployment_mode').notNull().default('local_only'),
+  deploymentMode: text('deployment_mode').notNull().default('vault'),
   status: text('status').notNull().default('draft'),
   triggerAt: integer('trigger_at', { mode: 'timestamp' }),
   heartbeatIntervalDays: integer('heartbeat_interval_days'),
@@ -67,6 +67,9 @@ export const switches = sqliteTable('switches', {
   warningWindowDays: integer('warning_window_days').notNull().default(3),
   lastCheckInAt: integer('last_check_in_at', { mode: 'timestamp' }),
   lastPacketSyncAt: integer('last_packet_sync_at', { mode: 'timestamp' }),
+  lastReminderSentAt: integer('last_reminder_sent_at', { mode: 'timestamp' }),
+  lastWarningSentAt: integer('last_warning_sent_at', { mode: 'timestamp' }),
+  lastEvaluatedAt: integer('last_evaluated_at', { mode: 'timestamp' }),
   selectedContactIds: text('selected_contact_ids').default('[]'),
   selectedEstateItemIds: text('selected_estate_item_ids').default('[]'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
@@ -123,8 +126,31 @@ export const auditEvents = sqliteTable('audit_events', {
 
 export const appSettings = sqliteTable('app_settings', {
   key: text('key').primaryKey(),
-  valueEncrypted: text('value_encrypted').notNull(),
+  value: text('value'),
+  encrypted: integer('encrypted', { mode: 'boolean' }).notNull().default(false),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+});
+
+export const notificationEvents = sqliteTable('notification_events', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  switchId: integer('switch_id').references(() => switches.id, { onDelete: 'cascade' }),
+  contactId: integer('contact_id').references(() => contacts.id, { onDelete: 'set null' }),
+  channel: text('channel').notNull(), // email | telegram | sms_future
+  purpose: text('purpose').notNull(), // test | reminder | warning | triggered
+  status: text('status').notNull(), // queued | sent | failed | skipped
+  externalId: text('external_id'),
+  failureReason: text('failure_reason'),
+  sentAt: integer('sent_at', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+});
+
+export const releaseRuns = sqliteTable('release_runs', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  switchId: integer('switch_id').notNull().references(() => switches.id, { onDelete: 'no action' }),
+  status: text('status').notNull().default('active_pending_packet'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  completedAt: integer('completed_at', { mode: 'timestamp' }),
+  cancelledAt: integer('cancelled_at', { mode: 'timestamp' }),
 });
 
 export const encryptionKeys = sqliteTable('encryption_keys', {

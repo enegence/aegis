@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { owner } from '../db/schema.js';
 import { hashPassword, verifyPassword } from '../auth/password.js';
 import { createSession, deleteSession } from '../auth/session.js';
+import { deriveCsrfToken } from '../auth/csrf.js';
 import { eq, count } from 'drizzle-orm';
 
 const setupSchema = z.object({
@@ -17,6 +18,15 @@ const loginSchema = z.object({
 });
 
 export async function authRoutes(app: FastifyInstance) {
+  // GET /api/csrf — returns a CSRF token derived from the current session
+  app.get('/api/csrf', {
+    preHandler: [app.requireAuth],
+  }, async (req, reply) => {
+    const sessionId = req.cookies!.aegis_session!;
+    const csrfToken = deriveCsrfToken(sessionId, app.config.secretKey);
+    return reply.send({ csrfToken });
+  });
+
   app.get('/api/auth/status', async (_req, reply) => {
     const [result] = await app.db.select({ total: count() }).from(owner);
     return reply.send({ setupRequired: result.total === 0 });

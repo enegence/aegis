@@ -61,7 +61,7 @@ export async function contactRoutes(app: FastifyInstance) {
   });
 
   app.post('/api/contacts', {
-    preHandler: [app.requireAuth],
+    preHandler: [app.requireAuth, app.requireCsrf],
   }, async (req, reply) => {
     const body = createSchema.parse(req.body);
     const now = new Date();
@@ -84,7 +84,7 @@ export async function contactRoutes(app: FastifyInstance) {
   });
 
   app.put('/api/contacts/:id', {
-    preHandler: [app.requireAuth],
+    preHandler: [app.requireAuth, app.requireCsrf],
   }, async (req, reply) => {
     const { id } = req.params as { id: string };
     const body = updateSchema.parse(req.body);
@@ -111,7 +111,7 @@ export async function contactRoutes(app: FastifyInstance) {
   });
 
   app.put('/api/contacts/reorder', {
-    preHandler: [app.requireAuth],
+    preHandler: [app.requireAuth, app.requireCsrf],
   }, async (req, reply) => {
     const body = reorderSchema.parse(req.body);
 
@@ -127,7 +127,7 @@ export async function contactRoutes(app: FastifyInstance) {
   });
 
   app.delete('/api/contacts/:id', {
-    preHandler: [app.requireAuth],
+    preHandler: [app.requireAuth, app.requireCsrf],
   }, async (req, reply) => {
     const { id } = req.params as { id: string };
     const deleted = await app.db.delete(contacts)

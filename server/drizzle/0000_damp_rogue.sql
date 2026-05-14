@@ -125,7 +125,7 @@ CREATE TABLE `switches` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`name` text NOT NULL,
 	`mode` text NOT NULL,
-	`deployment_mode` text DEFAULT 'local_only' NOT NULL,
+	`deployment_mode` text DEFAULT 'vault' NOT NULL,
 	`status` text DEFAULT 'draft' NOT NULL,
 	`trigger_at` integer,
 	`heartbeat_interval_days` integer,

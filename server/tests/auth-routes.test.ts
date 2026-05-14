@@ -99,4 +99,46 @@ describe('Auth routes', () => {
       expect(res.statusCode).toBe(401);
     });
   });
+
+  describe('GET /api/csrf', () => {
+    it('returns a CSRF token when authenticated', async () => {
+      const loginRes = await app.inject({
+        method: 'POST',
+        url: '/api/auth/login',
+        payload: { password: 'secure-passphrase-123' },
+      });
+      const cookies = loginRes.headers['set-cookie'];
+
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/csrf',
+        headers: { cookie: String(cookies) },
+      });
+      expect(res.statusCode).toBe(200);
+      const body = JSON.parse(res.payload);
+      expect(typeof body.csrfToken).toBe('string');
+      expect(body.csrfToken.length).toBe(64); // 32 bytes as hex = 64 chars
+    });
+
+    it('returns 401 without session', async () => {
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/csrf',
+      });
+      expect(res.statusCode).toBe(401);
+    });
+
+    it('returns consistent token for the same session', async () => {
+      const loginRes = await app.inject({
+        method: 'POST',
+        url: '/api/auth/login',
+        payload: { password: 'secure-passphrase-123' },
+      });
+      const cookies = loginRes.headers['set-cookie'];
+
+      const res1 = await app.inject({ method: 'GET', url: '/api/csrf', headers: { cookie: String(cookies) } });
+      const res2 = await app.inject({ method: 'GET', url: '/api/csrf', headers: { cookie: String(cookies) } });
+      expect(JSON.parse(res1.payload).csrfToken).toBe(JSON.parse(res2.payload).csrfToken);
+    });
+  });
 });
