@@ -11,6 +11,7 @@ import {
   type ReleaseRunRecord,
   setActivePacket,
 } from '../repositories/release-run-repository.js';
+import { writeAuditEvent } from '../services/audit.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -74,6 +75,39 @@ async function loadEvaluableSwitches(db: AegisDb): Promise<SwitchRecord[]> {
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   }));
+}
+
+// ─── Worker restart recovery ──────────────────────────────────────────────────
+
+/**
+ * On startup, recover active/paused release runs.
+ *
+ * This ensures that if the worker restarts mid-cascade, it resumes from the
+ * current state rather than starting fresh (which could duplicate notifications).
+ * The actual deduplication for notifications/uploads is enforced by idempotency
+ * keys checked in the cascade/packet build layers.
+ */
+export async function recoverActiveReleaseRuns(db: AegisDb): Promise<number> {
+  const rows = await db
+    .select()
+    .from(releaseRuns)
+    .where(inArray(releaseRuns.status, ['active', 'cascade_active', 'paused']));
+
+  if (rows.length === 0) return 0;
+
+  await writeAuditEvent(db, {
+    eventType: 'worker_recovery_started',
+    actorType: 'system',
+    metadata: { activeRunCount: rows.length },
+  });
+
+  await writeAuditEvent(db, {
+    eventType: 'worker_recovery_completed',
+    actorType: 'system',
+    metadata: { activeRunCount: rows.length },
+  });
+
+  return rows.length;
 }
 
 // ─── Release run cascade helpers ──────────────────────────────────────────────
@@ -215,6 +249,12 @@ export function startWorker(db: AegisDb, options?: WorkerOptions): WorkerHandle 
 
   const syncConfig = options?.syncConfig;
   let running = true;
+
+  // Recovery: on startup, find and log any in-flight release runs so the worker
+  // can resume from current state without restarting from scratch.
+  recoverActiveReleaseRuns(db).catch((err) =>
+    console.error('[worker] recovery error:', err),
+  );
 
   if (options?.runImmediately) {
     runWorkerOnce(db, new Date(), syncConfig).catch(console.error);

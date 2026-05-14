@@ -182,6 +182,14 @@ export const encryptionKeys = sqliteTable('encryption_keys', {
   rotatedAt: integer('rotated_at', { mode: 'timestamp' }),
 });
 
+export const idempotencyKeys = sqliteTable('idempotency_keys', {
+  key: text('key').primaryKey(),
+  scope: text('scope').notNull(),
+  resultJson: text('result_json'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  expiresAt: integer('expires_at', { mode: 'timestamp' }),
+});
+
 export const localAcknowledgements = sqliteTable('local_acknowledgements', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   ownerId: integer('owner_id').notNull().references(() => owner.id, { onDelete: 'cascade' }),
