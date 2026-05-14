@@ -5,6 +5,9 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Switches from './pages/Switches';
 import Settings from './pages/Settings';
+import Release from './pages/Release';
+import AuditLog from './pages/AuditLog';
+import ClaimPortal from './pages/claim/ClaimPortal';
 
 const T = {
   bg: '#DDE8F4', ink: '#0B1C2C', accent: '#1A6B9A',
@@ -30,6 +33,8 @@ function Nav({ onLogout }: { onLogout: () => void }) {
       </span>
       <NavLink to="/dashboard" style={linkStyle}>Dashboard</NavLink>
       <NavLink to="/switches" style={linkStyle}>Switches</NavLink>
+      <NavLink to="/release" style={linkStyle}>Release</NavLink>
+      <NavLink to="/audit-log" style={linkStyle}>Audit</NavLink>
       <NavLink to="/settings" style={linkStyle}>Settings</NavLink>
       <div style={{ flex: 1 }} />
       <button
@@ -62,6 +67,8 @@ function AuthedApp() {
       <Routes>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/switches" element={<Switches />} />
+        <Route path="/release" element={<Release />} />
+        <Route path="/audit-log" element={<AuditLog />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<Navigate to="/dashboard" />} />
       </Routes>
@@ -93,6 +100,16 @@ export default function App() {
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Caveat', cursive, sans-serif", fontSize: '2rem', background: T.bg, color: T.ink }}>
         Loading…
       </div>
+    );
+  }
+
+  // Public claim portal — accessible without auth
+  if (window.location.pathname.startsWith('/claim/')) {
+    return (
+      <Routes>
+        <Route path="/claim/:token" element={<ClaimPortal />} />
+        <Route path="*" element={<ClaimPortal />} />
+      </Routes>
     );
   }
 

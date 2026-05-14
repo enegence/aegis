@@ -142,8 +142,8 @@ describe('switch-repository', () => {
 
     const run = await createReleaseRun(db, sw.id);
     expect(run.id).toBeGreaterThan(0);
-    expect(run.switchId).toBe(sw.id);
-    expect(run.status).toBe('active_pending_packet');
+    expect(run.triggeringSwitchId).toBe(sw.id);
+    expect(run.status).toBe('active');
     expect(run.completedAt).toBeNull();
     expect(run.cancelledAt).toBeNull();
   });
@@ -162,7 +162,7 @@ describe('switch-repository', () => {
 
     const active = await getActiveReleaseRun(isolatedDb);
     expect(active).not.toBeNull();
-    expect(active?.switchId).toBe(sw.id);
-    expect(active?.status).toBe('active_pending_packet');
+    expect(active?.triggeringSwitchId).toBe(sw.id);
+    expect(active?.status).toBe('active');
   });
 });

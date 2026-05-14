@@ -10,7 +10,7 @@ export interface NotificationDispatchRequest {
   switchId?: number;
   contactId?: number;
   channel: 'email' | 'telegram';
-  purpose: 'test' | 'reminder' | 'warning' | 'triggered';
+  purpose: 'test' | 'reminder' | 'warning' | 'triggered' | 'claim';
   to: string;         // email address or telegram chat ID
   subject?: string;
   body: string;
