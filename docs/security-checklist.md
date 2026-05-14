@@ -291,11 +291,11 @@ Status: Alpha — see Known Limitations
 
 **Required behavior:** Login, claim, and setup endpoints are rate-limited.
 
-**Implemented files:** Not yet implemented in OSS (in-memory only via claim pin counter).
+**Implemented files:** NOT IMPLEMENTED. No rate limiting exists for any endpoint (login, TOTP, claim PIN verification, setup). This is a known gap before beta.
 
 **Tests proving behavior:** `server/tests/security-baseline.test.ts` — `it.todo` for claim PIN throttle
 
-**Known limitations:** No rate limiting implemented for login, setup, or claim token guessing. Critical gap for production.
+**Known limitations:** Rate limiting is entirely absent. No in-process counters, no middleware, no token-bucket logic. All endpoints (login, claim PIN, TOTP, password reset) are unlimited. Critical gap — must be addressed before beta.
 
 ---
 
