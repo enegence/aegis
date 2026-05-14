@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import { eq } from 'drizzle-orm';
+import { mkdtempSync, rmSync } from 'fs';
+import { join } from 'path';
+import { tmpdir } from 'os';
 import { createTestDb, type AegisDb } from '../src/db/index.js';
 import { runWorkerOnce } from '../src/worker/index.js';
 import { startOrAttachReleaseRun } from '../src/services/release-run.js';
@@ -11,7 +13,7 @@ import {
 import { listClaimsForRun } from '../src/repositories/contact-claim-repository.js';
 import { createSwitch } from '../src/services/switch-repository.js';
 import { encryptField } from '../src/services/field-encrypt.js';
-import { owner, contacts, switches, packets } from '../src/db/schema.js';
+import { owner, contacts, switches, packets, estateItems } from '../src/db/schema.js';
 
 vi.mock('../src/services/notifications.js', () => ({
   dispatchNotification: vi.fn().mockResolvedValue(undefined),
@@ -21,7 +23,6 @@ vi.mock('../src/services/notifications.js', () => ({
 
 const FIELD_KEY = 'dev-field-key-change-me-32bytes!!';
 const APP_URL = 'http://localhost:8000';
-const SYNC_CONFIG = { fieldEncryptionKey: FIELD_KEY, dataDir: './data', appUrl: APP_URL };
 
 function makeDb(): AegisDb {
   const db = createTestDb();
@@ -63,8 +64,12 @@ async function seedPacket(db: AegisDb, switchId: number, runId: number) {
 
 describe('worker cascade integration', () => {
   let db: AegisDb;
+  let dataDir: string;
 
-  beforeEach(() => { db = makeDb(); });
+  beforeEach(() => {
+    db = makeDb();
+    dataDir = mkdtempSync(join(tmpdir(), 'aegis-worker-test-'));
+  });
 
   it('starts cascade when release run has active packet and no claim', async () => {
     const { sw } = await seedBase(db);
@@ -72,7 +77,7 @@ describe('worker cascade integration', () => {
     const pkt = await seedPacket(db, sw.id, run.id);
     await setActivePacket(db, run.id, pkt.id);
 
-    await runWorkerOnce(db, new Date(), SYNC_CONFIG);
+    await runWorkerOnce(db, new Date(), { fieldEncryptionKey: FIELD_KEY, dataDir, appUrl: APP_URL });
 
     const claims = await listClaimsForRun(db, run.id);
     expect(claims.length).toBe(1);
@@ -85,8 +90,8 @@ describe('worker cascade integration', () => {
     const pkt = await seedPacket(db, sw.id, run.id);
     await setActivePacket(db, run.id, pkt.id);
 
-    await runWorkerOnce(db, new Date(), SYNC_CONFIG);
-    await runWorkerOnce(db, new Date(), SYNC_CONFIG);
+    await runWorkerOnce(db, new Date(), { fieldEncryptionKey: FIELD_KEY, dataDir, appUrl: APP_URL });
+    await runWorkerOnce(db, new Date(), { fieldEncryptionKey: FIELD_KEY, dataDir, appUrl: APP_URL });
 
     const claims = await listClaimsForRun(db, run.id);
     expect(claims.length).toBe(1);
@@ -99,13 +104,13 @@ describe('worker cascade integration', () => {
     await setActivePacket(db, run.id, pkt.id);
 
     // Tick 1: starts cascade (notifies contact 1)
-    await runWorkerOnce(db, new Date(), SYNC_CONFIG);
+    await runWorkerOnce(db, new Date(), { fieldEncryptionKey: FIELD_KEY, dataDir, appUrl: APP_URL });
     const claimsAfterFirst = await listClaimsForRun(db, run.id);
     expect(claimsAfterFirst.length).toBe(1);
 
     // Tick 2 — 25h later: escalates to contact 2
     const future = new Date(Date.now() + 25 * 3600000);
-    await runWorkerOnce(db, future, SYNC_CONFIG);
+    await runWorkerOnce(db, future, { fieldEncryptionKey: FIELD_KEY, dataDir, appUrl: APP_URL });
 
     const claimsAfterEscalation = await listClaimsForRun(db, run.id);
     expect(claimsAfterEscalation.length).toBe(2);
@@ -135,24 +140,64 @@ describe('worker cascade integration', () => {
     await setActivePacket(db, run.id, pkt.id);
 
     // Tick 1: starts cascade
-    await runWorkerOnce(db, new Date(), SYNC_CONFIG);
+    await runWorkerOnce(db, new Date(), { fieldEncryptionKey: FIELD_KEY, dataDir, appUrl: APP_URL });
 
     // Tick 2 — 25h later: one contact, run fails
     const future = new Date(Date.now() + 25 * 3600000);
-    await runWorkerOnce(db, future, SYNC_CONFIG);
+    await runWorkerOnce(db, future, { fieldEncryptionKey: FIELD_KEY, dataDir, appUrl: APP_URL });
 
     const failedRun = await getReleaseRunById(db, run.id);
     expect(failedRun?.status).toBe('failed');
   });
 
-  it('skips cascade when no active packet set', async () => {
+  it('gracefully handles packet build failure (no estate items) — no claims created', async () => {
+    // seedBase creates a switch without estate items, so buildPacket will throw
     const { sw } = await seedBase(db);
     const { run } = await startOrAttachReleaseRun(db, { triggeringSwitchId: sw.id, reason: 'trip_triggered' });
-    // No setActivePacket
 
-    await runWorkerOnce(db, new Date(), SYNC_CONFIG);
+    await runWorkerOnce(db, new Date(), { fieldEncryptionKey: FIELD_KEY, dataDir, appUrl: APP_URL });
 
+    // Build failed — no packet attached, no claims
+    const updatedRun = await getReleaseRunById(db, run.id);
+    expect(updatedRun?.activePacketId).toBeNull();
     const claims = await listClaimsForRun(db, run.id);
     expect(claims.length).toBe(0);
+  });
+
+  it('worker builds packet on first tick then starts cascade on second tick', async () => {
+    await db.insert(owner).values({
+      displayName: 'Owner3', email: 'o3@x.com', phone: null,
+      timezone: 'UTC', passwordHash: 'x', totpEnabled: false, setupComplete: true,
+    });
+    const [c] = await db.insert(contacts).values({
+      fullNameEncrypted: encryptField('Carol', FIELD_KEY)!,
+      emailEncrypted: encryptField('carol@x.com', FIELD_KEY)!,
+      priorityOrder: 1, preferredChannels: '["email"]', confirmationWindowHours: 24,
+    }).returning();
+    await db.insert(estateItems).values({
+      category: 'Financial', title: 'Savings Account', sensitiveFlag: false, sortOrder: 0,
+    });
+    const [item] = await db.select().from(estateItems);
+    const sw = await createSwitch(db, {
+      name: 'Full Switch', mode: 'trip',
+      triggerAt: new Date(Date.now() + 86400000),
+      selectedContactIds: [c.id],
+      selectedEstateItemIds: [item.id],
+    });
+
+    const { run } = await startOrAttachReleaseRun(db, { triggeringSwitchId: sw.id, reason: 'trip_triggered' });
+
+    // Tick 1: worker builds packet, attaches it
+    await runWorkerOnce(db, new Date(), { fieldEncryptionKey: FIELD_KEY, dataDir, appUrl: APP_URL });
+    const runAfterTick1 = await getReleaseRunById(db, run.id);
+    expect(runAfterTick1?.activePacketId).not.toBeNull();
+
+    // Tick 2: cascade starts (first claim notified)
+    await runWorkerOnce(db, new Date(), { fieldEncryptionKey: FIELD_KEY, dataDir, appUrl: APP_URL });
+    const claims = await listClaimsForRun(db, run.id);
+    expect(claims.length).toBe(1);
+    expect(claims[0].status).toBe('notified');
+
+    rmSync(dataDir, { recursive: true, force: true });
   });
 });

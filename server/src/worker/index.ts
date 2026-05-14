@@ -5,8 +5,12 @@ import type { SwitchRecord } from '../services/switch-repository.js';
 import { evaluateAndTransition } from '../services/switch-engine.js';
 import { processRemindersForSwitch } from '../services/reminders.js';
 import { syncPacketForSwitch } from '../services/dead-drop-sync.js';
+import { buildPacket } from '../services/packet-builder.js';
 import { startCascade, checkAndEscalate, type CascadeConfig } from '../services/cascade.js';
-import type { ReleaseRunRecord } from '../repositories/release-run-repository.js';
+import {
+  type ReleaseRunRecord,
+  setActivePacket,
+} from '../repositories/release-run-repository.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -117,7 +121,21 @@ async function progressReleaseRuns(
 
   for (const run of activeRuns) {
     try {
-      if (run.activePacketId == null) continue; // no packet yet, skip
+      if (run.activePacketId == null) {
+        // Build and attach packet — required before cascade can start
+        try {
+          const packet = await buildPacket(
+            db,
+            syncConfig.fieldEncryptionKey,
+            syncConfig.dataDir,
+            run.triggeringSwitchId,
+          );
+          await setActivePacket(db, run.id, packet.id);
+        } catch (err) {
+          console.error(`[worker] failed to build packet for run ${run.id}:`, err);
+        }
+        continue; // cascade starts on next tick
+      }
 
       // Start cascade if not yet started
       if (run.currentContactClaimId == null) {

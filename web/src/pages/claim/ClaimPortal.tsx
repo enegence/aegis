@@ -284,7 +284,7 @@ export default function ClaimPortal() {
         )}
 
         {/* Step 5: Acknowledge */}
-        {claim.acceptedAt && !claim.acknowledgedAt && (
+        {claim.keyViewedAt && !claim.acknowledgedAt && (
           <div style={{ marginTop: 20, borderTop: `1px solid ${T.border}`, paddingTop: 16 }}>
             <p style={{ fontSize: '0.85rem', color: '#4A6B8A' }}>Step 5 of 5: Acknowledge receipt</p>
             <p style={{ fontSize: '0.82rem', color: T.ink }}>

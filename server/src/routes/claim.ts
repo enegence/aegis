@@ -174,6 +174,10 @@ export async function claimRoutes(app: FastifyInstance) {
     const claim = await lookupActiveClaim(app, token, reply);
     if (!claim) return;
 
+    if (!claim.verifiedAt) {
+      return reply.status(400).send({ error: 'Identity must be verified before accepting' });
+    }
+
     const now = new Date();
     await updateClaimStatus(app.db, claim.id, {
       status: 'accepted',
@@ -236,8 +240,8 @@ export async function claimRoutes(app: FastifyInstance) {
     const claim = await lookupActiveClaim(app, token, reply);
     if (!claim) return;
 
-    if (!ACCEPTED_OR_LATER.has(claim.status)) {
-      return reply.status(403).send({ error: 'Key not accessible — accept claim first' });
+    if (!claim.packetDownloadedAt) {
+      return reply.status(403).send({ error: 'Packet must be downloaded before viewing key' });
     }
 
     const packet = await getPacketById(app.db, claim.packetId);
@@ -281,6 +285,10 @@ export async function claimRoutes(app: FastifyInstance) {
     const { token } = req.params as { token: string };
     const claim = await lookupActiveClaim(app, token, reply);
     if (!claim) return;
+
+    if (!claim.keyViewedAt) {
+      return reply.status(400).send({ error: 'Key must be viewed before acknowledging receipt' });
+    }
 
     const now = new Date();
     await updateClaimStatus(app.db, claim.id, {

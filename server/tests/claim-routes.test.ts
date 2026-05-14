@@ -263,6 +263,47 @@ describe('claim routes', () => {
     expect(sw?.status).toBe('completed');
   });
 
+  it('accept blocked without prior verify', async () => {
+    const freshClaim = await createContactClaim(app.db, {
+      releaseRunId: runId, switchId, packetId,
+      contactId: 1, expiresAt: new Date(Date.now() + 86400000),
+    });
+    // open but skip verify
+    await app.inject({ method: 'POST', url: `/api/claim/${freshClaim.rawToken}/open` });
+    const res = await app.inject({ method: 'POST', url: `/api/claim/${freshClaim.rawToken}/accept` });
+    expect(res.statusCode).toBe(400);
+    expect(JSON.parse(res.payload).error).toContain('verified');
+  });
+
+  it('key-view blocked without prior packet download', async () => {
+    const freshClaim = await createContactClaim(app.db, {
+      releaseRunId: runId, switchId, packetId,
+      contactId: 1, expiresAt: new Date(Date.now() + 86400000),
+    });
+    await app.inject({ method: 'POST', url: `/api/claim/${freshClaim.rawToken}/open` });
+    await app.inject({ method: 'POST', url: `/api/claim/${freshClaim.rawToken}/verify` });
+    await app.inject({ method: 'POST', url: `/api/claim/${freshClaim.rawToken}/accept` });
+    // skip packet download — go straight to key-view
+    const res = await app.inject({ method: 'POST', url: `/api/claim/${freshClaim.rawToken}/key-view` });
+    expect(res.statusCode).toBe(403);
+    expect(JSON.parse(res.payload).error).toContain('downloaded');
+  });
+
+  it('acknowledge blocked without prior key-view', async () => {
+    const freshClaim = await createContactClaim(app.db, {
+      releaseRunId: runId, switchId, packetId,
+      contactId: 1, expiresAt: new Date(Date.now() + 86400000),
+    });
+    await app.inject({ method: 'POST', url: `/api/claim/${freshClaim.rawToken}/open` });
+    await app.inject({ method: 'POST', url: `/api/claim/${freshClaim.rawToken}/verify` });
+    await app.inject({ method: 'POST', url: `/api/claim/${freshClaim.rawToken}/accept` });
+    await app.inject({ method: 'GET', url: `/api/claim/${freshClaim.rawToken}/packet` });
+    // skip key-view — go straight to acknowledge
+    const res = await app.inject({ method: 'POST', url: `/api/claim/${freshClaim.rawToken}/acknowledge` });
+    expect(res.statusCode).toBe(400);
+    expect(JSON.parse(res.payload).error).toContain('Key must be viewed');
+  });
+
   it('expired claim returns 403', async () => {
     const { contactClaims } = await import('../src/db/schema.js');
     const { eq } = await import('drizzle-orm');
