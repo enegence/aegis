@@ -4,7 +4,7 @@ export interface NotificationRequest {
   to: string;         // recipient email or chat ID
   subject?: string;   // email subject
   body: string;       // message body (plain text)
-  purpose: 'test' | 'reminder' | 'warning' | 'triggered';
+  purpose: 'test' | 'reminder' | 'warning' | 'triggered' | 'claim';
   switchId?: number;
   contactId?: number;
 }
