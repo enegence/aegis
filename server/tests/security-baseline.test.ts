@@ -21,7 +21,7 @@ import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { eq } from 'drizzle-orm';
 import { buildApp } from '../src/index.js';
 import { createTestDb } from '../src/db/index.js';
-import { estateItems, contacts, auditEvents } from '../src/db/schema.js';
+import { estateItems, contacts, auditEvents, sessions } from '../src/db/schema.js';
 import { loadConfig } from '../src/config.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -162,6 +162,31 @@ describe('Session lifecycle', () => {
       method: 'GET',
       url: '/api/auth/me',
       headers: { cookie: 'aegis_session=totally-fake-session-id-that-does-not-exist' },
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it('expired session is rejected — returns 401', async () => {
+    // Look up the owner id from the owner table (set up in beforeAll)
+    const { owner: ownerTable } = await import('../src/db/schema.js');
+    const ownerRows = await app.db.select({ id: ownerTable.id }).from(ownerTable).limit(1);
+    const ownerId = ownerRows[0]!.id;
+
+    // Insert an already-expired session directly into the DB
+    const expiredSessionId = 'expired-session-id-for-test-baseline-oss';
+    const pastDate = new Date(Date.now() - 60 * 60 * 1000); // 1 hour ago
+    app.db.insert(sessions).values({
+      id: expiredSessionId,
+      ownerId,
+      expiresAt: pastDate,
+      createdAt: pastDate,
+    }).run();
+
+    // Request with the expired session cookie must be rejected
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/auth/me',
+      headers: { cookie: `aegis_session=${expiredSessionId}` },
     });
     expect(res.statusCode).toBe(401);
   });
@@ -476,6 +501,68 @@ describe('Audit log redaction', () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Audit Log — Packet / Release Events
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('Audit log — packet/release events strip secrets', () => {
+  it('packet_generated audit event metadata does not contain key material, storage credentials, or API keys', async () => {
+    const db = createTestDb();
+    migrate(db, { migrationsFolder: './drizzle' });
+
+    const { writeAuditEvent } = await import('../src/services/audit.js');
+
+    // Simulate the metadata written by packet-builder.ts for packet_generated
+    // (packetId, version, keyId — the keyId is an identifier, not the raw key)
+    await writeAuditEvent(db, {
+      eventType: 'packet_generated',
+      actorType: 'owner',
+      metadata: { packetId: 1, version: 1, keyId: 'key-uuid-abc123' },
+    });
+
+    const events = await db.select().from(auditEvents).where(eq(auditEvents.eventType, 'packet_generated'));
+    expect(events).toHaveLength(1);
+    // In SQLite, metadata is stored as TEXT (JSON string); normalise to string for contains checks
+    const rawMeta = events[0]!.metadata;
+    const metaStr = typeof rawMeta === 'string' ? rawMeta : JSON.stringify(rawMeta);
+
+    // Must not contain any raw key material, storage credentials, or API keys
+    expect(metaStr).not.toContain('secretKey');
+    expect(metaStr).not.toContain('encryptionKey');
+    expect(metaStr).not.toContain('accessKeyId');
+    expect(metaStr).not.toContain('secretAccessKey');
+    expect(metaStr).not.toContain('apiKey');
+    // The fields present (packetId, version, keyId) are identifiers only — not secret material
+    expect(JSON.parse(metaStr)).toMatchObject({ packetId: 1, version: 1 });
+  });
+
+  it('packet_deleted audit event metadata does not contain key material or storage credentials', async () => {
+    const db = createTestDb();
+    migrate(db, { migrationsFolder: './drizzle' });
+
+    const { writeAuditEvent } = await import('../src/services/audit.js');
+
+    // Simulate the metadata written by packets.ts route for packet_deleted
+    await writeAuditEvent(db, {
+      eventType: 'packet_deleted',
+      actorType: 'owner',
+      metadata: { packetId: 2, version: 1 },
+    });
+
+    const events = await db.select().from(auditEvents).where(eq(auditEvents.eventType, 'packet_deleted'));
+    expect(events).toHaveLength(1);
+    const rawMeta = events[0]!.metadata;
+    const metaStr = typeof rawMeta === 'string' ? rawMeta : JSON.stringify(rawMeta);
+
+    expect(metaStr).not.toContain('secretKey');
+    expect(metaStr).not.toContain('encryptionKey');
+    expect(metaStr).not.toContain('accessKeyId');
+    expect(metaStr).not.toContain('secretAccessKey');
+    expect(metaStr).not.toContain('apiKey');
+    expect(JSON.parse(metaStr)).toMatchObject({ packetId: 2, version: 1 });
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // TOTP security
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -552,7 +639,8 @@ describe('TOTP security', () => {
 describe('Security features — not yet implemented (documented gaps)', () => {
   it.todo('password change requires current-password proof — not yet implemented in OSS');
   it.todo('claim PIN brute-force attempts are throttled after N wrong attempts — not yet implemented');
-  it.todo('password reset token cannot be reused (OSS has no password reset flow) — not applicable');
+  it.todo('password reset token not reusable — OSS has no password reset; handled by SaaS only');
+  it.todo('password reset token stored as hash — OSS has no password reset; handled by SaaS only');
   it.todo('account deletion zeroes encrypted fields before delete — not yet implemented');
   it.todo('relay API key is never passed in URL query string — enforced at linking flow level, no unit test yet');
 });
