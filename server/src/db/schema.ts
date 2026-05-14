@@ -190,6 +190,26 @@ export const idempotencyKeys = sqliteTable('idempotency_keys', {
   expiresAt: integer('expires_at', { mode: 'timestamp' }),
 });
 
+export const notificationDeliveries = sqliteTable('notification_deliveries', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  releaseRunId: integer('release_run_id').references(() => releaseRuns.id, { onDelete: 'cascade' }),
+  claimId: integer('claim_id'),
+  contactId: integer('contact_id').notNull(),
+  channel: text('channel').notNull(), // 'email' | 'telegram'
+  provider: text('provider').notNull(),
+  // queued|sending|sent|delivered|failed_retryable|failed_permanent|cancelled
+  status: text('status').notNull().default('queued'),
+  attemptCount: integer('attempt_count').notNull().default(0),
+  lastAttemptAt: integer('last_attempt_at', { mode: 'timestamp' }),
+  nextAttemptAt: integer('next_attempt_at', { mode: 'timestamp' }),
+  providerMessageId: text('provider_message_id'),
+  lastErrorCode: text('last_error_code'),
+  lastErrorMessageRedacted: text('last_error_message_redacted'),
+  payloadHash: text('payload_hash'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+});
+
 export const localAcknowledgements = sqliteTable('local_acknowledgements', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   ownerId: integer('owner_id').notNull().references(() => owner.id, { onDelete: 'cascade' }),
