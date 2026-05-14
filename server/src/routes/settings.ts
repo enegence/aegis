@@ -499,6 +499,45 @@ export async function settingsRoutes(app: FastifyInstance) {
     if (message) response.message = message;
     return reply.send(response);
   });
+
+  // POST /api/settings/danger/clear-credentials
+  app.post('/api/settings/danger/clear-credentials', {
+    preHandler: [app.requireAuth, app.requireCsrf],
+  }, async (req, reply) => {
+    const db = app.db;
+    const keys = [
+      'smtp.password', 'smtp.host', 'smtp.port', 'smtp.user', 'smtp.fromEmail', 'smtp.secure',
+      'telegram.botToken', 'telegram.chatId',
+      's3_access_key_id_encrypted', 's3_secret_access_key_encrypted', 's3_bucket', 's3_region', 's3_prefix', 's3_endpoint', 's3_force_path_style',
+      'relay_url', 'relay_api_key_encrypted',
+    ];
+    for (const key of keys) {
+      await db.delete(appSettings).where(eq(appSettings.key, key));
+    }
+    await writeAuditEvent(db, { eventType: 'credentials_cleared', actorType: 'owner', actorId: String(req.ownerId), metadata: {} });
+    return reply.send({ ok: true });
+  });
+
+  // POST /api/settings/danger/delete-packets
+  app.post('/api/settings/danger/delete-packets', {
+    preHandler: [app.requireAuth, app.requireCsrf],
+  }, async (req, reply) => {
+    const db = app.db;
+    const { rm, readdir } = await import('node:fs/promises');
+    const { join } = await import('node:path');
+    const dataDir = app.config.dataDir;
+    const packetsDir = join(dataDir, 'packets');
+    try {
+      const entries = await readdir(packetsDir);
+      for (const entry of entries) {
+        await rm(join(packetsDir, entry), { recursive: true, force: true });
+      }
+    } catch {
+      // directory may not exist
+    }
+    await writeAuditEvent(db, { eventType: 'packets_deleted', actorType: 'owner', actorId: String(req.ownerId), metadata: {} });
+    return reply.send({ ok: true });
+  });
 }
 
 // ─── Internal helpers ─────────────────────────────────────────────────────────

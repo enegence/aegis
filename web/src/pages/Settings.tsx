@@ -1,53 +1,61 @@
 import { useState, useEffect } from 'react';
 import { get } from '../lib/api';
-import SmtpSettingsForm from '../components/settings/SmtpSettingsForm';
-import TelegramSettingsForm from '../components/settings/TelegramSettingsForm';
-import TestNotificationPanel from '../components/settings/TestNotificationPanel';
+import OwnerSettings from '../components/settings/OwnerSettings';
+import DeploymentSettings from '../components/settings/DeploymentSettings';
+import NotificationSettings from '../components/settings/NotificationSettings';
+import StorageSettings from '../components/settings/StorageSettings';
+import RelaySettings from '../components/settings/RelaySettings';
+import SecuritySettings from '../components/settings/SecuritySettings';
+import PacketSettings from '../components/settings/PacketSettings';
+import DangerZone from '../components/settings/DangerZone';
 
 const T = {
-  bg: '#DDE8F4', ink: '#0B1C2C', surface: '#C8D9ED', border: '#8AAAC8',
+  bg: '#DDE8F4', ink: '#0B1C2C', surface: '#C8D9ED', border: '#8AAAC8', accent: '#1A6B9A',
 };
 
-interface NotifStatus {
-  smtp: {
-    configured: boolean; hasPassword: boolean;
-    host?: string; port?: number; user?: string; fromEmail?: string; secure?: boolean;
+interface SettingsData {
+  owner: { displayName: string; email: string; phone: string | null; timezone: string };
+  deployment: { mode: string };
+  notifications: {
+    smtp: { configured: boolean; hasPassword: boolean; host?: string | null; port?: number | null; user?: string | null; fromEmail?: string | null; secure?: boolean };
+    telegram: { configured: boolean; hasBotToken: boolean; chatId?: string | null };
   };
-  telegram: { configured: boolean; hasBotToken: boolean; chatId?: string };
+  storage: { s3Configured: boolean; bucket?: string | null; region?: string | null; prefix?: string | null; endpoint?: string | null; hasAccessKey: boolean; lastVerifiedAt?: string | null };
+  relay: { enabled: boolean; relayUrl?: string | null; apiKeyConfigured: boolean; lastHeartbeatAt?: string | null };
+  security: { totpEnabled: boolean };
+  packets: { retentionDays: number | null };
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div style={{
-      padding: '20px', background: T.surface,
-      border: `2px solid ${T.border}`,
-      borderRadius: '3px 10px 3px 10px / 10px 3px 10px 3px',
-      marginBottom: '20px',
-    }}>
-      <h2 style={{ fontFamily: "'Caveat', cursive, sans-serif", fontSize: '1.4rem', color: T.ink, margin: '0 0 14px' }}>
-        {title}
-      </h2>
-      {children}
-    </div>
-  );
-}
+const TABS = [
+  { id: 'profile', label: 'Profile' },
+  { id: 'deployment', label: 'Deployment' },
+  { id: 'notifications', label: 'Notifications' },
+  { id: 'storage', label: 'Storage' },
+  { id: 'relay', label: 'Relay' },
+  { id: 'security', label: 'Security' },
+  { id: 'packets', label: 'Packets' },
+  { id: 'danger', label: 'Danger Zone' },
+] as const;
+
+type TabId = typeof TABS[number]['id'];
 
 export default function Settings() {
-  const [status, setStatus] = useState<NotifStatus | null>(null);
+  const [activeTab, setActiveTab] = useState<TabId>('profile');
+  const [data, setData] = useState<SettingsData | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => { load(); }, []);
 
   async function load() {
     try {
-      const data = await get<NotifStatus>('/api/settings/notifications');
-      setStatus(data);
+      const d = await get<SettingsData>('/api/settings');
+      setData(d);
     } catch {
       setError('Failed to load settings');
     }
   }
 
-  if (!status) {
+  if (!data) {
     return (
       <div style={{ padding: '32px', fontFamily: 'monospace', color: T.ink }}>
         {error || 'Loading…'}
@@ -57,25 +65,71 @@ export default function Settings() {
 
   return (
     <div style={{ padding: '24px', background: T.bg, minHeight: '100vh' }}>
-      <div style={{ maxWidth: '700px', margin: '0 auto' }}>
+      <div style={{ maxWidth: '780px', margin: '0 auto' }}>
         <h1 style={{ fontFamily: "'Caveat', cursive, sans-serif", fontSize: '2rem', fontWeight: 'bold', color: T.ink, marginBottom: '20px' }}>
           Settings
         </h1>
 
-        <Section title="SMTP (Email)">
-          <SmtpSettingsForm status={status.smtp} onSaved={load} />
-        </Section>
+        {/* Tab bar */}
+        <div style={{
+          display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '20px',
+          borderBottom: `2px solid ${T.border}`, paddingBottom: '8px',
+        }}>
+          {TABS.map(tab => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                fontFamily: 'monospace', fontSize: '0.82rem', padding: '5px 12px',
+                background: activeTab === tab.id ? T.ink : 'transparent',
+                color: activeTab === tab.id ? T.bg : T.ink,
+                border: `1.5px solid ${activeTab === tab.id ? T.ink : T.border}`,
+                borderRadius: '3px 6px 3px 6px / 6px 3px 6px 3px',
+                cursor: 'pointer',
+                ...(tab.id === 'danger' && activeTab !== 'danger' ? { color: '#C0392B', borderColor: '#C0392B' } : {}),
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
-        <Section title="Telegram">
-          <TelegramSettingsForm status={status.telegram} onSaved={load} />
-        </Section>
+        {/* Tab content */}
+        <div style={{
+          padding: '20px', background: T.surface,
+          border: `2px solid ${T.border}`,
+          borderRadius: '3px 10px 3px 10px / 10px 3px 10px 3px',
+        }}>
+          <h2 style={{ fontFamily: "'Caveat', cursive, sans-serif", fontSize: '1.4rem', color: T.ink, margin: '0 0 16px' }}>
+            {TABS.find(t => t.id === activeTab)?.label}
+          </h2>
 
-        <Section title="Test Notification">
-          <p style={{ fontFamily: 'monospace', fontSize: '0.82rem', color: '#4A6B8A', marginTop: 0, marginBottom: '12px' }}>
-            Send a test message to verify your notification provider is working.
-          </p>
-          <TestNotificationPanel />
-        </Section>
+          {activeTab === 'profile' && (
+            <OwnerSettings data={data.owner} onSaved={load} />
+          )}
+          {activeTab === 'deployment' && (
+            <DeploymentSettings data={data.deployment} onSaved={load} />
+          )}
+          {activeTab === 'notifications' && (
+            <NotificationSettings data={data.notifications} onSaved={load} />
+          )}
+          {activeTab === 'storage' && (
+            <StorageSettings data={data.storage} onSaved={load} />
+          )}
+          {activeTab === 'relay' && (
+            <RelaySettings data={data.relay} onSaved={load} />
+          )}
+          {activeTab === 'security' && (
+            <SecuritySettings data={data.security} />
+          )}
+          {activeTab === 'packets' && (
+            <PacketSettings data={data.packets} onSaved={load} />
+          )}
+          {activeTab === 'danger' && (
+            <DangerZone />
+          )}
+        </div>
       </div>
     </div>
   );
