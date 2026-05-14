@@ -16,6 +16,7 @@ import { contactRoutes } from './routes/contacts.js';
 import { switchRoutes } from './routes/switches.js';
 import { settingsRoutes } from './routes/settings.js';
 import { dashboardRoutes } from './routes/dashboard.js';
+import { packetRoutes } from './routes/packets.js';
 import { startWorker, type WorkerHandle } from './worker/index.js';
 
 declare module 'fastify' {
@@ -53,6 +54,7 @@ export async function buildApp(overrides: Partial<AppConfig & { dbPath: string }
   await app.register(switchRoutes);
   await app.register(settingsRoutes);
   await app.register(dashboardRoutes, { prefix: '/api' });
+  await app.register(packetRoutes);
 
   if (config.testing && overrides.dbPath === ':memory:') {
     const { migrate } = await import('drizzle-orm/better-sqlite3/migrator');
