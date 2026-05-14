@@ -1,4 +1,4 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z, ZodError } from 'zod';
 import { owner } from '../db/schema.js';
 import { hashPassword, verifyPassword } from '../auth/password.js';
@@ -51,7 +51,7 @@ export async function authRoutes(app: FastifyInstance) {
   });
 
   // POST /api/setup — primary setup endpoint (also aliased from /api/auth/setup)
-  async function handleSetup(req: Parameters<Parameters<typeof app.post>[1]>[0], reply: Parameters<Parameters<typeof app.post>[1]>[1]) {
+  async function handleSetup(req: FastifyRequest, reply: FastifyReply) {
     const [existing] = await app.db.select({ total: count() }).from(owner);
     if (existing.total > 0) {
       return reply.status(409).send({ error: 'Owner already configured' });
