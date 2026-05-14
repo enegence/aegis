@@ -96,7 +96,12 @@ async function start() {
   }
 
   if (process.env.AEGIS_WORKER_ENABLED === 'true') {
-    workerHandle = startWorker(app.db);
+    workerHandle = startWorker(app.db, {
+      syncConfig: {
+        fieldEncryptionKey: config.fieldEncryptionKey,
+        dataDir: config.dataDir,
+      },
+    });
     console.log('[worker] started');
   }
 

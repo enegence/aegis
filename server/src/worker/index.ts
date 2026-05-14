@@ -4,12 +4,19 @@ import type { AegisDb } from '../db/index.js';
 import type { SwitchRecord } from '../services/switch-repository.js';
 import { evaluateAndTransition } from '../services/switch-engine.js';
 import { processRemindersForSwitch } from '../services/reminders.js';
+import { syncPacketForSwitch } from '../services/dead-drop-sync.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+
+export interface WorkerSyncConfig {
+  fieldEncryptionKey: string;
+  dataDir: string;
+}
 
 export interface WorkerOptions {
   intervalMs?: number;       // default: AEGIS_WORKER_INTERVAL_SECONDS * 1000 || 60000
   runImmediately?: boolean;  // run once on start, default false
+  syncConfig?: WorkerSyncConfig;
 }
 
 export interface WorkerHandle {
@@ -64,7 +71,11 @@ async function loadEvaluableSwitches(db: AegisDb): Promise<SwitchRecord[]> {
 
 // ─── runWorkerOnce ─────────────────────────────────────────────────────────────
 
-export async function runWorkerOnce(db: AegisDb, now: Date = new Date()): Promise<WorkerRunResult> {
+export async function runWorkerOnce(
+  db: AegisDb,
+  now: Date = new Date(),
+  syncConfig?: WorkerSyncConfig,
+): Promise<WorkerRunResult> {
   const result: WorkerRunResult = {
     evaluated: 0,
     transitioned: 0,
@@ -91,6 +102,14 @@ export async function runWorkerOnce(db: AegisDb, now: Date = new Date()): Promis
       const reminderResult = await processRemindersForSwitch(db, updatedSwitch, now);
       result.notificationsSent += reminderResult.sent;
 
+      // 3. Dead-drop sync for eligible deployment modes (armed/warning only)
+      if (syncConfig && (updatedSwitch.status === 'armed' || updatedSwitch.status === 'warning')) {
+        const deadDropModes = new Set(['dead_drop', 'relay_monitoring', 'relay_escrow']);
+        if (deadDropModes.has(updatedSwitch.deploymentMode)) {
+          await syncPacketForSwitch(db, updatedSwitch.id, syncConfig.fieldEncryptionKey, syncConfig.dataDir);
+        }
+      }
+
     } catch (err) {
       console.error(`[worker] error processing switch ${sw.id}:`, err);
       result.errors += 1;
@@ -107,16 +126,17 @@ export function startWorker(db: AegisDb, options?: WorkerOptions): WorkerHandle 
     options?.intervalMs ??
     parseInt(process.env.AEGIS_WORKER_INTERVAL_SECONDS ?? '60') * 1000;
 
+  const syncConfig = options?.syncConfig;
   let running = true;
 
   if (options?.runImmediately) {
-    runWorkerOnce(db).catch(console.error);
+    runWorkerOnce(db, new Date(), syncConfig).catch(console.error);
   }
 
   const timer = setInterval(async () => {
     if (!running) return;
     try {
-      await runWorkerOnce(db);
+      await runWorkerOnce(db, new Date(), syncConfig);
     } catch (err) {
       console.error('[worker] tick error:', err);
     }
