@@ -7,6 +7,7 @@ export interface AppConfig {
   port: number;
   host: string;
   dbPath: string;
+  dataDir: string;
   appUrl: string;
   secretKey: string;
   fieldEncryptionKey: string;
@@ -18,6 +19,7 @@ export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     port: parseInt(process.env.AEGIS_PORT || '8000', 10),
     host: process.env.AEGIS_HOST || '0.0.0.0',
     dbPath: process.env.AEGIS_DB_PATH || './data/aegis.db',
+    dataDir: process.env.AEGIS_DATA_DIR || './data',
     appUrl: process.env.AEGIS_APP_URL || 'http://localhost:8000',
     secretKey: process.env.AEGIS_SECRET_KEY || 'dev-secret-key-change-me',
     fieldEncryptionKey: process.env.AEGIS_FIELD_ENCRYPTION_KEY || 'dev-field-key-change-me-32bytes!!',

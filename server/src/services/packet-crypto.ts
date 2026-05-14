@@ -71,6 +71,26 @@ export function decryptPacketJson(
   return JSON.parse(plaintext) as unknown;
 }
 
+// File format: [12 bytes IV][16 bytes authTag][N bytes ciphertext]
+export function serializeEncryptedPacket(result: EncryptedPacketResult): Buffer {
+  const iv = Buffer.from(result.iv, 'base64url');
+  const authTag = Buffer.from(result.authTag, 'base64url');
+  return Buffer.concat([iv, authTag, result.ciphertext]);
+}
+
+export interface DeserializedPacket {
+  iv: string;
+  authTag: string;
+  ciphertext: Buffer;
+}
+
+export function deserializeEncryptedPacket(data: Buffer): DeserializedPacket {
+  const iv = data.subarray(0, 12).toString('base64url');
+  const authTag = data.subarray(12, 28).toString('base64url');
+  const ciphertext = data.subarray(28);
+  return { iv, authTag, ciphertext };
+}
+
 // Deterministic JSON serialization: sort object keys recursively.
 function canonicalize(value: unknown): unknown {
   if (value === null || typeof value !== 'object') return value;
