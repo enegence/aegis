@@ -2,12 +2,11 @@ import type { AegisDb } from '../db/index.js';
 import {
   getSwitchById,
   markSwitchStatus,
-  getActiveReleaseRun,
-  createReleaseRun,
   type SwitchRecord,
 } from './switch-repository.js';
 import { writeAuditEvent } from './audit.js';
 import { assertReadyToArm } from './readiness.js';
+import { startOrAttachReleaseRun } from './release-run.js';
 
 // ─── Pure helpers ──────────────────────────────────────────────────────────────
 
@@ -247,23 +246,10 @@ export async function evaluateAndTransition(
     const newStatus = evaluation.shouldTransitionTo;
 
     if (newStatus === 'triggered') {
-      const activeRun = await getActiveReleaseRun(db);
-      if (activeRun) {
-        await writeAuditEvent(db, {
-          switchId: id,
-          eventType: 'trigger_suppressed_by_active_release_run',
-          actorType: 'system',
-          metadata: { switchId: id, activeReleaseRunId: activeRun.id },
-        });
-      } else {
-        await createReleaseRun(db, id);
-        await writeAuditEvent(db, {
-          switchId: id,
-          eventType: 'release_run_created',
-          actorType: 'system',
-          metadata: { switchId: id },
-        });
-      }
+      await startOrAttachReleaseRun(db, {
+        triggeringSwitchId: id,
+        reason: sw.mode === 'heartbeat' ? 'heartbeat_missed' : 'trip_triggered',
+      });
     } else if (newStatus === 'warning') {
       await writeAuditEvent(db, {
         switchId: id,
