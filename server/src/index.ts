@@ -20,6 +20,7 @@ import { packetRoutes } from './routes/packets.js';
 import { claimRoutes } from './routes/claim.js';
 import { releaseRoutes } from './routes/release.js';
 import { auditRoutes } from './routes/audit.js';
+import { securityRoutes } from './routes/security.js';
 import { startWorker, type WorkerHandle } from './worker/index.js';
 
 declare module 'fastify' {
@@ -61,6 +62,7 @@ export async function buildApp(overrides: Partial<AppConfig & { dbPath: string }
   await app.register(claimRoutes);
   await app.register(releaseRoutes);
   await app.register(auditRoutes);
+  await app.register(securityRoutes);
 
   if (config.testing && overrides.dbPath === ':memory:') {
     const { migrate } = await import('drizzle-orm/better-sqlite3/migrator');

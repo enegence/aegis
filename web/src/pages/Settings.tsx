@@ -121,7 +121,7 @@ export default function Settings() {
             <RelaySettings data={data.relay} onSaved={load} />
           )}
           {activeTab === 'security' && (
-            <SecuritySettings data={data.security} />
+            <SecuritySettings data={data.security} onSaved={load} />
           )}
           {activeTab === 'packets' && (
             <PacketSettings data={data.packets} onSaved={load} />
