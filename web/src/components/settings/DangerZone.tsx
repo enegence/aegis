@@ -112,6 +112,21 @@ function DangerAction({ label, description, confirmText, buttonLabel, onConfirm,
 export default function DangerZone() {
   return (
     <div>
+      {/* Backup reminder */}
+      <div style={{ fontFamily: 'monospace', fontSize: '0.82rem', color: '#4A6B8A', marginBottom: '16px', padding: '12px 14px', background: T.surface, border: `1.5px solid ${T.border}`, borderRadius: '4px', lineHeight: 1.6 }}>
+        <strong>Before taking any action below, back up your data.</strong>
+        <br />
+        Back up <code>.env</code> and <code>data/aegis.db</code> together — neither is useful without the other.
+        <br />
+        <span style={{ fontSize: '0.75rem' }}>
+          Quick backup:{' '}
+          <code style={{ background: T.bg, padding: '1px 4px', borderRadius: '2px' }}>
+            sqlite3 data/aegis.db ".backup 'backup/aegis.db'"
+          </code>
+          {' '}and copy <code>.env</code>.
+        </span>
+      </div>
+
       <div style={{ fontFamily: 'monospace', fontSize: '0.82rem', color: '#C0392B', marginBottom: '16px', padding: '10px 14px', background: '#FDE8E8', borderRadius: '4px', lineHeight: 1.5 }}>
         These actions are irreversible or hard to undo. Proceed with caution.
       </div>

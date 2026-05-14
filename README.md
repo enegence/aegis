@@ -39,11 +39,24 @@ All configuration is done through the web UI. No config files required.
 - Docker + Docker Compose (recommended)
 - Or: Node.js 20+, SQLite
 
+## Backup
+
+Back up both your `.env` and `data/aegis.db` together. Either one alone is not recoverable.
+
+```bash
+# Quick backup while running
+cp .env backup/.env
+sqlite3 data/aegis.db ".backup 'backup/aegis.db'"
+```
+
+See [docs/backups.md](docs/backups.md) for full backup, restore, and upgrade procedures.
+
 ## Documentation
 
 - [Switches](docs/switches.md) — switch modes, lifecycle, readiness checks
 - [Notifications](docs/notifications.md) — SMTP and Telegram setup
 - [Deployment modes](docs/release-modes.md) — resilience options
+- [Backup and restore](docs/backups.md) — data protection procedures
 
 ## Phase 2 status
 
