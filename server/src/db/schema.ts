@@ -76,30 +76,55 @@ export const switches = sqliteTable('switches', {
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
 
+// releaseRuns defined before packets to avoid forward-reference issues.
+// activePacketId / currentContactClaimId are plain integers (no FK) to break
+// the circular reference with packets / contact_claims.
+export const releaseRuns = sqliteTable('release_runs', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  triggeringSwitchId: integer('triggering_switch_id').notNull().references(() => switches.id, { onDelete: 'no action' }),
+  status: text('status').notNull().default('active'), // active | cascade_active | completed | cancelled | failed
+  activePacketId: integer('active_packet_id'),         // no FK — circular ref broken at app layer
+  currentContactClaimId: integer('current_contact_claim_id'), // no FK — circular ref
+  suppressedSwitchIds: text('suppressed_switch_ids').notNull().default('[]'), // JSON int[]
+  metadata: text('metadata').notNull().default('{}'),  // JSON, redacted only — no PII
+  startedAt: integer('started_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  completedAt: integer('completed_at', { mode: 'timestamp' }),
+  cancelledAt: integer('cancelled_at', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+});
+
 export const packets = sqliteTable('packets', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   switchId: integer('switch_id').notNull().references(() => switches.id, { onDelete: 'cascade' }),
+  releaseRunId: integer('release_run_id').references(() => releaseRuns.id, { onDelete: 'set null' }),
   version: integer('version').notNull(),
+  schemaVersion: text('schema_version').notNull().default('1.0'),
   encryptionAlgorithm: text('encryption_algorithm').notNull().default('aes-256-gcm'),
   keyId: text('key_id').notNull(),
   contentHash: text('content_hash').notNull(),
   encryptedObjectHash: text('encrypted_object_hash'),
+  localCiphertextPath: text('local_ciphertext_path'),
   storageProvider: text('storage_provider'),
   storageBucket: text('storage_bucket'),
   storageObjectKey: text('storage_object_key'),
   storageRegion: text('storage_region'),
+  storageVersionId: text('storage_version_id'),
   deletionStatus: text('deletion_status'),
   lastVerifiedAt: integer('last_verified_at', { mode: 'timestamp' }),
   expiresAt: integer('expires_at', { mode: 'timestamp' }),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
 
+// claimTokenHash stores SHA-256(claimToken). The raw token only travels in
+// outbound notification URLs and is never persisted after claim creation.
 export const contactClaims = sqliteTable('contact_claims', {
   id: integer('id').primaryKey({ autoIncrement: true }),
+  releaseRunId: integer('release_run_id').notNull().references(() => releaseRuns.id),
   switchId: integer('switch_id').notNull().references(() => switches.id),
   packetId: integer('packet_id').notNull().references(() => packets.id),
   contactId: integer('contact_id').notNull().references(() => contacts.id),
-  claimToken: text('claim_token').notNull().unique(),
+  claimTokenHash: text('claim_token_hash').notNull().unique(),
   status: text('status').notNull().default('pending'),
   notifiedAt: integer('notified_at', { mode: 'timestamp' }),
   openedAt: integer('opened_at', { mode: 'timestamp' }),
@@ -124,6 +149,10 @@ export const auditEvents = sqliteTable('audit_events', {
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });
 
+// Key-value settings store.
+// S3 storage keys: s3_endpoint, s3_region, s3_bucket, s3_prefix,
+//   s3_access_key_id_encrypted, s3_secret_access_key_encrypted,
+//   s3_force_path_style, packet_retention_days
 export const appSettings = sqliteTable('app_settings', {
   key: text('key').primaryKey(),
   value: text('value'),
@@ -135,22 +164,13 @@ export const notificationEvents = sqliteTable('notification_events', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   switchId: integer('switch_id').references(() => switches.id, { onDelete: 'cascade' }),
   contactId: integer('contact_id').references(() => contacts.id, { onDelete: 'set null' }),
-  channel: text('channel').notNull(), // email | telegram | sms_future
-  purpose: text('purpose').notNull(), // test | reminder | warning | triggered
-  status: text('status').notNull(), // queued | sent | failed | skipped
+  channel: text('channel').notNull(),
+  purpose: text('purpose').notNull(),
+  status: text('status').notNull(),
   externalId: text('external_id'),
   failureReason: text('failure_reason'),
   sentAt: integer('sent_at', { mode: 'timestamp' }),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-});
-
-export const releaseRuns = sqliteTable('release_runs', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  switchId: integer('switch_id').notNull().references(() => switches.id, { onDelete: 'no action' }),
-  status: text('status').notNull().default('active_pending_packet'),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-  completedAt: integer('completed_at', { mode: 'timestamp' }),
-  cancelledAt: integer('cancelled_at', { mode: 'timestamp' }),
 });
 
 export const encryptionKeys = sqliteTable('encryption_keys', {
@@ -160,4 +180,13 @@ export const encryptionKeys = sqliteTable('encryption_keys', {
   algorithm: text('algorithm').notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
   rotatedAt: integer('rotated_at', { mode: 'timestamp' }),
+});
+
+export const localAcknowledgements = sqliteTable('local_acknowledgements', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  ownerId: integer('owner_id').notNull().references(() => owner.id, { onDelete: 'cascade' }),
+  contextType: text('context_type').notNull(), // 'relay_escrow' | 'hosted' | 'deployment_mode'
+  contextId: text('context_id').notNull(),     // e.g. switch ID or mode name
+  version: text('version').notNull(),          // terms/policy version string
+  acknowledgedAt: integer('acknowledged_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
 });

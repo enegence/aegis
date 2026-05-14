@@ -27,7 +27,7 @@ export interface SwitchRecord {
 
 export interface ReleaseRunRecord {
   id: number;
-  switchId: number;
+  triggeringSwitchId: number;
   status: string;
   createdAt: Date;
   completedAt: Date | null;
@@ -104,7 +104,7 @@ function rowToSwitchRecord(row: typeof switches.$inferSelect): SwitchRecord {
 function rowToReleaseRunRecord(row: typeof releaseRuns.$inferSelect): ReleaseRunRecord {
   return {
     id: row.id,
-    switchId: row.switchId,
+    triggeringSwitchId: row.triggeringSwitchId,
     status: row.status,
     createdAt: row.createdAt,
     completedAt: row.completedAt ?? null,
@@ -220,7 +220,7 @@ export async function getActiveReleaseRun(db: AegisDb): Promise<ReleaseRunRecord
 export async function createReleaseRun(db: AegisDb, switchId: number): Promise<ReleaseRunRecord> {
   const result = await db
     .insert(releaseRuns)
-    .values({ switchId })
+    .values({ triggeringSwitchId: switchId })
     .returning();
 
   return rowToReleaseRunRecord(result[0]);

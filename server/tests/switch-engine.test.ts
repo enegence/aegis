@@ -186,7 +186,7 @@ describe('evaluateAndTransition', () => {
 
     const activeRun = await getActiveReleaseRun(db);
     expect(activeRun).not.toBeNull();
-    expect(activeRun?.switchId).toBe(sw.id);
+    expect(activeRun?.triggeringSwitchId).toBe(sw.id);
 
     const events = await getAuditEvents(db, { switchId: sw.id });
     expect(events.some(e => e.eventType === 'release_run_created')).toBe(true);
@@ -217,7 +217,7 @@ describe('evaluateAndTransition', () => {
 
     // Should still be just the one (original) release run
     const activeRun = await getActiveReleaseRun(isolatedDb);
-    expect(activeRun?.switchId).toBe(sw1.id);
+    expect(activeRun?.triggeringSwitchId).toBe(sw1.id);
 
     const events = await getAuditEvents(isolatedDb, { switchId: sw2.id });
     expect(

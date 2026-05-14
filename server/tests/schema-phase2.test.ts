@@ -47,7 +47,8 @@ describe('Phase 2 schema migrations', () => {
     expect(tableExists('release_runs')).toBe(true);
     const columns = getColumns('release_runs');
     expect(columns).toContain('id');
-    expect(columns).toContain('switch_id');
+    // Phase 3 renamed switch_id → triggering_switch_id
+    expect(columns).toContain('triggering_switch_id');
     expect(columns).toContain('status');
     expect(columns).toContain('created_at');
     expect(columns).toContain('completed_at');

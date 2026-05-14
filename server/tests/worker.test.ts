@@ -63,7 +63,7 @@ describe('runWorkerOnce', () => {
     // Verify switch is now triggered
     const activeRun = await getActiveReleaseRun(db);
     expect(activeRun).not.toBeNull();
-    expect(activeRun?.switchId).toBe(sw.id);
+    expect(activeRun?.triggeringSwitchId).toBe(sw.id);
   });
 
   it('armed heartbeat switch with overdue nextCheckInDueAt transitions to warning', async () => {
