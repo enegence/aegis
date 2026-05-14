@@ -2,6 +2,8 @@ import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
 import { validateSession } from './session.js';
 import { deriveCsrfToken } from './csrf.js';
+import { owner } from '../db/schema.js';
+import { count } from 'drizzle-orm';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -16,6 +18,12 @@ async function authPlugin(app: FastifyInstance) {
   app.decorateRequest('ownerId', undefined);
 
   app.decorate('requireAuth', async function (req: FastifyRequest, reply: FastifyReply) {
+    // Protected routes require setup to be complete first
+    const [result] = await app.db.select({ total: count() }).from(owner);
+    if (result.total === 0) {
+      return reply.status(428).send({ error: 'Setup required', code: 'setup_required' });
+    }
+
     const sessionId = req.cookies?.aegis_session;
     if (!sessionId) {
       return reply.status(401).send({ error: 'Not authenticated' });

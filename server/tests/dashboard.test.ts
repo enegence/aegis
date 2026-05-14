@@ -16,7 +16,7 @@ describe('Dashboard API', () => {
       payload: {
         displayName: 'Dashboard Owner',
         email: 'dash@test.com',
-        password: 'testpass123',
+        password: 'testpass1234',
         timezone: 'UTC',
       },
     });
@@ -24,7 +24,7 @@ describe('Dashboard API', () => {
     const loginRes = await app.inject({
       method: 'POST',
       url: '/api/auth/login',
-      payload: { password: 'testpass123' },
+      payload: { password: 'testpass1234' },
     });
     cookies = String(loginRes.headers['set-cookie']);
 
@@ -136,13 +136,13 @@ describe('Dashboard API', () => {
     await localApp.inject({
       method: 'POST',
       url: '/api/auth/setup',
-      payload: { displayName: 'Warn Owner', email: 'warn@test.com', password: 'testpass123', timezone: 'UTC' },
+      payload: { displayName: 'Warn Owner', email: 'warn@test.com', password: 'testpass1234', timezone: 'UTC' },
     });
 
     const loginRes = await localApp.inject({
       method: 'POST',
       url: '/api/auth/login',
-      payload: { password: 'testpass123' },
+      payload: { password: 'testpass1234' },
     });
     const localCookies = String(loginRes.headers['set-cookie']);
 
@@ -212,13 +212,13 @@ describe('Dashboard API', () => {
     await localApp.inject({
       method: 'POST',
       url: '/api/auth/setup',
-      payload: { displayName: 'Heartbeat Warning Owner', email: 'hbwarn@test.com', password: 'testpass123', timezone: 'UTC' },
+      payload: { displayName: 'Heartbeat Warning Owner', email: 'hbwarn@test.com', password: 'testpass1234', timezone: 'UTC' },
     });
 
     const loginRes = await localApp.inject({
       method: 'POST',
       url: '/api/auth/login',
-      payload: { password: 'testpass123' },
+      payload: { password: 'testpass1234' },
     });
     const localCookies = String(loginRes.headers['set-cookie']);
 
@@ -285,13 +285,13 @@ describe('Dashboard API', () => {
     await localApp.inject({
       method: 'POST',
       url: '/api/auth/setup',
-      payload: { displayName: 'No Notif Owner', email: 'nonotif@test.com', password: 'testpass123', timezone: 'UTC' },
+      payload: { displayName: 'No Notif Owner', email: 'nonotif@test.com', password: 'testpass1234', timezone: 'UTC' },
     });
 
     const loginRes = await localApp.inject({
       method: 'POST',
       url: '/api/auth/login',
-      payload: { password: 'testpass123' },
+      payload: { password: 'testpass1234' },
     });
     const localCookies = String(loginRes.headers['set-cookie']);
 
@@ -315,13 +315,13 @@ describe('Dashboard API', () => {
     await localApp.inject({
       method: 'POST',
       url: '/api/auth/setup',
-      payload: { displayName: 'SMTP Owner', email: 'smtp@test.com', password: 'testpass123', timezone: 'UTC' },
+      payload: { displayName: 'SMTP Owner', email: 'smtp@test.com', password: 'testpass1234', timezone: 'UTC' },
     });
 
     const loginRes = await localApp.inject({
       method: 'POST',
       url: '/api/auth/login',
-      payload: { password: 'testpass123' },
+      payload: { password: 'testpass1234' },
     });
     const localCookies = String(loginRes.headers['set-cookie']);
 
