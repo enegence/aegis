@@ -93,6 +93,16 @@ async function start() {
   const app = await buildApp();
   const config = loadConfig();
 
+  // Ensure data directory exists
+  const { mkdirSync } = await import('fs');
+  const { join: pathJoin } = await import('path');
+  try {
+    mkdirSync(pathJoin(config.dataDir, 'packets'), { recursive: true });
+  } catch (err) {
+    console.error(`FATAL: cannot create data directory at ${config.dataDir}/packets:`, err);
+    process.exit(1);
+  }
+
   let workerHandle: WorkerHandle | null = null;
 
   try {

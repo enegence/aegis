@@ -28,11 +28,14 @@ export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
   };
 
   if (!config.testing && process.env.NODE_ENV === 'production') {
-    if (config.secretKey.includes('change-me') || config.secretKey.length < 32) {
-      throw new Error('FATAL: AEGIS_SECRET_KEY is not set or too short. Run setup.sh to generate secrets.');
+    if (config.secretKey.includes('change-me') || config.secretKey.length < 64) {
+      throw new Error('FATAL: AEGIS_SECRET_KEY is not set or too short (min 64 chars). Run setup.sh to generate secrets.');
     }
-    if (config.fieldEncryptionKey.includes('change-me') || config.fieldEncryptionKey.length < 32) {
-      throw new Error('FATAL: AEGIS_FIELD_ENCRYPTION_KEY is not set or too short. Run setup.sh to generate secrets.');
+    if (config.fieldEncryptionKey.includes('change-me')) {
+      throw new Error('FATAL: AEGIS_FIELD_ENCRYPTION_KEY is not set. Run setup.sh to generate secrets.');
+    }
+    if (!/^[0-9a-fA-F]{64}$/.test(config.fieldEncryptionKey)) {
+      throw new Error('FATAL: AEGIS_FIELD_ENCRYPTION_KEY must be exactly 64 hex characters (32 bytes). Run setup.sh to generate secrets.');
     }
   }
 
