@@ -5,10 +5,59 @@ import CountdownCard from '../components/dashboard/CountdownCard';
 import SystemHealthCard from '../components/dashboard/SystemHealthCard';
 import SwitchSummaryCards from '../components/dashboard/SwitchSummaryCards';
 
+interface Phase3DashboardExtra {
+  latestPacket: { id: number; version: number; storageObjectKey: string | null; lastVerifiedAt: string | null; createdAt: string } | null;
+  activeReleaseRun: { id: number; status: string; triggeringSwitchId: number } | null;
+  recentAuditEvents: { eventType: string; createdAt: string }[];
+}
+
 const T = { bg: '#DDE8F4', ink: '#0B1C2C', accent: '#1A6B9A', border: '#8AAAC8' };
 
+const T2 = { surface: '#C8D9ED', border: '#8AAAC8', accent: '#1A6B9A', ink: '#0B1C2C' };
+
+function Phase3StatusCards({ extra }: { extra: Phase3DashboardExtra }) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+      {/* Packet card */}
+      <div style={{ background: T2.surface, border: `1px solid ${T2.border}`, borderRadius: 6, padding: 14, fontFamily: 'monospace' }}>
+        <div style={{ fontSize: '0.75rem', color: '#4A6B8A', marginBottom: 4 }}>Latest Packet</div>
+        {extra.latestPacket ? (
+          <>
+            <div style={{ fontSize: '0.88rem', color: T2.ink }}>v{extra.latestPacket.version}</div>
+            <div style={{ fontSize: '0.72rem', color: '#4A6B8A' }}>
+              {extra.latestPacket.storageObjectKey ? '✓ Synced to storage' : '⚠ Local only'}
+            </div>
+            {extra.latestPacket.lastVerifiedAt && (
+              <div style={{ fontSize: '0.68rem', color: '#7f8c8d' }}>
+                Verified {new Date(extra.latestPacket.lastVerifiedAt).toLocaleDateString()}
+              </div>
+            )}
+          </>
+        ) : (
+          <div style={{ fontSize: '0.82rem', color: '#c0392b' }}>No packet generated</div>
+        )}
+      </div>
+
+      {/* Release run card */}
+      <div style={{ background: T2.surface, border: `1px solid ${T2.border}`, borderRadius: 6, padding: 14, fontFamily: 'monospace' }}>
+        <div style={{ fontSize: '0.75rem', color: '#4A6B8A', marginBottom: 4 }}>Active Release</div>
+        {extra.activeReleaseRun ? (
+          <>
+            <div style={{ fontSize: '0.88rem', color: '#c0392b' }}>⚠ Release in progress</div>
+            <div style={{ fontSize: '0.72rem', color: '#4A6B8A' }}>
+              Run #{extra.activeReleaseRun.id} — {extra.activeReleaseRun.status}
+            </div>
+          </>
+        ) : (
+          <div style={{ fontSize: '0.82rem', color: '#27ae60' }}>✓ No active release</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function Dashboard() {
-  const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [summary, setSummary] = useState<(DashboardSummary & Phase3DashboardExtra) | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -19,7 +68,7 @@ export default function Dashboard() {
 
   async function load() {
     try {
-      const data = await getDashboard();
+      const data = await getDashboard() as DashboardSummary & Phase3DashboardExtra;
       setSummary(data);
       setError('');
     } catch {
@@ -67,6 +116,10 @@ export default function Dashboard() {
             />
             <CountdownCard nextSwitch={summary.nextSwitch} nextActionAt={summary.nextActionAt} />
           </>
+        )}
+
+        {(summary.latestPacket !== undefined || summary.activeReleaseRun !== undefined) && (
+          <Phase3StatusCards extra={summary} />
         )}
 
         <SystemHealthCard health={summary.health} />

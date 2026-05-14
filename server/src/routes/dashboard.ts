@@ -1,8 +1,9 @@
 import type { FastifyInstance } from 'fastify';
-import { eq } from 'drizzle-orm';
-import { owner } from '../db/schema.js';
+import { eq, desc } from 'drizzle-orm';
+import { owner, packets, auditEvents } from '../db/schema.js';
 import { listSwitches } from '../services/switch-repository.js';
 import { getSmtpConfig, getTelegramConfig } from '../services/notifications.js';
+import { getActiveReleaseRunFull } from '../repositories/release-run-repository.js';
 import type { SwitchRecord } from '../services/switch-repository.js';
 import type { Switch, HealthStatus, DashboardSummary } from '@aegis/shared';
 
@@ -86,18 +87,56 @@ export async function dashboardRoutes(app: FastifyInstance) {
     const telegramConfig = await getTelegramConfig(db);
     const notificationsConfigured = smtpConfig !== null || telegramConfig !== null;
 
-    // 5. Build health object
+    // 5. Latest packet
+    const latestPacketRows = await db
+      .select()
+      .from(packets)
+      .orderBy(desc(packets.createdAt))
+      .limit(1);
+    const latestPacket = latestPacketRows[0]
+      ? {
+          id: latestPacketRows[0].id,
+          version: latestPacketRows[0].version,
+          storageProvider: latestPacketRows[0].storageProvider ?? null,
+          storageObjectKey: latestPacketRows[0].storageObjectKey ?? null,
+          lastVerifiedAt: latestPacketRows[0].lastVerifiedAt?.toISOString() ?? null,
+          createdAt: latestPacketRows[0].createdAt.toISOString(),
+        }
+      : null;
+
+    // 6. Active release run
+    const activeRun = await getActiveReleaseRunFull(db);
+    const activeReleaseRun = activeRun
+      ? { id: activeRun.id, status: activeRun.status, triggeringSwitchId: activeRun.triggeringSwitchId }
+      : null;
+
+    // 7. Recent audit events
+    const recentAuditRows = await db
+      .select({ eventType: auditEvents.eventType, createdAt: auditEvents.createdAt })
+      .from(auditEvents)
+      .orderBy(desc(auditEvents.createdAt))
+      .limit(5);
+    const recentAuditEvents = recentAuditRows.map((r) => ({
+      eventType: r.eventType,
+      createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt),
+    }));
+
+    // 8. Build health object
     const health: HealthStatus = {
       status: 'ok',
       database: 'ok',
-      storage: 'not_configured',
+      storage: latestPacket?.storageObjectKey ? 'ok' : 'not_configured',
       notifications: notificationsConfigured ? 'ok' : 'not_configured',
       relay: 'not_configured',
       uptime: process.uptime(),
       version: APP_VERSION,
     };
 
-    const summary: DashboardSummary = {
+    const summary: DashboardSummary & {
+      latestPacket: typeof latestPacket;
+      activeReleaseRun: typeof activeReleaseRun;
+      recentAuditEvents: typeof recentAuditEvents;
+    } = {
       ownerName,
       activeSwitchCount,
       warningSwitchCount,
@@ -106,8 +145,11 @@ export async function dashboardRoutes(app: FastifyInstance) {
       nextActionAt: nextActionDate ? nextActionDate.toISOString() : null,
       notificationsConfigured,
       relayConfigured: false,
-      storageConfigured: false,
+      storageConfigured: latestPacket?.storageObjectKey != null,
       health,
+      latestPacket,
+      activeReleaseRun,
+      recentAuditEvents,
     };
 
     return reply.send(summary);
