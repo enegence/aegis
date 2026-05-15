@@ -108,14 +108,14 @@ Owner (device) ──────► Server Process
 | Per-user derived keys | Not implemented (single key for all data) |
 | Key rotation | Not implemented (would require re-encrypting all rows) |
 | Zero-knowledge guarantees | Not implemented (server holds the key) |
-| TOTP recovery codes | Not implemented |
+| TOTP recovery codes | Implemented (Phase 5 Task 10) |
 
 ---
 
 ## What Changes in Beta / GA
 
 1. **HKDF key derivation** — switch from `SHA-256(rawKey)` to `HKDF-SHA256` with context string for key derivation (already done in SaaS; OSS pending).
-2. **TOTP recovery codes** — generated at setup, stored as hashed values, single-use.
+2. **TOTP recovery codes** — implemented in Phase 5 Task 10; generated at setup, stored as hashed values, single-use.
 3. **Key rotation path** — migration script to re-encrypt all fields with a new key.
 4. **Consider HSM for packet key custody** — move `encryption_keys` table to a managed KMS (Vault, AWS KMS) for production deployments.
 

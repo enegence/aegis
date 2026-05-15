@@ -28,8 +28,8 @@ Aegis Core is a single-owner, self-hosted digital legacy release system. The own
 
 ### 1. Authentication endpoint (`POST /api/auth/login`)
 - **Threat:** Brute-force password guessing
-- **Mitigation:** Argon2id password hashing (computationally expensive). TOTP optional second factor.
-- **Gap:** No rate limiting on login endpoint. Relies on Argon2 latency only.
+- **Mitigation:** Argon2id password hashing (computationally expensive). TOTP optional second factor. `@fastify/rate-limit` on login and TOTP challenge routes (Phase 5 Task 10).
+- **Gap:** Rate limit counters are in-process only — reset on server restart.
 
 ### 2. Claim portal (`GET /api/claim/:token/...`)
 - **Threat:** Claim token guessing or brute force
@@ -94,8 +94,8 @@ Aegis Core is a single-owner, self-hosted digital legacy release system. The own
 
 ## Known Gaps (to address before beta)
 
-1. **No login rate limiting.** An attacker can attempt passwords rapidly; only Argon2 latency limits them.
-2. **No TOTP recovery codes.** If the owner loses their TOTP device, they cannot log in without DB intervention.
+1. **Login rate limiting implemented (Phase 5 Task 10).** `@fastify/rate-limit` applied on login and TOTP challenge routes. Counter is in-process only (resets on restart).
+2. **TOTP recovery codes implemented (Phase 5 Task 10).** Single-use codes generated at TOTP setup, stored hashed, can be regenerated.
 3. **No password reset flow.** Lost password requires manual DB reset.
 4. **Claim PIN rate limit is in-memory.** Server restart resets the counter.
 5. **Single field encryption key.** Compromise of `AEGIS_FIELD_ENCRYPTION_KEY` decrypts all fields for all users.
@@ -108,7 +108,7 @@ Aegis Core is a single-owner, self-hosted digital legacy release system. The own
 
 | Risk | Mitigation | Residual Risk |
 |------|------------|---------------|
-| Auth bypass | Argon2id + optional TOTP | No lockout on failed attempts |
+| Auth bypass | Argon2id + optional TOTP + rate limiting | In-process rate limit resets on restart |
 | Data at rest exposure | AES-256-GCM field + packet encryption | Single key for all data |
 | Claim spoofing | 32-byte random token stored as hash | PIN rate limit resets on restart |
 | CSRF | HMAC-signed session-bound token | Token not time-bounded |

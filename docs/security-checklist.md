@@ -103,27 +103,30 @@ Status: Alpha — see Known Limitations
 
 ## TOTP Recovery Codes
 
-**Required behavior:** Not yet implemented.
+**Required behavior:** Recovery codes generated at TOTP setup (shown once), stored as hashed values, single-use. Can be regenerated. Codes are invalidated when TOTP is disabled or re-setup.
 
-**Implemented files:** None
+**Implemented files:**
+- `server/src/routes/security.ts` — generate, list-count, use, and regenerate endpoints
+- `server/src/db/schema.ts` — `totp_recovery_codes` table
 
-**Tests proving behavior:** `server/tests/security-baseline.test.ts` — `it.todo`
+**Tests proving behavior:** `server/tests/security-password.test.ts` — recovery code generation, use, and single-use enforcement
 
 **Known limitations:**
-- TOTP recovery codes are not implemented in alpha
-- If the owner loses their TOTP device, manual DB reset is the only recovery path
+- Recovery codes are hashed (bcrypt/argon2) at rest; shown plaintext once at generation only
+- No hardware token backup path
 
 ---
 
 ## Password Change
 
-**Required behavior:** Not yet implemented in OSS settings.
+**Required behavior:** Owner can change password via `POST /api/security/password/change`. Requires current password proof. Argon2id re-hash on success.
 
-**Implemented files:** None
+**Implemented files:**
+- `server/src/routes/security.ts` — `POST /api/security/password/change`
 
-**Tests proving behavior:** `server/tests/security-baseline.test.ts` — `it.todo`
+**Tests proving behavior:** `server/tests/security-password.test.ts` — requires correct current password, rejects wrong current password
 
-**Known limitations:** Password change requiring current-password proof is not implemented
+**Known limitations:** No forced re-authentication of all sessions after password change (existing sessions remain valid)
 
 ---
 
@@ -291,11 +294,12 @@ Status: Alpha — see Known Limitations
 
 **Required behavior:** Login, claim, and setup endpoints are rate-limited.
 
-**Implemented files:** NOT IMPLEMENTED. No rate limiting exists for any endpoint (login, TOTP, claim PIN verification, setup). This is a known gap before beta.
+**Implemented files:**
+- `@fastify/rate-limit` applied on login, TOTP challenge, claim PIN verification, and owner setup routes (added Phase 5 Task 10)
 
-**Tests proving behavior:** `server/tests/security-baseline.test.ts` — `it.todo` for claim PIN throttle
+**Tests proving behavior:** `server/tests/security-password.test.ts` — rate-limit behavior tested for login and claim flows
 
-**Known limitations:** Rate limiting is entirely absent. No in-process counters, no middleware, no token-bucket logic. All endpoints (login, claim PIN, TOTP, password reset) are unlimited. Critical gap — must be addressed before beta.
+**Known limitations:** Rate limit counters are in-process only — reset on server restart. No distributed rate-limit store.
 
 ---
 

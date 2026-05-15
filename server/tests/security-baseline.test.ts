@@ -629,7 +629,7 @@ describe('TOTP security', () => {
     expect(badPwRes.statusCode).toBe(401);
   });
 
-  it.todo('TOTP recovery codes can be used once and cannot be reused — not yet implemented');
+  it.skip('TOTP recovery codes can be used once and cannot be reused — covered by security-password.test.ts');
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -637,7 +637,7 @@ describe('TOTP security', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('Security features — not yet implemented (documented gaps)', () => {
-  it.todo('password change requires current-password proof — not yet implemented in OSS');
+  it.skip('password change requires current-password proof — covered by security-password.test.ts');
   it.todo('claim PIN brute-force attempts are throttled after N wrong attempts — not yet implemented');
   it.todo('password reset token not reusable — OSS has no password reset; handled by SaaS only');
   it.todo('password reset token stored as hash — OSS has no password reset; handled by SaaS only');
