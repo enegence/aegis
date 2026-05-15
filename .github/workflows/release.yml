@@ -1,0 +1,34 @@
+name: Release
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    name: Build and Package OSS Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build --workspace=packages/shared --workspace=packages/contracts
+      - run: npm test
+        working-directory: server
+      - name: Build Docker image
+        run: docker build -t aegis-core:${{ github.ref_name }} .
+      - name: Create release artifacts
+        run: |
+          cp docker-compose.yml docker-compose-${{ github.ref_name }}.yml
+          cp .env.example .env.example-${{ github.ref_name }}
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            docker-compose-${{ github.ref_name }}.yml
+            .env.example-${{ github.ref_name }}
+          generate_release_notes: true
+          draft: true
