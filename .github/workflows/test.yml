@@ -16,6 +16,10 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci
-      - run: npm run build --workspace=packages/shared --workspace=packages/contracts
-      - run: npm test
+      - name: Build shared packages
+        run: npm run build --workspace=packages/shared --workspace=packages/contracts
+      - name: Run server tests
+        run: npm test
         working-directory: server
+      - name: Build full application (TypeScript + Vite)
+        run: npm run build

@@ -15,14 +15,20 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci
-      - run: npm run build --workspace=packages/shared --workspace=packages/contracts
-      - run: npm test
+      - name: Build shared packages
+        run: npm run build --workspace=packages/shared --workspace=packages/contracts
+      - name: Run server tests
+        run: npm test
         working-directory: server
+      - name: Build full application
+        run: npm run build
       - name: Build Docker image
         run: docker build -t aegis-core:${{ github.ref_name }} .
-      - name: Create release artifacts
+      - name: Create pinned docker-compose release artifact
+        # Replace "build: ." with the tagged image so the release artifact is pinned
         run: |
-          cp docker-compose.yml docker-compose-${{ github.ref_name }}.yml
+          sed 's|build: \.|image: ghcr.io/${{ github.repository_owner }}/aegis-core:${{ github.ref_name }}|g' \
+            docker-compose.yml > docker-compose-${{ github.ref_name }}.yml
           cp .env.example .env.example-${{ github.ref_name }}
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

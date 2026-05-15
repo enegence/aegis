@@ -7,6 +7,7 @@ import {
   decryptExportBundle,
   gatherExportPayload,
   EXPORT_SCHEMA_VERSION,
+  type ExportBundle,
 } from '../services/export.js';
 import { encryptField } from '../services/field-encrypt.js';
 
@@ -69,7 +70,7 @@ export async function exportRoutes(app: FastifyInstance) {
 
     let payload;
     try {
-      payload = await decryptExportBundle(bundle as Parameters<typeof decryptExportBundle>[0], passphrase);
+      payload = await decryptExportBundle(bundle as unknown as ExportBundle, passphrase);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Decryption failed';
       return reply.status(400).send({ error: message });
@@ -108,7 +109,7 @@ export async function exportRoutes(app: FastifyInstance) {
 
     let payload;
     try {
-      payload = await decryptExportBundle(bundle as Parameters<typeof decryptExportBundle>[0], passphrase);
+      payload = await decryptExportBundle(bundle as unknown as ExportBundle, passphrase);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Decryption failed';
       return reply.status(400).send({ error: message });
@@ -180,14 +181,16 @@ export async function exportRoutes(app: FastifyInstance) {
         telegramHandleEncrypted: c.telegramHandle
           ? encryptField(c.telegramHandle, fieldKey)
           : null,
-        preferredChannels: c.preferredChannels,
+        preferredChannels: Array.isArray(c.preferredChannels)
+          ? JSON.stringify(c.preferredChannels)
+          : c.preferredChannels,
         confirmationWindowHours: c.confirmationWindowHours,
         backupNotesEncrypted: c.backupNotes
           ? encryptField(c.backupNotes, fieldKey)
           : null,
         createdAt: new Date(c.createdAt),
         updatedAt: new Date(),
-      });
+      } as typeof contacts.$inferInsert);
       restoredContacts++;
     }
 

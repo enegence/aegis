@@ -125,7 +125,7 @@ export async function transitionReleaseRun(
 
   await db
     .update(releaseRuns)
-    .set(patch as Parameters<typeof releaseRuns.$inferInsert>[0])
+    .set(patch as Partial<typeof releaseRuns.$inferInsert>)
     .where(eq(releaseRuns.id, runId));
 
   await writeAuditEvent(db, {
