@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { put, post } from '../../lib/api';
+import { post, del } from '../../lib/api';
 
 const T = {
   bg: '#DDE8F4', ink: '#0B1C2C', accent: '#1A6B9A',
@@ -24,6 +24,7 @@ interface RelayData {
   relayUrl?: string | null;
   apiKeyConfigured: boolean;
   lastHeartbeatAt?: string | null;
+  connectionId?: string | null;
 }
 
 interface Props {
@@ -32,29 +33,31 @@ interface Props {
 }
 
 export default function RelaySettings({ data, onSaved }: Props) {
-  const [relayUrl, setRelayUrl] = useState(data.relayUrl ?? '');
-  const [apiKey, setApiKey] = useState('');
-  const [saving, setSaving] = useState(false);
+  const [relayUrl, setRelayUrl] = useState('');
+  const [linkCode, setLinkCode] = useState('');
+  const [linking, setLinking] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [unlinking, setUnlinking] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [testResult, setTestResult] = useState('');
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleLinkExchange(e: React.FormEvent) {
     e.preventDefault();
-    setSaving(true); setError(''); setSuccess('');
+    setLinking(true); setError(''); setSuccess('');
     try {
-      await put('/api/settings/relay', {
-        relayUrl: relayUrl || undefined,
-        apiKey: apiKey || undefined,
+      await post('/api/settings/relay/link-exchange', {
+        relayUrl: relayUrl.trim(),
+        code: linkCode.trim(),
       });
-      setApiKey('');
-      setSuccess('Relay settings saved.');
+      setRelayUrl('');
+      setLinkCode('');
+      setSuccess('Relay linked successfully.');
       onSaved();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Save failed');
+      setError(err instanceof Error ? err.message : 'Link failed');
     } finally {
-      setSaving(false);
+      setLinking(false);
     }
   }
 
@@ -70,10 +73,30 @@ export default function RelaySettings({ data, onSaved }: Props) {
     }
   }
 
+  async function handleUnlink() {
+    if (!confirm('Unlink this Relay connection? You will need to generate a new link code to reconnect.')) return;
+    setUnlinking(true); setError(''); setSuccess('');
+    try {
+      await del('/api/settings/relay/unlink');
+      setSuccess('Relay unlinked.');
+      onSaved();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unlink failed');
+    } finally {
+      setUnlinking(false);
+    }
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      {/* Connection status */}
       <div style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: data.enabled ? '#2E7D32' : '#8B6914' }}>
         {data.enabled ? `✓ Connected — ${data.relayUrl}` : '⚠ Not connected'}
+        {data.connectionId && (
+          <span style={{ marginLeft: '12px', color: '#4A6B8A' }}>
+            connection: {data.connectionId}
+          </span>
+        )}
         {data.lastHeartbeatAt && (
           <span style={{ marginLeft: '12px', color: '#4A6B8A' }}>
             last heartbeat: {new Date(data.lastHeartbeatAt).toLocaleString()}
@@ -81,57 +104,85 @@ export default function RelaySettings({ data, onSaved }: Props) {
         )}
       </div>
 
+      {/* Instructions */}
       <div style={{
         padding: '10px 14px', background: T.surface, border: `1.5px solid ${T.border}`,
         borderRadius: '3px 8px 3px 8px / 8px 3px 8px 3px',
         fontFamily: 'monospace', fontSize: '0.78rem', color: '#4A6B8A', lineHeight: 1.5,
       }}>
-        Guided Relay connection requires an Aegis DMS Site Relay subscription.
-        Manual entry is available below for advanced self-hosted setups.
+        To connect to Aegis Relay: log in to <strong>aegis-dms.com</strong>, go to your account settings,
+        and generate a link code. Paste the code and the Relay URL below.
+        The link code is single-use and expires in 10 minutes.
       </div>
 
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        <div>
-          <label style={labelStyle}>Relay URL</label>
-          <input style={inputStyle} type="url" value={relayUrl} onChange={e => setRelayUrl(e.target.value)}
-            placeholder="https://relay.example.com" />
-        </div>
+      {!data.enabled ? (
+        /* Link form — shown when not yet connected */
+        <form onSubmit={handleLinkExchange} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div>
+            <label style={labelStyle}>Relay URL</label>
+            <input
+              style={inputStyle}
+              type="url"
+              value={relayUrl}
+              onChange={e => setRelayUrl(e.target.value)}
+              placeholder="https://relay.aegis-dms.com"
+              required
+            />
+          </div>
 
-        <div>
-          <label style={labelStyle}>
-            API Key{data.apiKeyConfigured ? ' (leave blank to keep existing)' : ''}
-          </label>
-          <input style={inputStyle} type="password" value={apiKey} onChange={e => setApiKey(e.target.value)}
-            placeholder={data.apiKeyConfigured ? '••••••••' : 'Enter API key'} />
-        </div>
+          <div>
+            <label style={labelStyle}>Link Code (from aegis-dms.com)</label>
+            <input
+              style={inputStyle}
+              type="text"
+              value={linkCode}
+              onChange={e => setLinkCode(e.target.value)}
+              placeholder="Paste your link code here"
+              required
+            />
+          </div>
 
-        {error && <div style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: T.danger }}>{error}</div>}
-        {success && <div style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: '#2E7D32' }}>{success}</div>}
+          {error && <div style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: T.danger }}>{error}</div>}
+          {success && <div style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: '#2E7D32' }}>{success}</div>}
 
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <button type="submit" disabled={saving} style={{
-            fontFamily: 'monospace', fontSize: '0.85rem', padding: '7px 16px',
-            background: saving ? T.border : T.accent, color: '#fff',
-            border: `1.5px solid ${T.accent}`, borderRadius: '3px 6px 3px 6px / 6px 3px 6px 3px',
-            cursor: saving ? 'not-allowed' : 'pointer',
-          }}>{saving ? 'Saving…' : 'Save Relay'}</button>
+          <div>
+            <button type="submit" disabled={linking} style={{
+              fontFamily: 'monospace', fontSize: '0.85rem', padding: '7px 16px',
+              background: linking ? T.border : T.accent, color: '#fff',
+              border: `1.5px solid ${T.accent}`, borderRadius: '3px 6px 3px 6px / 6px 3px 6px 3px',
+              cursor: linking ? 'not-allowed' : 'pointer',
+            }}>{linking ? 'Linking…' : 'Link Relay'}</button>
+          </div>
+        </form>
+      ) : (
+        /* Connected state — test + unlink buttons */
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {error && <div style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: T.danger }}>{error}</div>}
+          {success && <div style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: '#2E7D32' }}>{success}</div>}
 
-          {data.enabled && (
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
             <button type="button" onClick={handleTest} disabled={testing} style={{
               fontFamily: 'monospace', fontSize: '0.85rem', padding: '7px 16px',
               background: 'transparent', color: T.accent,
               border: `1.5px solid ${T.accent}`, borderRadius: '3px 6px 3px 6px / 6px 3px 6px 3px',
               cursor: testing ? 'not-allowed' : 'pointer',
             }}>{testing ? 'Testing…' : 'Send Heartbeat'}</button>
-          )}
 
-          {testResult && (
-            <span style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: testResult.startsWith('✓') ? '#2E7D32' : T.danger }}>
-              {testResult}
-            </span>
-          )}
+            <button type="button" onClick={handleUnlink} disabled={unlinking} style={{
+              fontFamily: 'monospace', fontSize: '0.85rem', padding: '7px 16px',
+              background: 'transparent', color: T.danger,
+              border: `1.5px solid ${T.danger}`, borderRadius: '3px 6px 3px 6px / 6px 3px 6px 3px',
+              cursor: unlinking ? 'not-allowed' : 'pointer',
+            }}>{unlinking ? 'Unlinking…' : 'Unlink Relay'}</button>
+
+            {testResult && (
+              <span style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: testResult.startsWith('✓') ? '#2E7D32' : T.danger }}>
+                {testResult}
+              </span>
+            )}
+          </div>
         </div>
-      </form>
+      )}
     </div>
   );
 }

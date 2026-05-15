@@ -160,7 +160,7 @@ export default function ClaimPortal() {
     return (
       <Section>
         <Heading>Claim Not Available</Heading>
-        <p style={{ color: '#c0392b' }}>{error}</p>
+        <p role="alert" style={{ color: '#c0392b' }}>{error}</p>
         <p style={{ fontSize: '0.82rem', color: '#4A6B8A' }}>
           This link may be expired, already used, or invalid. If you believe this is an error, contact the person who sent you this link.
         </p>
@@ -206,8 +206,11 @@ export default function ClaimPortal() {
           This link expires: <strong>{new Date(claim.expiresAt).toLocaleString()}</strong>.
         </p>
 
+        {/* aria-live region for async step messages */}
+        <div aria-live="polite" aria-atomic="true" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }} />
+
         {actionMsg && (
-          <p style={{ color: '#c0392b', fontSize: '0.85rem', background: '#fde8e8', padding: '6px 10px', borderRadius: 4, marginBottom: 12 }}>
+          <p id="claim-action-msg" role="alert" aria-live="assertive" style={{ color: '#c0392b', fontSize: '0.85rem', background: '#fde8e8', padding: '6px 10px', borderRadius: 4, marginBottom: 12 }}>
             {actionMsg}
           </p>
         )}
@@ -226,13 +229,20 @@ export default function ClaimPortal() {
             <p style={{ fontSize: '0.85rem', color: '#4A6B8A' }}>Step 2 of 5: Verify identity</p>
             {claim.pinRequired ? (
               <>
-                <p style={{ fontSize: '0.85rem', color: T.ink }}>Enter your verification PIN:</p>
+                <label htmlFor="claim-pin" style={{ display: 'block', fontSize: '0.85rem', color: T.ink, marginBottom: 4 }}>
+                  Verification PIN
+                </label>
                 <input
+                  id="claim-pin"
                   type="password"
                   value={pin}
                   onChange={(e) => setPin(e.target.value)}
                   placeholder="PIN"
-                  style={{ display: 'block', marginBottom: 10, padding: '6px 10px', fontFamily: 'monospace', border: `1px solid ${T.border}`, borderRadius: 4, width: '100%', boxSizing: 'border-box' }}
+                  aria-required="true"
+                  aria-describedby={actionMsg ? 'claim-action-msg' : undefined}
+                  style={{ display: 'block', marginBottom: 10, padding: '6px 10px', fontFamily: 'monospace', border: `1px solid ${T.border}`, borderRadius: 4, width: '100%', boxSizing: 'border-box', outline: 'none' }}
+                  onFocus={e => { e.currentTarget.style.outline = '2px solid #1A6B9A'; e.currentTarget.style.outlineOffset = '2px'; }}
+                  onBlur={e => { e.currentTarget.style.outline = 'none'; }}
                 />
               </>
             ) : (

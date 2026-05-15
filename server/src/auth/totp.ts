@@ -1,4 +1,4 @@
-import { createHmac, randomBytes } from 'crypto';
+import { createHmac, randomBytes, timingSafeEqual } from 'crypto';
 import { encryptField, decryptField } from '../services/field-encrypt.js';
 
 // RFC 6238 TOTP — 30-second window, SHA-1, 6 digits
@@ -73,6 +73,55 @@ export function generateTotpCode(secretBase32: string): string {
   const counter = Math.floor(Date.now() / 1000 / 30);
   return hotp(base32Decode(secretBase32), counter);
 }
+
+// ─── Recovery codes ───────────────────────────────────────────────────────────
+
+/** Generate 8 single-use recovery codes (8 hex chars each). */
+export function generateRecoveryCodes(): string[] {
+  return Array.from({ length: 8 }, () => randomBytes(4).toString('hex'));
+}
+
+/** Encrypt a recovery codes array for storage. */
+export function encryptRecoveryCodes(codes: string[], fieldKey: string): string {
+  const json = JSON.stringify(codes);
+  const encrypted = encryptField(json, fieldKey);
+  if (!encrypted) throw new Error('Failed to encrypt recovery codes');
+  return encrypted;
+}
+
+/** Decrypt and parse recovery codes. */
+export function decryptRecoveryCodes(encrypted: string, fieldKey: string): string[] {
+  const json = decryptField(encrypted, fieldKey);
+  if (!json) throw new Error('Failed to decrypt recovery codes');
+  return JSON.parse(json) as string[];
+}
+
+/**
+ * Verify one recovery code using constant-time comparison.
+ * Returns the remaining codes array if valid, or null if invalid.
+ */
+export function useRecoveryCode(
+  code: string,
+  encryptedCodes: string,
+  fieldKey: string,
+): string[] | null {
+  const codes = decryptRecoveryCodes(encryptedCodes, fieldKey);
+  // Our codes are always 8 hex chars. Normalise input to same length for timingSafeEqual.
+  const normalised = Buffer.from(code.toLowerCase().padEnd(8, ' ').slice(0, 8));
+
+  // Always iterate all codes — no early return — to prevent timing side-channel.
+  let matchIndex = -1;
+  for (let i = 0; i < codes.length; i++) {
+    const stored = Buffer.from(codes[i].toLowerCase());
+    if (stored.length === normalised.length && timingSafeEqual(normalised, stored)) {
+      if (matchIndex === -1) matchIndex = i;
+    }
+  }
+  if (matchIndex === -1) return null;
+  return [...codes.slice(0, matchIndex), ...codes.slice(matchIndex + 1)];
+}
+
+// ─── TOTP verification ────────────────────────────────────────────────────────
 
 export function verifyTotpCode(
   code: string,

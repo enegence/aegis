@@ -52,40 +52,63 @@ interface SetupProps {
   onSetupComplete: () => void;
 }
 
-function FieldError({ msg }: { msg: string }) {
-  return msg ? <p style={{ color: '#c0392b', fontSize: '0.78rem', margin: '4px 0 0' }}>{msg}</p> : null;
+function FieldError({ id, msg }: { id?: string; msg: string }) {
+  return msg ? (
+    <p id={id} role="alert" aria-live="assertive" style={{ color: '#c0392b', fontSize: '0.78rem', margin: '4px 0 0' }}>
+      {msg}
+    </p>
+  ) : null;
 }
 
-function Label({ children }: { children: React.ReactNode }) {
-  return <label style={{ fontSize: '0.82rem', color: T.muted, display: 'block', marginBottom: 4 }}>{children}</label>;
+function Label({ htmlFor, children }: { htmlFor: string; children: React.ReactNode }) {
+  return (
+    <label htmlFor={htmlFor} style={{ fontSize: '0.82rem', color: T.muted, display: 'block', marginBottom: 4 }}>
+      {children}
+    </label>
+  );
 }
 
-function Input({ value, onChange, type = 'text', placeholder }: {
-  value: string; onChange: (v: string) => void; type?: string; placeholder?: string;
+function Input({ id, value, onChange, type = 'text', placeholder, required, describedBy }: {
+  id: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string;
+  required?: boolean; describedBy?: string;
 }) {
+  const [focused, setFocused] = useState(false);
   return (
     <input
+      id={id}
       type={type}
       value={value}
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
+      aria-required={required ? 'true' : undefined}
+      aria-describedby={describedBy}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
       style={{
         width: '100%', boxSizing: 'border-box', padding: '8px 10px',
         fontFamily: 'monospace', fontSize: '0.85rem',
         border: `1.5px solid ${T.border}`, borderRadius: 4,
-        background: '#fff', color: T.ink, outline: 'none',
+        background: '#fff', color: T.ink,
+        outline: focused ? '2px solid #1A6B9A' : 'none',
+        outlineOffset: focused ? '2px' : undefined,
       }}
     />
   );
 }
 
-function Btn({ onClick, disabled, children, secondary }: {
+function Btn({ onClick, disabled, children, secondary, type, 'aria-busy': ariaBusy }: {
   onClick?: () => void; disabled?: boolean; children: React.ReactNode; secondary?: boolean;
+  type?: 'button' | 'submit'; 'aria-busy'?: boolean;
 }) {
+  const [focused, setFocused] = useState(false);
   return (
     <button
+      type={type ?? 'button'}
       onClick={onClick}
       disabled={disabled}
+      aria-busy={ariaBusy}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
       style={{
         padding: '9px 20px', fontFamily: 'monospace', fontSize: '0.85rem',
         background: secondary ? 'transparent' : (disabled ? '#8AAAC8' : T.accent),
@@ -93,6 +116,8 @@ function Btn({ onClick, disabled, children, secondary }: {
         border: secondary ? `1px solid ${T.border}` : 'none',
         borderRadius: 4, cursor: disabled ? 'not-allowed' : 'pointer',
         marginRight: 8,
+        outline: focused ? '2px solid #1A6B9A' : 'none',
+        outlineOffset: focused ? '2px' : undefined,
       }}
     >
       {children}
@@ -190,21 +215,26 @@ export default function Setup({ onSetupComplete }: SetupProps) {
     <div style={{ minHeight: '100vh', background: T.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       <div style={{ width: '100%', maxWidth: 520, background: T.surface, border: `2px solid ${T.border}`, borderRadius: '4px 12px 4px 12px / 12px 4px 12px 4px', padding: 32 }}>
 
+        {/* aria-live region for async status */}
+        <div aria-live="polite" aria-atomic="true" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>
+          {submitting ? 'Creating your account…' : ''}
+        </div>
+
         {/* Header */}
         <div style={{ marginBottom: 24 }}>
           <div style={{ fontFamily: "'Caveat', cursive, sans-serif", fontSize: '1.8rem', fontWeight: 'bold', color: T.ink, marginBottom: 4 }}>
             Aegis Setup
           </div>
-          <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+          <div role="progressbar" aria-valuenow={step + 1} aria-valuemin={1} aria-valuemax={steps.length} aria-label={`Step ${step + 1} of ${steps.length}: ${steps[step]}`} style={{ display: 'flex', gap: 6, marginTop: 8 }}>
             {steps.map((s, i) => (
-              <div key={s} style={{
+              <div key={s} aria-hidden="true" style={{
                 height: 4, flex: 1, borderRadius: 2,
                 background: i <= step ? T.accent : T.border,
                 transition: 'background 0.2s',
               }} />
             ))}
           </div>
-          <p style={{ fontSize: '0.78rem', color: T.muted, marginTop: 6 }}>
+          <p aria-hidden="true" style={{ fontSize: '0.78rem', color: T.muted, marginTop: 6 }}>
             Step {step + 1} of {steps.length}: {steps[step]}
           </p>
         </div>
@@ -240,22 +270,22 @@ export default function Setup({ onSetupComplete }: SetupProps) {
           <div>
             <h2 style={{ fontSize: '1.1rem', color: T.ink, marginTop: 0 }}>Owner Profile</h2>
             <div style={{ marginBottom: 14 }}>
-              <Label>Display name *</Label>
-              <Input value={data.displayName} onChange={v => set('displayName', v)} placeholder="Your name" />
-              <FieldError msg={fieldErrors.displayName ?? ''} />
+              <Label htmlFor="setup-displayName">Display name *</Label>
+              <Input id="setup-displayName" value={data.displayName} onChange={v => set('displayName', v)} placeholder="Your name" required describedBy={fieldErrors.displayName ? 'err-displayName' : undefined} />
+              <FieldError id="err-displayName" msg={fieldErrors.displayName ?? ''} />
             </div>
             <div style={{ marginBottom: 14 }}>
-              <Label>Email *</Label>
-              <Input value={data.email} onChange={v => set('email', v)} type="email" placeholder="you@example.com" />
-              <FieldError msg={fieldErrors.email ?? ''} />
+              <Label htmlFor="setup-email">Email *</Label>
+              <Input id="setup-email" value={data.email} onChange={v => set('email', v)} type="email" placeholder="you@example.com" required describedBy={fieldErrors.email ? 'err-email' : undefined} />
+              <FieldError id="err-email" msg={fieldErrors.email ?? ''} />
             </div>
             <div style={{ marginBottom: 14 }}>
-              <Label>Phone (optional)</Label>
-              <Input value={data.phone} onChange={v => set('phone', v)} type="tel" placeholder="+1 555 000 0000" />
+              <Label htmlFor="setup-phone">Phone (optional)</Label>
+              <Input id="setup-phone" value={data.phone} onChange={v => set('phone', v)} type="tel" placeholder="+1 555 000 0000" />
             </div>
             <div style={{ marginBottom: 20 }}>
-              <Label>Timezone</Label>
-              <Input value={data.timezone} onChange={v => set('timezone', v)} placeholder="UTC" />
+              <Label htmlFor="setup-timezone">Timezone</Label>
+              <Input id="setup-timezone" value={data.timezone} onChange={v => set('timezone', v)} placeholder="UTC" />
             </div>
             <Btn secondary onClick={() => setStep(s => s - 1)}>← Back</Btn>
             <Btn onClick={nextStep}>Next →</Btn>
@@ -271,14 +301,14 @@ export default function Setup({ onSetupComplete }: SetupProps) {
               to reset the database. We recommend a passphrase of 4+ random words.
             </p>
             <div style={{ marginBottom: 14 }}>
-              <Label>Password (min 12 characters) *</Label>
-              <Input value={data.password} onChange={v => set('password', v)} type="password" placeholder="••••••••••••" />
-              <FieldError msg={fieldErrors.password ?? ''} />
+              <Label htmlFor="setup-password">Password (min 12 characters) *</Label>
+              <Input id="setup-password" value={data.password} onChange={v => set('password', v)} type="password" placeholder="••••••••••••" required describedBy={fieldErrors.password ? 'err-password' : undefined} />
+              <FieldError id="err-password" msg={fieldErrors.password ?? ''} />
             </div>
             <div style={{ marginBottom: 20 }}>
-              <Label>Confirm password *</Label>
-              <Input value={data.confirmPassword} onChange={v => set('confirmPassword', v)} type="password" placeholder="••••••••••••" />
-              <FieldError msg={fieldErrors.confirmPassword ?? ''} />
+              <Label htmlFor="setup-confirmPassword">Confirm password *</Label>
+              <Input id="setup-confirmPassword" value={data.confirmPassword} onChange={v => set('confirmPassword', v)} type="password" placeholder="••••••••••••" required describedBy={fieldErrors.confirmPassword ? 'err-confirmPassword' : undefined} />
+              <FieldError id="err-confirmPassword" msg={fieldErrors.confirmPassword ?? ''} />
             </div>
             <Btn secondary onClick={() => setStep(s => s - 1)}>← Back</Btn>
             <Btn onClick={nextStep}>Next →</Btn>
@@ -292,21 +322,31 @@ export default function Setup({ onSetupComplete }: SetupProps) {
             <p style={{ fontSize: '0.82rem', color: T.muted, marginTop: 0 }}>
               Choose how Aegis releases your information. You can change this later in Settings.
             </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {DEPLOYMENT_MODES.map(mode => (
-                <div
-                  key={mode.id}
-                  onClick={() => set('deploymentMode', mode.id)}
-                  style={{
-                    padding: '12px 14px', borderRadius: 4, cursor: 'pointer',
-                    border: `2px solid ${data.deploymentMode === mode.id ? T.accent : T.border}`,
-                    background: data.deploymentMode === mode.id ? '#e8f0f8' : '#fff',
-                  }}
-                >
-                  <div style={{ fontSize: '0.88rem', fontWeight: 600, color: T.ink }}>{mode.label}</div>
-                  <div style={{ fontSize: '0.8rem', color: T.muted, marginTop: 4 }}>{mode.description}</div>
-                </div>
-              ))}
+            <div role="radiogroup" aria-label="Deployment mode" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {DEPLOYMENT_MODES.map(mode => {
+                const selected = data.deploymentMode === mode.id;
+                return (
+                  <div
+                    key={mode.id}
+                    role="radio"
+                    aria-checked={selected}
+                    tabIndex={selected ? 0 : -1}
+                    onClick={() => set('deploymentMode', mode.id)}
+                    onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); set('deploymentMode', mode.id); } }}
+                    style={{
+                      padding: '12px 14px', borderRadius: 4, cursor: 'pointer',
+                      border: `2px solid ${selected ? T.accent : T.border}`,
+                      background: selected ? '#e8f0f8' : '#fff',
+                      outline: 'none',
+                    }}
+                    onFocus={e => { e.currentTarget.style.outline = '2px solid #1A6B9A'; e.currentTarget.style.outlineOffset = '2px'; }}
+                    onBlur={e => { e.currentTarget.style.outline = 'none'; }}
+                  >
+                    <div style={{ fontSize: '0.88rem', fontWeight: 600, color: T.ink }}>{mode.label}</div>
+                    <div style={{ fontSize: '0.8rem', color: T.muted, marginTop: 4 }}>{mode.description}</div>
+                  </div>
+                );
+              })}
             </div>
             <div style={{ marginTop: 20 }}>
               <Btn secondary onClick={() => setStep(s => s - 1)}>← Back</Btn>
@@ -325,11 +365,14 @@ export default function Setup({ onSetupComplete }: SetupProps) {
               <p style={{ margin: '6px 0 0' }}>{selectedMode.limitation}</p>
             </div>
 
-            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 14, cursor: 'pointer' }}>
+            <label htmlFor="ack-general" style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 4, cursor: 'pointer' }}>
               <input
+                id="ack-general"
                 type="checkbox"
                 checked={data.acknowledgedGeneral}
                 onChange={e => set('acknowledgedGeneral', e.target.checked)}
+                aria-required="true"
+                aria-describedby={fieldErrors.acknowledgedGeneral ? 'err-ack-general' : undefined}
                 style={{ marginTop: 2, flexShrink: 0 }}
               />
               <span style={{ fontSize: '0.82rem', color: T.ink, lineHeight: 1.5 }}>
@@ -337,20 +380,25 @@ export default function Setup({ onSetupComplete }: SetupProps) {
                 Release reliability depends on the deployment mode and configured services.
               </span>
             </label>
-            <FieldError msg={fieldErrors.acknowledgedGeneral ?? ''} />
+            <FieldError id="err-ack-general" msg={fieldErrors.acknowledgedGeneral ?? ''} />
 
-            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 20, cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={data.acknowledgedMode}
-                onChange={e => set('acknowledgedMode', e.target.checked)}
-                style={{ marginTop: 2, flexShrink: 0 }}
-              />
-              <span style={{ fontSize: '0.82rem', color: T.ink, lineHeight: 1.5 }}>
-                I understand the limitations of {selectedMode.label} described above.
-              </span>
-            </label>
-            <FieldError msg={fieldErrors.acknowledgedMode ?? ''} />
+            <div style={{ marginBottom: 20 }}>
+              <label htmlFor="ack-mode" style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 4, cursor: 'pointer' }}>
+                <input
+                  id="ack-mode"
+                  type="checkbox"
+                  checked={data.acknowledgedMode}
+                  onChange={e => set('acknowledgedMode', e.target.checked)}
+                  aria-required="true"
+                  aria-describedby={fieldErrors.acknowledgedMode ? 'err-ack-mode' : undefined}
+                  style={{ marginTop: 2, flexShrink: 0 }}
+                />
+                <span style={{ fontSize: '0.82rem', color: T.ink, lineHeight: 1.5 }}>
+                  I understand the limitations of {selectedMode.label} described above.
+                </span>
+              </label>
+              <FieldError id="err-ack-mode" msg={fieldErrors.acknowledgedMode ?? ''} />
+            </div>
 
             <Btn secondary onClick={() => setStep(s => s - 1)}>← Back</Btn>
             <Btn onClick={nextStep}>Next →</Btn>
@@ -373,13 +421,13 @@ export default function Setup({ onSetupComplete }: SetupProps) {
             </div>
 
             {error && (
-              <div style={{ background: '#fde', border: '1px solid #c0392b', borderRadius: 4, padding: 10, marginBottom: 14, fontSize: '0.82rem', color: '#c0392b' }}>
+              <div role="alert" aria-live="assertive" style={{ background: '#fde', border: '1px solid #c0392b', borderRadius: 4, padding: 10, marginBottom: 14, fontSize: '0.82rem', color: '#c0392b' }}>
                 {error}
               </div>
             )}
 
             <Btn secondary onClick={() => setStep(s => s - 1)}>← Back</Btn>
-            <Btn onClick={submit} disabled={submitting}>
+            <Btn onClick={submit} disabled={submitting} aria-busy={submitting}>
               {submitting ? 'Creating account…' : 'Create account →'}
             </Btn>
           </div>

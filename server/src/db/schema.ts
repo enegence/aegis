@@ -9,6 +9,7 @@ export const owner = sqliteTable('owner', {
   passwordHash: text('password_hash').notNull(),
   totpSecretEncrypted: text('totp_secret_encrypted'),
   totpEnabled: integer('totp_enabled', { mode: 'boolean' }).notNull().default(false),
+  totpRecoveryCodesEncrypted: text('totp_recovery_codes_encrypted'),
   setupComplete: integer('setup_complete', { mode: 'boolean' }).notNull().default(false),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),

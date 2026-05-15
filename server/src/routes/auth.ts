@@ -104,7 +104,9 @@ export async function authRoutes(app: FastifyInstance) {
   app.post('/api/setup', handleSetup);
   app.post('/api/auth/setup', handleSetup);
 
-  app.post('/api/auth/login', async (req, reply) => {
+  app.post('/api/auth/login', {
+    config: { rateLimit: { max: 10, timeWindow: '15 minutes' } },
+  }, async (req, reply) => {
     const body = loginSchema.parse(req.body);
     const [ownerRow] = await app.db.select().from(owner).limit(1);
 

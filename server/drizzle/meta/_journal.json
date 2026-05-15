@@ -43,6 +43,13 @@
       "when": 1747785600000,
       "tag": "0005_phase5_worker_heartbeat",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1747872000000,
+      "tag": "0006_phase5_security",
+      "breakpoints": true
     }
   ]
 }

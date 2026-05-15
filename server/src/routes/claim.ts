@@ -115,7 +115,9 @@ export async function claimRoutes(app: FastifyInstance) {
   });
 
   // POST /api/claim/:token/verify — verify identity (PIN or no-PIN confirmation)
-  app.post('/api/claim/:token/verify', async (req, reply) => {
+  app.post('/api/claim/:token/verify', {
+    config: { rateLimit: { max: 10, timeWindow: '15 minutes' } },
+  }, async (req, reply) => {
     const { token } = req.params as { token: string };
     const claim = await lookupActiveClaim(app, token, reply);
     if (!claim) return;

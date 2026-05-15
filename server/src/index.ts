@@ -49,6 +49,9 @@ export async function buildApp(overrides: Partial<AppConfig & { dbPath: string }
     credentials: true,
   });
   await app.register(formbody);
+  await app.register(import('@fastify/rate-limit'), {
+    global: false, // only apply to routes that opt-in via config.rateLimit
+  });
 
   app.decorate('config', config);
   app.decorate('db', db);
