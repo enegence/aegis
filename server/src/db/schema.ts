@@ -9,6 +9,7 @@ export const owner = sqliteTable('owner', {
   passwordHash: text('password_hash').notNull(),
   totpSecretEncrypted: text('totp_secret_encrypted'),
   totpEnabled: integer('totp_enabled', { mode: 'boolean' }).notNull().default(false),
+  totpRecoveryCodesEncrypted: text('totp_recovery_codes_encrypted'),
   setupComplete: integer('setup_complete', { mode: 'boolean' }).notNull().default(false),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
@@ -182,6 +183,34 @@ export const encryptionKeys = sqliteTable('encryption_keys', {
   rotatedAt: integer('rotated_at', { mode: 'timestamp' }),
 });
 
+export const idempotencyKeys = sqliteTable('idempotency_keys', {
+  key: text('key').primaryKey(),
+  scope: text('scope').notNull(),
+  resultJson: text('result_json'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  expiresAt: integer('expires_at', { mode: 'timestamp' }),
+});
+
+export const notificationDeliveries = sqliteTable('notification_deliveries', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  releaseRunId: integer('release_run_id').references(() => releaseRuns.id, { onDelete: 'cascade' }),
+  claimId: integer('claim_id'),
+  contactId: integer('contact_id').notNull(),
+  channel: text('channel').notNull(), // 'email' | 'telegram'
+  provider: text('provider').notNull(),
+  // queued|sending|sent|delivered|failed_retryable|failed_permanent|cancelled
+  status: text('status').notNull().default('queued'),
+  attemptCount: integer('attempt_count').notNull().default(0),
+  lastAttemptAt: integer('last_attempt_at', { mode: 'timestamp' }),
+  nextAttemptAt: integer('next_attempt_at', { mode: 'timestamp' }),
+  providerMessageId: text('provider_message_id'),
+  lastErrorCode: text('last_error_code'),
+  lastErrorMessageRedacted: text('last_error_message_redacted'),
+  payloadHash: text('payload_hash'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+});
+
 export const localAcknowledgements = sqliteTable('local_acknowledgements', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   ownerId: integer('owner_id').notNull().references(() => owner.id, { onDelete: 'cascade' }),
@@ -189,4 +218,16 @@ export const localAcknowledgements = sqliteTable('local_acknowledgements', {
   contextId: text('context_id').notNull(),     // e.g. switch ID or mode name
   version: text('version').notNull(),          // terms/policy version string
   acknowledgedAt: integer('acknowledged_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+});
+
+// worker_heartbeats: single-row upsert table (singleton id = 'singleton').
+// Records last tick time, last success, last error for operational health checks.
+// lastErrorRedacted stores error type/code only — no stack traces, no user data.
+export const workerHeartbeats = sqliteTable('worker_heartbeats', {
+  id: text('id').primaryKey().default('singleton'),
+  lastTickAt: integer('last_tick_at', { mode: 'timestamp' }),
+  lastSuccessAt: integer('last_success_at', { mode: 'timestamp' }),
+  lastErrorAt: integer('last_error_at', { mode: 'timestamp' }),
+  lastErrorRedacted: text('last_error_redacted'),
+  tickDurationMs: integer('tick_duration_ms'),
 });

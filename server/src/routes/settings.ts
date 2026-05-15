@@ -39,6 +39,12 @@ const RelayUpdateSchema = z.object({
   apiKey: z.string().optional(), // empty = keep existing
 });
 
+const RelayLinkExchangeSchema = z.object({
+  relayUrl: z.string().url(),
+  code: z.string().min(1),
+  instanceId: z.string().optional(),
+});
+
 const PacketsUpdateSchema = z.object({
   retentionDays: z.number().int().min(0).max(3650).nullable(),
 });
@@ -203,13 +209,14 @@ export async function settingsRoutes(app: FastifyInstance) {
     const s3Region = await getPlainSetting(db, 's3_region');
     const s3Prefix = await getPlainSetting(db, 's3_prefix');
     const s3Endpoint = await getPlainSetting(db, 's3_endpoint');
-    const s3HasKey = (await getSettingRow(db, 's3_access_key_id_encrypted'))?.value != null;
+    const s3HasKey = (await getSettingRow(db, 's3_secret_access_key_encrypted'))?.value != null;
     const s3LastVerified = await getPlainSetting(db, 's3_last_verified_at');
 
     // Relay
     const relayUrl = await getPlainSetting(db, 'relay_url');
     const relayHasKey = (await getSettingRow(db, 'relay_api_key_encrypted'))?.value != null;
     const relayLastHeartbeat = await getPlainSetting(db, 'relay_last_heartbeat_at');
+    const relayConnectionId = await getPlainSetting(db, 'relay_connection_id');
 
     // Deployment mode and packets
     const deploymentMode = await getPlainSetting(db, 'deployment_mode') ?? 'vault';
@@ -255,6 +262,7 @@ export async function settingsRoutes(app: FastifyInstance) {
         relayUrl,
         apiKeyConfigured: relayHasKey,
         lastHeartbeatAt: relayLastHeartbeat,
+        connectionId: relayConnectionId,
       },
       security: {
         totpEnabled: ownerRow?.totpEnabled ?? false,
@@ -335,7 +343,7 @@ export async function settingsRoutes(app: FastifyInstance) {
 
     if (body.secretAccessKey && body.secretAccessKey.length > 0) {
       const encrypted = encryptField(body.secretAccessKey, fek)!;
-      await upsertSetting(db, 's3_access_key_id_encrypted', encrypted, true);
+      await upsertSetting(db, 's3_secret_access_key_encrypted', encrypted, true);
     }
 
     await writeAuditEvent(db, {
@@ -515,6 +523,84 @@ export async function settingsRoutes(app: FastifyInstance) {
       await db.delete(appSettings).where(eq(appSettings.key, key));
     }
     await writeAuditEvent(db, { eventType: 'credentials_cleared', actorType: 'owner', actorId: String(req.ownerId), metadata: {} });
+    return reply.send({ ok: true });
+  });
+
+  // POST /api/settings/relay/link-exchange — server-to-server relay linking via auth code
+  app.post('/api/settings/relay/link-exchange', {
+    preHandler: [app.requireAuth, app.requireCsrf],
+  }, async (req, reply) => {
+    const parseResult = RelayLinkExchangeSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      return reply.status(400).send({ error: 'Validation failed', issues: parseResult.error.issues });
+    }
+    const { relayUrl, code, instanceId } = parseResult.data;
+    const fek = app.config.fieldEncryptionKey;
+    const db = app.db;
+
+    // Call SaaS exchange endpoint
+    let exchangeResult: { relayEndpoint: string; apiKey: string; connectionId: string };
+    try {
+      const res = await fetch(`${relayUrl}/api/relay/link/exchange`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, state: 'oss-link', ...(instanceId ? { instanceId } : {}) }),
+        signal: AbortSignal.timeout(10000),
+      });
+
+      if (res.status === 410) {
+        return reply.status(410).send({ error: 'Link code has expired or been used' });
+      }
+      if (res.status === 400) {
+        const body = await res.json() as { error?: string };
+        return reply.status(400).send({ error: body.error ?? 'Bad request' });
+      }
+      if (!res.ok) {
+        return reply.status(502).send({ error: 'Relay server returned an error' });
+      }
+
+      exchangeResult = await res.json() as { relayEndpoint: string; apiKey: string; connectionId: string };
+    } catch {
+      return reply.status(502).send({ error: 'Could not reach relay server' });
+    }
+
+    // Store settings: relayUrl plaintext, apiKey encrypted, connectionId plaintext
+    await upsertSetting(db, 'relay_url', exchangeResult.relayEndpoint ?? relayUrl, false);
+    const encryptedApiKey = encryptField(exchangeResult.apiKey, fek)!;
+    await upsertSetting(db, 'relay_api_key_encrypted', encryptedApiKey, true);
+    await upsertSetting(db, 'relay_connection_id', exchangeResult.connectionId, false);
+
+    await writeAuditEvent(db, {
+      eventType: 'relay_linked',
+      actorType: 'owner',
+      actorId: String(req.ownerId),
+      metadata: { connectionId: exchangeResult.connectionId },
+    });
+
+    return reply.send({
+      ok: true,
+      relayUrl: exchangeResult.relayEndpoint ?? relayUrl,
+      connectionId: exchangeResult.connectionId,
+    });
+  });
+
+  // DELETE /api/settings/relay/unlink — clear all relay credentials
+  app.delete('/api/settings/relay/unlink', {
+    preHandler: [app.requireAuth, app.requireCsrf],
+  }, async (req, reply) => {
+    const db = app.db;
+    const keysToRemove = ['relay_url', 'relay_api_key_encrypted', 'relay_connection_id', 'relay_last_heartbeat_at'];
+    for (const key of keysToRemove) {
+      await db.delete(appSettings).where(eq(appSettings.key, key));
+    }
+
+    await writeAuditEvent(db, {
+      eventType: 'relay_unlinked',
+      actorType: 'owner',
+      actorId: String(req.ownerId),
+      metadata: {},
+    });
+
     return reply.send({ ok: true });
   });
 

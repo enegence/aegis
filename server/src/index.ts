@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url';
 import { existsSync } from 'fs';
 import { loadConfig, type AppConfig } from './config.js';
 import { getDb, createTestDb, type AegisDb } from './db/index.js';
+import { createLoggerConfig } from './logger.js';
 import authPlugin from './auth/plugin.js';
 import { healthRoutes } from './routes/health.js';
 import { authRoutes } from './routes/auth.js';
@@ -21,6 +22,7 @@ import { claimRoutes } from './routes/claim.js';
 import { releaseRoutes } from './routes/release.js';
 import { auditRoutes } from './routes/audit.js';
 import { securityRoutes } from './routes/security.js';
+import { exportRoutes } from './routes/export.js';
 import { startWorker, type WorkerHandle } from './worker/index.js';
 
 declare module 'fastify' {
@@ -34,7 +36,8 @@ declare module 'fastify' {
 
 export async function buildApp(overrides: Partial<AppConfig & { dbPath: string }> = {}) {
   const config = loadConfig(overrides);
-  const app = Fastify({ logger: !config.testing });
+  const loggerConfig = createLoggerConfig({ testing: !!config.testing });
+  const app = Fastify({ logger: loggerConfig as any });
 
   const db = config.testing && overrides.dbPath === ':memory:'
     ? createTestDb()
@@ -46,6 +49,9 @@ export async function buildApp(overrides: Partial<AppConfig & { dbPath: string }
     credentials: true,
   });
   await app.register(formbody);
+  await app.register(import('@fastify/rate-limit'), {
+    global: false, // only apply to routes that opt-in via config.rateLimit
+  });
 
   app.decorate('config', config);
   app.decorate('db', db);
@@ -63,6 +69,7 @@ export async function buildApp(overrides: Partial<AppConfig & { dbPath: string }
   await app.register(releaseRoutes);
   await app.register(auditRoutes);
   await app.register(securityRoutes);
+  await app.register(exportRoutes);
 
   if (config.testing && overrides.dbPath === ':memory:') {
     const { migrate } = await import('drizzle-orm/better-sqlite3/migrator');

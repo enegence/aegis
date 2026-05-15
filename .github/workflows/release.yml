@@ -1,0 +1,40 @@
+name: Release
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    name: Build and Package OSS Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - name: Build shared packages
+        run: npm run build --workspace=packages/shared --workspace=packages/contracts
+      - name: Run server tests
+        run: npm test
+        working-directory: server
+      - name: Build full application
+        run: npm run build
+      - name: Build Docker image
+        run: docker build -t aegis-core:${{ github.ref_name }} .
+      - name: Create pinned docker-compose release artifact
+        # Replace "build: ." with the tagged image so the release artifact is pinned
+        run: |
+          sed 's|build: \.|image: ghcr.io/${{ github.repository_owner }}/aegis-core:${{ github.ref_name }}|g' \
+            docker-compose.yml > docker-compose-${{ github.ref_name }}.yml
+          cp .env.example .env.example-${{ github.ref_name }}
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            docker-compose-${{ github.ref_name }}.yml
+            .env.example-${{ github.ref_name }}
+          generate_release_notes: true
+          draft: true

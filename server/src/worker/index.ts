@@ -1,5 +1,5 @@
-import { inArray } from 'drizzle-orm';
-import { switches, releaseRuns } from '../db/schema.js';
+import { inArray, eq } from 'drizzle-orm';
+import { switches, releaseRuns, workerHeartbeats } from '../db/schema.js';
 import type { AegisDb } from '../db/index.js';
 import type { SwitchRecord } from '../services/switch-repository.js';
 import { evaluateAndTransition } from '../services/switch-engine.js';
@@ -11,6 +11,8 @@ import {
   type ReleaseRunRecord,
   setActivePacket,
 } from '../repositories/release-run-repository.js';
+import { writeAuditEvent } from '../services/audit.js';
+import { purgeExpiredIdempotencyKeys } from '../services/idempotency-keys.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -74,6 +76,44 @@ async function loadEvaluableSwitches(db: AegisDb): Promise<SwitchRecord[]> {
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   }));
+}
+
+// ─── Worker restart recovery ──────────────────────────────────────────────────
+
+/**
+ * On startup, recover active/paused release runs.
+ *
+ * This ensures that if the worker restarts mid-cascade, it resumes from the
+ * current state rather than starting fresh (which could duplicate notifications).
+ * The actual deduplication for notifications/uploads is enforced by idempotency
+ * keys checked in the cascade/packet build layers.
+ */
+export async function recoverActiveReleaseRuns(db: AegisDb): Promise<number> {
+  const rows = await db
+    .select()
+    .from(releaseRuns)
+    .where(inArray(releaseRuns.status, ['active', 'cascade_active', 'paused']));
+
+  if (rows.length === 0) return 0;
+
+  const runIds = rows.map((r) => r.id);
+
+  await writeAuditEvent(db, {
+    eventType: 'worker_recovery_started',
+    actorType: 'system',
+    metadata: { activeRunCount: rows.length, runIds },
+  });
+
+  // The worker tick loop naturally picks up active/cascade_active runs
+  // via loadActiveReleaseRuns() on the next tick — no explicit re-queue needed.
+
+  await writeAuditEvent(db, {
+    eventType: 'worker_recovery_completed',
+    actorType: 'system',
+    metadata: { activeRunCount: rows.length, runIds },
+  });
+
+  return rows.length;
 }
 
 // ─── Release run cascade helpers ──────────────────────────────────────────────
@@ -151,6 +191,50 @@ async function progressReleaseRuns(
   }
 }
 
+// ─── Heartbeat persistence ─────────────────────────────────────────────────────
+
+async function upsertHeartbeatTick(db: AegisDb, now: Date): Promise<void> {
+  try {
+    await db
+      .insert(workerHeartbeats)
+      .values({ id: 'singleton', lastTickAt: now })
+      .onConflictDoUpdate({
+        target: workerHeartbeats.id,
+        set: { lastTickAt: now },
+      });
+  } catch {
+    // Non-fatal — heartbeat table may not exist yet (pre-migration)
+  }
+}
+
+async function upsertHeartbeatSuccess(db: AegisDb, now: Date, durationMs: number): Promise<void> {
+  try {
+    await db
+      .insert(workerHeartbeats)
+      .values({ id: 'singleton', lastTickAt: now, lastSuccessAt: now, tickDurationMs: durationMs })
+      .onConflictDoUpdate({
+        target: workerHeartbeats.id,
+        set: { lastSuccessAt: now, tickDurationMs: durationMs },
+      });
+  } catch {
+    // Non-fatal
+  }
+}
+
+async function upsertHeartbeatError(db: AegisDb, now: Date, errorRedacted: string): Promise<void> {
+  try {
+    await db
+      .insert(workerHeartbeats)
+      .values({ id: 'singleton', lastTickAt: now, lastErrorAt: now, lastErrorRedacted: errorRedacted })
+      .onConflictDoUpdate({
+        target: workerHeartbeats.id,
+        set: { lastErrorAt: now, lastErrorRedacted: errorRedacted },
+      });
+  } catch {
+    // Non-fatal
+  }
+}
+
 // ─── runWorkerOnce ─────────────────────────────────────────────────────────────
 
 export async function runWorkerOnce(
@@ -215,6 +299,14 @@ export function startWorker(db: AegisDb, options?: WorkerOptions): WorkerHandle 
 
   const syncConfig = options?.syncConfig;
   let running = true;
+  let tickCount = 0;
+  const PURGE_INTERVAL_TICKS = 100;
+
+  // Recovery: on startup, find and log any in-flight release runs so the worker
+  // can resume from current state without restarting from scratch.
+  recoverActiveReleaseRuns(db).catch((err) =>
+    console.error('[worker] recovery error:', err),
+  );
 
   if (options?.runImmediately) {
     runWorkerOnce(db, new Date(), syncConfig).catch(console.error);
@@ -222,9 +314,22 @@ export function startWorker(db: AegisDb, options?: WorkerOptions): WorkerHandle 
 
   const timer = setInterval(async () => {
     if (!running) return;
+    const tickStart = Date.now();
+    const now = new Date();
+    await upsertHeartbeatTick(db, now);
     try {
-      await runWorkerOnce(db, new Date(), syncConfig);
+      await runWorkerOnce(db, now, syncConfig);
+      const durationMs = Date.now() - tickStart;
+      await upsertHeartbeatSuccess(db, now, durationMs);
+      tickCount += 1;
+      if (tickCount % PURGE_INTERVAL_TICKS === 0) {
+        purgeExpiredIdempotencyKeys(db).catch((err) =>
+          console.error('[worker] purge idempotency keys error:', err),
+        );
+      }
     } catch (err) {
+      const errorRedacted = err instanceof Error ? err.constructor.name : 'UnknownError';
+      await upsertHeartbeatError(db, now, errorRedacted);
       console.error('[worker] tick error:', err);
     }
   }, intervalMs);

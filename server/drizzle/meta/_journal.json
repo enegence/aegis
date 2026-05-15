@@ -22,6 +22,34 @@
       "when": 1747180800000,
       "tag": "0002_phase3_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1747612800000,
+      "tag": "0003_phase5_idempotency",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1747699200000,
+      "tag": "0004_phase5_notification_deliveries",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1747785600000,
+      "tag": "0005_phase5_worker_heartbeat",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1747872000000,
+      "tag": "0006_phase5_security",
+      "breakpoints": true
     }
   ]
 }

@@ -118,6 +118,8 @@ export default function SecuritySettings({ data, onSaved }: Props) {
               type="button"
               onClick={() => data.totpEnabled ? setMode('disable') : startSetup()}
               disabled={loading}
+              aria-busy={loading}
+              aria-label={data.totpEnabled ? 'Disable two-factor authentication' : 'Enable two-factor authentication'}
               style={{
                 fontFamily: 'monospace', fontSize: '0.82rem', padding: '6px 14px',
                 background: data.totpEnabled ? 'transparent' : T.accent,
@@ -146,7 +148,7 @@ export default function SecuritySettings({ data, onSaved }: Props) {
               borderRadius: '4px', fontFamily: 'monospace', fontSize: '0.82rem',
             }}>
               <div style={{ ...labelStyle, marginBottom: '4px' }}>Manual entry secret</div>
-              <code style={{ wordBreak: 'break-all', letterSpacing: '0.1em', color: T.ink }}>
+              <code aria-label="TOTP manual entry secret" style={{ wordBreak: 'break-all', letterSpacing: '0.1em', color: T.ink }}>
                 {setup.secret}
               </code>
             </div>
@@ -156,28 +158,36 @@ export default function SecuritySettings({ data, onSaved }: Props) {
               borderRadius: '4px', fontSize: '0.75rem', fontFamily: 'monospace', color: '#4A6B8A',
             }}>
               <div style={{ ...labelStyle, marginBottom: '4px' }}>Or open in app:</div>
-              <a href={setup.otpauthUrl} style={{ color: T.accent, wordBreak: 'break-all' }}>
+              <a href={setup.otpauthUrl} aria-label="Open TOTP configuration in authenticator app" style={{ color: T.accent, wordBreak: 'break-all' }}>
                 {setup.otpauthUrl}
               </a>
             </div>
 
             <div style={{ maxWidth: '200px' }}>
-              <label style={labelStyle}>Enter 6-digit code to confirm</label>
+              <label htmlFor="totp-setup-code" style={labelStyle}>Enter 6-digit code to confirm</label>
               <input
+                id="totp-setup-code"
                 style={{ ...inputStyle, width: '100%', letterSpacing: '0.2em', textAlign: 'center' }}
                 type="text"
+                inputMode="numeric"
                 maxLength={6}
                 value={code}
                 onChange={e => setCode(e.target.value.replace(/\D/g, ''))}
                 placeholder="000000"
+                aria-required="true"
+                aria-describedby={error ? 'totp-setup-error' : undefined}
                 autoFocus
               />
             </div>
 
-            {error && <div style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: T.danger }}>{error}</div>}
+            {error && (
+              <div id="totp-setup-error" role="alert" aria-live="assertive" style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: T.danger }}>
+                {error}
+              </div>
+            )}
 
             <div style={{ display: 'flex', gap: '8px' }}>
-              <button type="button" onClick={confirmSetup} disabled={code.length !== 6 || loading} style={{
+              <button type="button" onClick={confirmSetup} disabled={code.length !== 6 || loading} aria-busy={loading} style={{
                 fontFamily: 'monospace', fontSize: '0.85rem', padding: '7px 16px',
                 background: code.length === 6 && !loading ? T.accent : T.border, color: '#fff',
                 border: `1.5px solid ${T.accent}`, borderRadius: '3px 6px 3px 6px / 6px 3px 6px 3px',
@@ -201,32 +211,43 @@ export default function SecuritySettings({ data, onSaved }: Props) {
             </p>
 
             <div>
-              <label style={labelStyle}>Passphrase</label>
+              <label htmlFor="totp-disable-password" style={labelStyle}>Passphrase</label>
               <input
+                id="totp-disable-password"
                 style={{ ...inputStyle, width: '100%', maxWidth: '300px' }}
                 type="password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="Your login passphrase"
+                aria-required="true"
+                aria-describedby={error ? 'totp-disable-error' : undefined}
               />
             </div>
 
             <div style={{ maxWidth: '200px' }}>
-              <label style={labelStyle}>Current TOTP code</label>
+              <label htmlFor="totp-disable-code" style={labelStyle}>Current TOTP code</label>
               <input
+                id="totp-disable-code"
                 style={{ ...inputStyle, width: '100%', letterSpacing: '0.2em', textAlign: 'center' }}
                 type="text"
+                inputMode="numeric"
                 maxLength={6}
                 value={code}
                 onChange={e => setCode(e.target.value.replace(/\D/g, ''))}
                 placeholder="000000"
+                aria-required="true"
+                aria-describedby={error ? 'totp-disable-error' : undefined}
               />
             </div>
 
-            {error && <div style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: T.danger }}>{error}</div>}
+            {error && (
+              <div id="totp-disable-error" role="alert" aria-live="assertive" style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: T.danger }}>
+                {error}
+              </div>
+            )}
 
             <div style={{ display: 'flex', gap: '8px' }}>
-              <button type="button" onClick={disableTotp} disabled={!password || code.length !== 6 || loading} style={{
+              <button type="button" onClick={disableTotp} disabled={!password || code.length !== 6 || loading} aria-busy={loading} style={{
                 fontFamily: 'monospace', fontSize: '0.85rem', padding: '7px 16px',
                 background: password && code.length === 6 && !loading ? T.danger : T.border, color: '#fff',
                 border: `1.5px solid ${T.danger}`, borderRadius: '3px 6px 3px 6px / 6px 3px 6px 3px',
@@ -242,9 +263,12 @@ export default function SecuritySettings({ data, onSaved }: Props) {
           </div>
         )}
 
-        {success && mode === 'idle' && (
-          <div style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: '#2E7D32', marginTop: '8px' }}>{success}</div>
-        )}
+        {/* Success and idle-mode error/success live region */}
+        <div aria-live="polite" aria-atomic="true">
+          {success && mode === 'idle' && (
+            <div style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: '#2E7D32', marginTop: '8px' }}>{success}</div>
+          )}
+        </div>
       </div>
 
       {/* Sessions */}

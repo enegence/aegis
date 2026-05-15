@@ -1,0 +1,25 @@
+name: CI
+on:
+  push:
+    branches: [master, oss-phase-4, oss-phase-5]
+  pull_request:
+    branches: [master]
+
+jobs:
+  test:
+    name: Unit & Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - name: Build shared packages
+        run: npm run build --workspace=packages/shared --workspace=packages/contracts
+      - name: Run server tests
+        run: npm test
+        working-directory: server
+      - name: Build full application (TypeScript + Vite)
+        run: npm run build
