@@ -6,6 +6,7 @@ import fastifyStatic from '@fastify/static';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { existsSync } from 'fs';
+import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { loadConfig, type AppConfig } from './config.js';
 import { getDb, createTestDb, type AegisDb } from './db/index.js';
 import { createLoggerConfig } from './logger.js';
@@ -38,6 +39,8 @@ export async function buildApp(overrides: Partial<AppConfig & { dbPath: string }
   const config = loadConfig(overrides);
   const loggerConfig = createLoggerConfig({ testing: !!config.testing });
   const app = Fastify({ logger: loggerConfig as any });
+  const __dirname = dirname(fileURLToPath(import.meta.url));
+  const migrationsFolder = resolve(__dirname, '../drizzle');
 
   const db = config.testing && overrides.dbPath === ':memory:'
     ? createTestDb()
@@ -72,11 +75,8 @@ export async function buildApp(overrides: Partial<AppConfig & { dbPath: string }
   await app.register(exportRoutes);
 
   if (config.testing && overrides.dbPath === ':memory:') {
-    const { migrate } = await import('drizzle-orm/better-sqlite3/migrator');
-    migrate(db, { migrationsFolder: './drizzle' });
+    migrate(db, { migrationsFolder });
   }
-
-  const __dirname = dirname(fileURLToPath(import.meta.url));
   const staticDir = resolve(__dirname, '../static');
   if (existsSync(staticDir)) {
     await app.register(fastifyStatic, {
@@ -99,6 +99,8 @@ export async function buildApp(overrides: Partial<AppConfig & { dbPath: string }
 async function start() {
   const app = await buildApp();
   const config = loadConfig();
+  const __dirname = dirname(fileURLToPath(import.meta.url));
+  const migrationsFolder = resolve(__dirname, '../drizzle');
 
   // Ensure data directory exists
   const { mkdirSync } = await import('fs');
@@ -113,6 +115,7 @@ async function start() {
   let workerHandle: WorkerHandle | null = null;
 
   try {
+    migrate(app.db, { migrationsFolder });
     await app.listen({ port: config.port, host: config.host });
     console.log(`Aegis server listening on ${config.host}:${config.port}`);
   } catch (err) {

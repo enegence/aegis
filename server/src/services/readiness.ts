@@ -223,8 +223,8 @@ export async function checkSwitchReadiness(
   ]);
 
   // Determine overall status
-  const hasNotReady = checks.some(c => c.required && c.status === 'not_ready');
-  const hasWarning = checks.some(c => c.status === 'warning');
+  const hasNotReady = checks.some((c: ReadinessCheck) => c.required && c.status === 'not_ready');
+  const hasWarning = checks.some((c: ReadinessCheck) => c.status === 'warning');
 
   let status: 'ready' | 'not_ready' | 'warning';
   if (hasNotReady) {

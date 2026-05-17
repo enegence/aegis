@@ -1,5 +1,5 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { z, ZodError } from 'zod';
+import { z } from 'zod';
 import { owner } from '../db/schema.js';
 import { hashPassword, verifyPassword } from '../auth/password.js';
 import { createSession, deleteSession } from '../auth/session.js';
@@ -107,7 +107,11 @@ export async function authRoutes(app: FastifyInstance) {
   app.post('/api/auth/login', {
     config: { rateLimit: { max: 10, timeWindow: '15 minutes' } },
   }, async (req, reply) => {
-    const body = loginSchema.parse(req.body);
+    const parseResult = loginSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      return reply.status(400).send({ error: 'Validation failed', issues: parseResult.error.issues });
+    }
+    const body = parseResult.data;
     const [ownerRow] = await app.db.select().from(owner).limit(1);
 
     if (!ownerRow) {
@@ -127,7 +131,7 @@ export async function authRoutes(app: FastifyInstance) {
     // TOTP check if enabled
     if (ownerRow.totpEnabled) {
       if (!body.totpCode) {
-        return reply.status(401).send({ error: 'TOTP code required', requiresTotop: true });
+        return reply.status(401).send({ error: 'TOTP code required', requiresTotp: true });
       }
       const { verifyTotpCode } = await import('../auth/totp.js');
       const totpValid = verifyTotpCode(

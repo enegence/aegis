@@ -3,13 +3,13 @@ services:
     build: .
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "${AEGIS_PORT:-8000}:${AEGIS_PORT:-8000}"
     volumes:
       - ./data:/data
     env_file:
       - .env
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:8000/health"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:${AEGIS_PORT:-8000}/health"]
       interval: 30s
       timeout: 5s
       start_period: 15s
