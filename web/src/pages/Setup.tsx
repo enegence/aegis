@@ -1,5 +1,9 @@
 import { useState } from 'react';
 import { apiFetch } from '../lib/api';
+import { useTheme } from '../lib/theme';
+import { AegisLockup } from '../components/brand';
+import TrustBadges from '../components/brand/TrustBadges';
+import { InkButton } from '../components/ui';
 
 const T = {
   bg: '#DDE8F4', ink: '#0B1C2C', accent: '#1A6B9A',
@@ -126,6 +130,7 @@ function Btn({ onClick, disabled, children, secondary, type, 'aria-busy': ariaBu
 }
 
 export default function Setup({ onSetupComplete }: SetupProps) {
+  const t = useTheme();
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -222,6 +227,9 @@ export default function Setup({ onSetupComplete }: SetupProps) {
 
         {/* Header */}
         <div style={{ marginBottom: 24 }}>
+          <div style={{ marginBottom: 10 }}>
+            <AegisLockup size="sm" color={T.ink} />
+          </div>
           <div style={{ fontFamily: "'Caveat', cursive, sans-serif", fontSize: '1.8rem', fontWeight: 'bold', color: T.ink, marginBottom: 4 }}>
             Aegis Setup
           </div>
@@ -239,17 +247,37 @@ export default function Setup({ onSetupComplete }: SetupProps) {
           </p>
         </div>
 
-        {/* ── Step 0: Welcome ─────────────────────────────────────────────── */}
+        {/* ── Step 0: Welcome (branded hero) ──────────────────────────────── */}
         {step === 0 && (
-          <div>
-            <h2 style={{ fontSize: '1.1rem', color: T.ink, marginTop: 0 }}>Welcome to Aegis Core</h2>
-            <p style={{ fontSize: '0.85rem', color: T.ink, lineHeight: 1.6 }}>
-              Aegis is a self-hosted dead man's switch and digital legacy system. When you don't check in,
-              it triggers a release process that notifies your designated contacts and gives them access
-              to the information you've prepared.
+          <div style={{ position: 'relative', textAlign: 'center' }}>
+            <svg style={{ position: 'absolute', top: -8, left: -8, opacity: 0.15 }} width="56" height="56" viewBox="0 0 80 80" fill="none">
+              <path d="M4 76 L4 4 L76 4" stroke={t.ink} strokeWidth="2.5" strokeLinecap="round" fill="none" />
+              <circle cx="4" cy="4" r="4" fill={t.ink} />
+            </svg>
+            <svg style={{ position: 'absolute', bottom: -8, right: -8, opacity: 0.15, transform: 'rotate(180deg)' }} width="56" height="56" viewBox="0 0 80 80" fill="none">
+              <path d="M4 76 L4 4 L76 4" stroke={t.ink} strokeWidth="2.5" strokeLinecap="round" fill="none" />
+              <circle cx="4" cy="4" r="4" fill={t.ink} />
+            </svg>
+
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+              <AegisLockup size="lg" color={t.ink} />
+            </div>
+            <h2 style={{ fontFamily: "'Caveat',cursive", fontSize: '2rem', fontWeight: 700, color: t.ink, margin: '0 0 10px' }}>
+              What happens after you're gone?
+            </h2>
+            <p style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '0.82rem', color: t.muted, lineHeight: 1.8, maxWidth: 420, margin: '0 auto 20px' }}>
+              Aegis is a privacy-first digital legacy release system.<br />
+              Your estate info, delivered to trusted people — automatically.<br />
+              If you don't check in, it knows.
             </p>
-            <div style={{ background: '#fff', border: `1px solid ${T.border}`, borderRadius: 4, padding: 14, margin: '16px 0', fontSize: '0.82rem', color: T.muted, lineHeight: 1.6 }}>
-              <strong style={{ color: T.ink }}>Aegis is not:</strong>
+
+            <div style={{ marginBottom: 20 }}>
+              <TrustBadges />
+            </div>
+
+            {/* Retained legal disclaimer */}
+            <div style={{ background: t.bg, border: `1.5px dashed ${t.border}`, borderRadius: '3px 10px 3px 10px / 10px 3px 10px 3px', padding: 14, margin: '0 0 20px', fontFamily: "'JetBrains Mono',monospace", fontSize: '0.78rem', color: t.muted, lineHeight: 1.6, textAlign: 'left' }}>
+              <strong style={{ color: t.ink }}>Aegis is not:</strong>
               <ul style={{ margin: '6px 0 0', paddingLeft: 18 }}>
                 <li>A will or legal document</li>
                 <li>A password manager</li>
@@ -257,11 +285,8 @@ export default function Setup({ onSetupComplete }: SetupProps) {
                 <li>A professional estate planning service</li>
               </ul>
             </div>
-            <p style={{ fontSize: '0.82rem', color: T.muted }}>
-              This wizard takes about 2 minutes. You'll create your owner account, choose a deployment mode,
-              and acknowledge the system's limitations.
-            </p>
-            <Btn onClick={nextStep}>Get started →</Btn>
+
+            <InkButton size="lg" onClick={nextStep}>Set Up Your Switch →</InkButton>
           </div>
         )}
 

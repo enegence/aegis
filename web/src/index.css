@@ -6,4 +6,10 @@
 html, body, #root { height: 100%; }
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #8AAAC8; border-radius: 99px; }
+::-webkit-scrollbar-thumb { background: var(--border, #8AAAC8); border-radius: 99px; }
+
+@layer utilities {
+  .rounded, .rounded-md, .rounded-lg { border-radius: 3px 10px 3px 10px / 10px 3px 10px 3px; }
+  .tilt-l { transform: rotate(-0.5deg); }
+  .tilt-r { transform: rotate(0.4deg); }
+}
