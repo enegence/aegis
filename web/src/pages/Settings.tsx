@@ -64,7 +64,7 @@ export default function Settings() {
   }
 
   return (
-    <div style={{ padding: '24px', background: T.bg, minHeight: '100vh' }}>
+    <div>
       <div style={{ maxWidth: '780px', margin: '0 auto' }}>
         <h1 style={{ fontFamily: "'Caveat', cursive, sans-serif", fontSize: '2rem', fontWeight: 'bold', color: T.ink, marginBottom: '20px' }}>
           Settings

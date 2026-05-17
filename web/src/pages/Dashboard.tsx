@@ -85,7 +85,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div style={{ padding: '24px', background: T.bg, minHeight: '100vh' }}>
+    <div>
       <div style={{ maxWidth: '800px', margin: '0 auto' }}>
         <h1 style={{ fontFamily: "'Caveat', cursive, sans-serif", fontSize: '2rem', fontWeight: 'bold', color: T.ink, marginBottom: '4px' }}>
           Welcome back, {summary.ownerName}
