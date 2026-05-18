@@ -18,6 +18,37 @@ export const TWEAK_DEFAULTS = {
 
 export type Tweaks = typeof TWEAK_DEFAULTS & Record<string, unknown>;
 
+/** Ungated localStorage key holding the end-user's theme choice. */
+export const USER_THEME_KEY = 'aegis:theme';
+
+/** Theme names exposed to end users via the Settings → Appearance section. */
+export const USER_THEMES = ['blueprint', 'midnight'] as const;
+export type UserTheme = (typeof USER_THEMES)[number];
+
+/**
+ * Resolve the initial Tweaks for the ThemeProvider.
+ * Precedence (highest first):
+ *  1. dev tweaks state (only when devGate) — preserves the dev TweaksPanel workflow
+ *  2. aegis:theme user choice (ungated, any browser)
+ *  3. blueprint default
+ */
+export function computeInitialTweaks(env: {
+  devGate: boolean;
+  devStateRaw: string | null;
+  userTheme: string | null;
+}): Tweaks {
+  if (env.devGate && env.devStateRaw) {
+    try {
+      return { ...TWEAK_DEFAULTS, ...JSON.parse(env.devStateRaw) };
+    } catch { /* ignore — fall through to user theme */ }
+  }
+  const base = { ...TWEAK_DEFAULTS };
+  if (env.userTheme && env.userTheme in THEMES) {
+    base.theme = env.userTheme;
+  }
+  return base;
+}
+
 export function resolveTheme(tweaks: Tweaks): Theme {
   const base = THEMES[tweaks.theme as keyof typeof THEMES] || THEMES.blueprint;
   return { ...base, accent: (tweaks.accentColor as string) || base.accent };
@@ -27,7 +58,12 @@ export function tweaksPanelEnabled(env: { dev: boolean; search: string; ls: stri
   return env.dev || /[?&]tweaks=1\b/.test(env.search) || env.ls === '1';
 }
 
-interface Ctx { theme: Theme; tweaks: Tweaks; setTweak: (k: string, v: unknown) => void; }
+interface Ctx {
+  theme: Theme;
+  tweaks: Tweaks;
+  setTweak: (k: string, v: unknown) => void;
+  setUserTheme: (name: UserTheme) => void;
+}
 const ThemeCtx = createContext<Ctx | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
@@ -36,12 +72,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     search: typeof window !== 'undefined' ? window.location.search : '',
     ls: typeof window !== 'undefined' ? window.localStorage.getItem('aegis:tweaks') : null,
   });
-  const [tweaks, setTweaks] = useState<Tweaks>(() => {
-    if (devGate && typeof window !== 'undefined') {
-      try { const s = window.localStorage.getItem('aegis:tweaks:state'); if (s) return { ...TWEAK_DEFAULTS, ...JSON.parse(s) }; } catch { /* ignore */ }
-    }
-    return { ...TWEAK_DEFAULTS };
-  });
+  const [tweaks, setTweaks] = useState<Tweaks>(() =>
+    computeInitialTweaks({
+      devGate,
+      devStateRaw: typeof window !== 'undefined' ? window.localStorage.getItem('aegis:tweaks:state') : null,
+      userTheme: typeof window !== 'undefined' ? window.localStorage.getItem(USER_THEME_KEY) : null,
+    }),
+  );
   const setTweak = useCallback((k: string, v: unknown) => {
     setTweaks(prev => {
       const next = { ...prev, [k]: v };
@@ -51,8 +88,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       return next;
     });
   }, [devGate]);
+  const setUserTheme = useCallback((name: UserTheme) => {
+    setTweaks(prev => ({ ...prev, theme: name }));
+    if (typeof window !== 'undefined') {
+      try { window.localStorage.setItem(USER_THEME_KEY, name); } catch { /* ignore */ }
+    }
+  }, []);
   const theme = resolveTheme(tweaks);
-  return <ThemeCtx.Provider value={{ theme, tweaks, setTweak }}>{children}</ThemeCtx.Provider>;
+  return <ThemeCtx.Provider value={{ theme, tweaks, setTweak, setUserTheme }}>{children}</ThemeCtx.Provider>;
 }
 
 export function useTheme(): Theme {
@@ -60,6 +103,10 @@ export function useTheme(): Theme {
 }
 export function useTweaks(): [Tweaks, (k: string, v: unknown) => void] {
   const c = useContext(ThemeCtx); if (!c) throw new Error('useTweaks outside ThemeProvider'); return [c.tweaks, c.setTweak];
+}
+/** Current theme name + ungated, persisted setter for the Settings → Appearance UI. */
+export function useUserTheme(): [string, (name: UserTheme) => void] {
+  const c = useContext(ThemeCtx); if (!c) throw new Error('useUserTheme outside ThemeProvider'); return [c.tweaks.theme, c.setUserTheme];
 }
 export function useTweaksPanelEnabled(): boolean {
   return tweaksPanelEnabled({

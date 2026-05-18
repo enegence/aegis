@@ -7,6 +7,7 @@ import StorageSettings from '../components/settings/StorageSettings';
 import RelaySettings from '../components/settings/RelaySettings';
 import SecuritySettings from '../components/settings/SecuritySettings';
 import PacketSettings from '../components/settings/PacketSettings';
+import AppearanceSettings from '../components/settings/AppearanceSettings';
 import DangerZone from '../components/settings/DangerZone';
 
 const T = {
@@ -34,6 +35,7 @@ const TABS = [
   { id: 'relay', label: 'Relay' },
   { id: 'security', label: 'Security' },
   { id: 'packets', label: 'Packets' },
+  { id: 'appearance', label: 'Appearance' },
   { id: 'danger', label: 'Danger Zone' },
 ] as const;
 
@@ -125,6 +127,9 @@ export default function Settings() {
           )}
           {activeTab === 'packets' && (
             <PacketSettings data={data.packets} onSaved={load} />
+          )}
+          {activeTab === 'appearance' && (
+            <AppearanceSettings />
           )}
           {activeTab === 'danger' && (
             <DangerZone />
