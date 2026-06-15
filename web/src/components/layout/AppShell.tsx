@@ -19,8 +19,6 @@ interface AppShellProps {
   onLogout?: () => void;
 }
 
-const DEFAULT_STATUS = ['Status: Armed', 'Mode: Heartbeat', 'Dead drop: Synced ✓'];
-
 export default function AppShell({ children, navItems, releaseTo, statusLines, onLogout }: AppShellProps) {
   const t = useTheme();
   const [tw] = useTweaks();
@@ -30,28 +28,28 @@ export default function AppShell({ children, navItems, releaseTo, statusLines, o
   const logoSize = ((tw.logoSize as string) || 'sm') as 'sm' | 'md' | 'lg';
   const path = location.pathname;
   const onRelease = path === releaseTo || path.startsWith(releaseTo + '/');
-  const lines = statusLines && statusLines.length ? statusLines : DEFAULT_STATUS;
+  const lines = statusLines ?? [];
+  const shellStyle = {
+    '--app-sidebar-width': `${sidebarWidth}px`,
+    background: t.bg,
+    color: t.ink,
+  } as CSSProperties;
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: t.bg, color: t.ink }}>
+    <div className="app-shell" style={shellStyle}>
       <aside
+        className="app-shell__sidebar"
         style={{
-          width: sidebarWidth,
-          flexShrink: 0,
           background: t.surface,
-          borderRight: `2px solid ${t.border}`,
-          display: 'flex',
-          flexDirection: 'column',
-          padding: '24px 0',
-          transition: 'width 0.2s',
+          borderColor: t.border,
         }}
       >
-        <div style={{ padding: '0 20px 28px', borderBottom: `1.5px dashed ${t.border}` }}>
+        <div className="app-shell__brand" style={{ borderBottom: `1.5px dashed ${t.border}` }}>
           <div onClick={() => navigate(navItems[0]?.to ?? '/')} style={{ cursor: 'pointer' }}>
             <AegisLockup size={logoSize} color={t.ink} />
           </div>
         </div>
-        <nav style={{ padding: '16px 12px', flex: 1 }}>
+        <nav className="app-shell__nav">
           {navItems.map(item => {
             const active = path === item.to || path.startsWith(item.to + '/');
             return (
@@ -62,7 +60,7 @@ export default function AppShell({ children, navItems, releaseTo, statusLines, o
                   width: '100%',
                   textAlign: 'left',
                   fontFamily: "'Caveat',cursive",
-                  fontSize: 20,
+                  fontSize: 21,
                   fontWeight: active ? 700 : 400,
                   padding: '9px 12px',
                   marginBottom: 4,
@@ -84,7 +82,7 @@ export default function AppShell({ children, navItems, releaseTo, statusLines, o
             );
           })}
         </nav>
-        <div style={{ padding: '0 12px 12px' }}>
+        <div className="app-shell__release">
           <button
             onClick={() => navigate(releaseTo)}
             style={{
@@ -108,32 +106,30 @@ export default function AppShell({ children, navItems, releaseTo, statusLines, o
             Release Mode
           </button>
         </div>
-        <div style={{ padding: '12px 20px 0', borderTop: `1.5px dashed ${t.border}` }}>
-          <div
-            style={{
-              fontFamily: "'JetBrains Mono',monospace",
-              fontSize: 9,
-              color: t.muted,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              lineHeight: 1.6,
-            }}
-          >
-            {lines.map((l, i) => (
-              <span key={i}>
-                {l}
-                {i < lines.length - 1 && <br />}
-              </span>
-            ))}
-          </div>
+        <div className="app-shell__footer" style={{ borderTop: `1.5px dashed ${t.border}` }}>
+          {lines.length > 0 && (
+            <div
+              className="app-shell__status"
+              style={{
+                color: t.muted,
+              }}
+            >
+              {lines.map((l, i) => (
+                <span key={i}>
+                  {l}
+                  {i < lines.length - 1 && <br />}
+                </span>
+              ))}
+            </div>
+          )}
           {onLogout && (
             <button
               onClick={onLogout}
               style={{
                 marginTop: 12,
-                fontFamily: "'Caveat',cursive",
-                fontSize: 15,
-                fontWeight: 700,
+                fontFamily: "'Inter',system-ui,sans-serif",
+                fontSize: 12,
+                fontWeight: 600,
                 padding: '6px 12px',
                 background: 'transparent',
                 color: t.muted,
@@ -149,7 +145,7 @@ export default function AppShell({ children, navItems, releaseTo, statusLines, o
         </div>
       </aside>
 
-      <main style={{ flex: 1, padding: '36px 40px', maxWidth: 900, overflowY: 'auto' }}>{children}</main>
+      <main className="app-shell__main">{children}</main>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
 
 export interface Theme {
   bg: string; ink: string; accent: string; muted: string; surface: string; border: string; danger: string;
@@ -54,6 +54,18 @@ export function resolveTheme(tweaks: Tweaks): Theme {
   return { ...base, accent: (tweaks.accentColor as string) || base.accent };
 }
 
+function hexToRgbChannels(hex: string): string {
+  const normalized = hex.replace('#', '');
+  const value = normalized.length === 3
+    ? normalized.split('').map((char) => char + char).join('')
+    : normalized;
+  const int = Number.parseInt(value, 16);
+  const r = (int >> 16) & 255;
+  const g = (int >> 8) & 255;
+  const b = int & 255;
+  return `${r} ${g} ${b}`;
+}
+
 export function tweaksPanelEnabled(env: { dev: boolean; search: string; ls: string | null }): boolean {
   return env.dev || /[?&]tweaks=1\b/.test(env.search) || env.ls === '1';
 }
@@ -95,6 +107,22 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
   }, []);
   const theme = resolveTheme(tweaks);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const root = document.documentElement;
+    root.style.setProperty('--brand-bg', hexToRgbChannels(theme.bg));
+    root.style.setProperty('--brand-ink', hexToRgbChannels(theme.ink));
+    root.style.setProperty('--brand-accent', hexToRgbChannels(theme.accent));
+    root.style.setProperty('--brand-muted', hexToRgbChannels(theme.muted));
+    root.style.setProperty('--brand-surface', hexToRgbChannels(theme.surface));
+    root.style.setProperty('--brand-border', hexToRgbChannels(theme.border));
+    root.style.setProperty('--brand-danger', hexToRgbChannels(theme.danger));
+
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', theme.bg);
+  }, [theme]);
+
   return <ThemeCtx.Provider value={{ theme, tweaks, setTweak, setUserTheme }}>{children}</ThemeCtx.Provider>;
 }
 

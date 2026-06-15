@@ -6,6 +6,7 @@ import fastifyStatic from '@fastify/static';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { existsSync } from 'fs';
+import { createServer } from 'node:net';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { loadConfig, type AppConfig } from './config.js';
 import { getDb, createTestDb, type AegisDb } from './db/index.js';
@@ -25,6 +26,7 @@ import { auditRoutes } from './routes/audit.js';
 import { securityRoutes } from './routes/security.js';
 import { exportRoutes } from './routes/export.js';
 import { startWorker, type WorkerHandle } from './worker/index.js';
+import { seedSettingsFromEnvironment } from './services/env-settings.js';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -96,6 +98,38 @@ export async function buildApp(overrides: Partial<AppConfig & { dbPath: string }
   return app;
 }
 
+export async function isPortAvailable(port: number, host: string): Promise<boolean> {
+  return new Promise((resolve, reject) => {
+    const server = createServer();
+
+    server.once('error', (err: NodeJS.ErrnoException) => {
+      if (err.code === 'EADDRINUSE' || err.code === 'EACCES') {
+        resolve(false);
+        return;
+      }
+      reject(err);
+    });
+
+    server.once('listening', () => {
+      server.close(() => resolve(true));
+    });
+
+    server.listen({ port, host });
+  });
+}
+
+export async function findAvailablePort(
+  requestedPort: number,
+  host: string,
+  maxAttempts = 50,
+): Promise<number> {
+  for (let port = requestedPort; port < requestedPort + maxAttempts && port <= 65535; port += 1) {
+    if (await isPortAvailable(port, host)) return port;
+  }
+
+  throw new Error(`No available port found from ${requestedPort} through ${Math.min(requestedPort + maxAttempts - 1, 65535)}`);
+}
+
 async function start() {
   const app = await buildApp();
   const config = loadConfig();
@@ -116,8 +150,18 @@ async function start() {
 
   try {
     migrate(app.db, { migrationsFolder });
-    await app.listen({ port: config.port, host: config.host });
-    console.log(`Aegis server listening on ${config.host}:${config.port}`);
+    const seededSettings = await seedSettingsFromEnvironment(app.db, config.fieldEncryptionKey);
+    if (seededSettings > 0) {
+      console.log(`[settings] imported ${seededSettings} setting(s) from environment`);
+    }
+
+    const listenPort = await findAvailablePort(config.port, config.host);
+    await app.listen({ port: listenPort, host: config.host });
+    if (listenPort !== config.port) {
+      console.warn(`Requested port ${config.port} is unavailable; Aegis server listening on ${config.host}:${listenPort}`);
+    } else {
+      console.log(`Aegis server listening on ${config.host}:${listenPort}`);
+    }
   } catch (err) {
     app.log.error(err);
     process.exit(1);

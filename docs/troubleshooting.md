@@ -95,7 +95,7 @@ Readiness checks must all pass before a switch can be armed. Common blockers:
 - **No contacts configured**: Add at least one contact in the Contacts section.
 - **No estate items**: Add at least one estate item.
 - **No packet generated**: The worker must have run at least once to build a packet. Check that `AEGIS_WORKER_ENABLED=true` in your `.env`.
-- **No storage configured** (Dead Drop mode): Configure S3 credentials in Settings → Storage.
+- **No storage configured** (Packet Mirror mode): Configure S3 credentials in Settings → Storage.
 
 ### Heartbeat not updating
 
@@ -115,7 +115,7 @@ AEGIS_WORKER_ENABLED=true
 
 ## Storage issues
 
-### Dead Drop upload fails
+### Packet Mirror upload fails
 
 1. Verify your S3 credentials in Settings → Storage → Test Connection.
 2. Check that your bucket exists and the access key has write permissions.
@@ -172,4 +172,4 @@ Then log in with your passphrase.
 ## Getting help
 
 - [GitHub Issues](https://github.com/aegis-dms/aegis/issues)
-- [Aegis DMS Site](https://aegis.dms) for Relay and Hosted support
+- [Aegis DMS Site](https://aegis-dms.com) for Relay and Hosted support

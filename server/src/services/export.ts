@@ -34,9 +34,9 @@ import {
   packets,
 } from '../db/schema.js';
 import { decryptField } from './field-encrypt.js';
+import { APP_VERSION } from '../version.js';
 
 export const EXPORT_SCHEMA_VERSION = 'aegis-export-2026-05-01';
-const APP_VERSION = '0.4.0-alpha';
 const ALGORITHM = 'aes-256-gcm';
 
 export interface ExportBundle {

@@ -1,22 +1,7 @@
 import { useState } from 'react';
 import { post } from '../../lib/api';
-
-const T = {
-  ink: '#0B1C2C', accent: '#1A6B9A', surface: '#C8D9ED',
-  border: '#8AAAC8', bg: '#DDE8F4', danger: '#C0392B',
-};
-
-const inputStyle = {
-  background: T.bg, border: `1px solid ${T.border}`, color: T.ink,
-  padding: '6px 10px', borderRadius: '4px', fontFamily: 'monospace',
-  fontSize: '0.85rem', outline: 'none', boxSizing: 'border-box' as const,
-};
-
-const labelStyle = {
-  fontFamily: 'monospace', fontSize: '0.72rem', color: '#4A6B8A',
-  textTransform: 'uppercase' as const, letterSpacing: '0.04em',
-  display: 'block', marginBottom: '3px',
-};
+import { useTheme } from '../../lib/theme';
+import { createActionButtonStyle, createInputStyle, createLabelStyle, toneTextColor } from '../../lib/themeStyles';
 
 interface SecurityData {
   totpEnabled: boolean;
@@ -35,6 +20,9 @@ interface SetupState {
 }
 
 export default function SecuritySettings({ data, onSaved }: Props) {
+  const t = useTheme();
+  const inputStyle = createInputStyle(t);
+  const labelStyle = createLabelStyle(t);
   const [mode, setMode] = useState<TotpMode>('idle');
   const [setup, setSetup] = useState<SetupState | null>(null);
   const [code, setCode] = useState('');
@@ -44,7 +32,9 @@ export default function SecuritySettings({ data, onSaved }: Props) {
   const [success, setSuccess] = useState('');
 
   async function startSetup() {
-    setLoading(true); setError(''); setSuccess('');
+    setLoading(true);
+    setError('');
+    setSuccess('');
     try {
       const res = await post<{ secret: string; otpauthUrl: string }>('/api/security/totp/start', {});
       setSetup(res);
@@ -58,7 +48,9 @@ export default function SecuritySettings({ data, onSaved }: Props) {
   }
 
   async function confirmSetup() {
-    setLoading(true); setError(''); setSuccess('');
+    setLoading(true);
+    setError('');
+    setSuccess('');
     try {
       await post('/api/security/totp/confirm', { code });
       setSuccess('TOTP enabled.');
@@ -74,7 +66,9 @@ export default function SecuritySettings({ data, onSaved }: Props) {
   }
 
   async function disableTotp() {
-    setLoading(true); setError(''); setSuccess('');
+    setLoading(true);
+    setError('');
+    setSuccess('');
     try {
       await post('/api/security/totp/disable', { password, code });
       setSuccess('TOTP disabled.');
@@ -99,18 +93,14 @@ export default function SecuritySettings({ data, onSaved }: Props) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      {/* TOTP card */}
-      <div style={{
-        padding: '14px 16px', background: T.surface, border: `1.5px solid ${T.border}`,
-        borderRadius: '3px 8px 3px 8px / 8px 3px 8px 3px',
-      }}>
+      <div style={{ padding: '14px 16px', background: t.surface, border: `1.5px solid ${t.border}`, borderRadius: '3px 8px 3px 8px / 8px 3px 8px 3px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: mode !== 'idle' ? '14px' : 0 }}>
           <div>
-            <div style={{ fontFamily: "'Caveat', cursive", fontSize: '1.05rem', fontWeight: 'bold', color: T.ink }}>
+            <div style={{ fontFamily: "'Caveat', cursive", fontSize: '1.05rem', fontWeight: 'bold', color: t.ink }}>
               Two-Factor Authentication
             </div>
-            <div style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: data.totpEnabled ? '#2E7D32' : '#8B6914', marginTop: '2px' }}>
-              {data.totpEnabled ? '✓ Enabled — TOTP required on login' : '⚠ Not enabled'}
+            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '0.78rem', color: data.totpEnabled ? toneTextColor(t, 'success') : toneTextColor(t, 'warning'), marginTop: '2px' }}>
+              {data.totpEnabled ? 'Enabled — TOTP required on login' : 'Not enabled'}
             </div>
           </div>
           {mode === 'idle' && (
@@ -120,45 +110,29 @@ export default function SecuritySettings({ data, onSaved }: Props) {
               disabled={loading}
               aria-busy={loading}
               aria-label={data.totpEnabled ? 'Disable two-factor authentication' : 'Enable two-factor authentication'}
-              style={{
-                fontFamily: 'monospace', fontSize: '0.82rem', padding: '6px 14px',
-                background: data.totpEnabled ? 'transparent' : T.accent,
-                color: data.totpEnabled ? T.danger : '#fff',
-                border: `1.5px solid ${data.totpEnabled ? T.danger : T.accent}`,
-                borderRadius: '3px 6px 3px 6px / 6px 3px 6px 3px',
-                cursor: loading ? 'not-allowed' : 'pointer',
-              }}
+              style={createActionButtonStyle(t, data.totpEnabled ? 'danger' : 'primary', loading)}
             >
               {loading ? '…' : data.totpEnabled ? 'Disable' : 'Enable'}
             </button>
           )}
         </div>
 
-        {/* Setup flow */}
         {mode === 'setup' && setup && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <p style={{ fontFamily: 'monospace', fontSize: '0.82rem', color: '#4A6B8A', margin: 0, lineHeight: 1.5 }}>
-              Scan the QR code with your authenticator app (Google Authenticator, Authy, etc.),
-              or enter the secret manually.
+            <p style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '0.82rem', color: t.muted, margin: 0, lineHeight: 1.5 }}>
+              Scan the QR code with your authenticator app, or enter the secret manually.
             </p>
 
-            {/* QR code via Google Charts API is not used — show secret + otpauth link */}
-            <div style={{
-              padding: '10px 14px', background: T.bg, border: `1px solid ${T.border}`,
-              borderRadius: '4px', fontFamily: 'monospace', fontSize: '0.82rem',
-            }}>
+            <div style={{ padding: '10px 14px', background: t.bg, border: `1px solid ${t.border}`, borderRadius: '4px', fontFamily: "'JetBrains Mono',monospace", fontSize: '0.82rem' }}>
               <div style={{ ...labelStyle, marginBottom: '4px' }}>Manual entry secret</div>
-              <code aria-label="TOTP manual entry secret" style={{ wordBreak: 'break-all', letterSpacing: '0.1em', color: T.ink }}>
+              <code aria-label="TOTP manual entry secret" style={{ wordBreak: 'break-all', letterSpacing: '0.1em', color: t.ink }}>
                 {setup.secret}
               </code>
             </div>
 
-            <div style={{
-              padding: '10px 14px', background: T.bg, border: `1px solid ${T.border}`,
-              borderRadius: '4px', fontSize: '0.75rem', fontFamily: 'monospace', color: '#4A6B8A',
-            }}>
-              <div style={{ ...labelStyle, marginBottom: '4px' }}>Or open in app:</div>
-              <a href={setup.otpauthUrl} aria-label="Open TOTP configuration in authenticator app" style={{ color: T.accent, wordBreak: 'break-all' }}>
+            <div style={{ padding: '10px 14px', background: t.bg, border: `1px solid ${t.border}`, borderRadius: '4px', fontSize: '0.75rem', fontFamily: "'JetBrains Mono',monospace", color: t.muted }}>
+              <div style={{ ...labelStyle, marginBottom: '4px' }}>Or open in app</div>
+              <a href={setup.otpauthUrl} aria-label="Open TOTP configuration in authenticator app" style={{ color: t.accent, wordBreak: 'break-all' }}>
                 {setup.otpauthUrl}
               </a>
             </div>
@@ -167,7 +141,7 @@ export default function SecuritySettings({ data, onSaved }: Props) {
               <label htmlFor="totp-setup-code" style={labelStyle}>Enter 6-digit code to confirm</label>
               <input
                 id="totp-setup-code"
-                style={{ ...inputStyle, width: '100%', letterSpacing: '0.2em', textAlign: 'center' }}
+                style={{ ...inputStyle, letterSpacing: '0.2em', textAlign: 'center' }}
                 type="text"
                 inputMode="numeric"
                 maxLength={6}
@@ -181,32 +155,25 @@ export default function SecuritySettings({ data, onSaved }: Props) {
             </div>
 
             {error && (
-              <div id="totp-setup-error" role="alert" aria-live="assertive" style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: T.danger }}>
+              <div id="totp-setup-error" role="alert" aria-live="assertive" style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '0.8rem', color: t.danger }}>
                 {error}
               </div>
             )}
 
             <div style={{ display: 'flex', gap: '8px' }}>
-              <button type="button" onClick={confirmSetup} disabled={code.length !== 6 || loading} aria-busy={loading} style={{
-                fontFamily: 'monospace', fontSize: '0.85rem', padding: '7px 16px',
-                background: code.length === 6 && !loading ? T.accent : T.border, color: '#fff',
-                border: `1.5px solid ${T.accent}`, borderRadius: '3px 6px 3px 6px / 6px 3px 6px 3px',
-                cursor: code.length === 6 && !loading ? 'pointer' : 'not-allowed',
-              }}>{loading ? 'Verifying…' : 'Activate TOTP'}</button>
-              <button type="button" onClick={cancel} style={{
-                fontFamily: 'monospace', fontSize: '0.85rem', padding: '7px 16px',
-                background: 'transparent', color: '#4A6B8A',
-                border: `1.5px solid ${T.border}`, borderRadius: '3px 6px 3px 6px / 6px 3px 6px 3px',
-                cursor: 'pointer',
-              }}>Cancel</button>
+              <button type="button" onClick={confirmSetup} disabled={code.length !== 6 || loading} aria-busy={loading} style={createActionButtonStyle(t, 'primary', code.length !== 6 || loading)}>
+                {loading ? 'Verifying…' : 'Activate TOTP'}
+              </button>
+              <button type="button" onClick={cancel} style={createActionButtonStyle(t, 'secondary', false)}>
+                Cancel
+              </button>
             </div>
           </div>
         )}
 
-        {/* Disable flow */}
         {mode === 'disable' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <p style={{ fontFamily: 'monospace', fontSize: '0.82rem', color: T.danger, margin: 0 }}>
+            <p style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '0.82rem', color: t.danger, margin: 0 }}>
               Disabling TOTP removes the second factor from your login. Confirm with your password and current TOTP code.
             </p>
 
@@ -214,7 +181,7 @@ export default function SecuritySettings({ data, onSaved }: Props) {
               <label htmlFor="totp-disable-password" style={labelStyle}>Passphrase</label>
               <input
                 id="totp-disable-password"
-                style={{ ...inputStyle, width: '100%', maxWidth: '300px' }}
+                style={{ ...inputStyle, maxWidth: '300px' }}
                 type="password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
@@ -228,7 +195,7 @@ export default function SecuritySettings({ data, onSaved }: Props) {
               <label htmlFor="totp-disable-code" style={labelStyle}>Current TOTP code</label>
               <input
                 id="totp-disable-code"
-                style={{ ...inputStyle, width: '100%', letterSpacing: '0.2em', textAlign: 'center' }}
+                style={{ ...inputStyle, letterSpacing: '0.2em', textAlign: 'center' }}
                 type="text"
                 inputMode="numeric"
                 maxLength={6}
@@ -241,60 +208,44 @@ export default function SecuritySettings({ data, onSaved }: Props) {
             </div>
 
             {error && (
-              <div id="totp-disable-error" role="alert" aria-live="assertive" style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: T.danger }}>
+              <div id="totp-disable-error" role="alert" aria-live="assertive" style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '0.8rem', color: t.danger }}>
                 {error}
               </div>
             )}
 
             <div style={{ display: 'flex', gap: '8px' }}>
-              <button type="button" onClick={disableTotp} disabled={!password || code.length !== 6 || loading} aria-busy={loading} style={{
-                fontFamily: 'monospace', fontSize: '0.85rem', padding: '7px 16px',
-                background: password && code.length === 6 && !loading ? T.danger : T.border, color: '#fff',
-                border: `1.5px solid ${T.danger}`, borderRadius: '3px 6px 3px 6px / 6px 3px 6px 3px',
-                cursor: password && code.length === 6 && !loading ? 'pointer' : 'not-allowed',
-              }}>{loading ? 'Disabling…' : 'Disable TOTP'}</button>
-              <button type="button" onClick={cancel} style={{
-                fontFamily: 'monospace', fontSize: '0.85rem', padding: '7px 16px',
-                background: 'transparent', color: '#4A6B8A',
-                border: `1.5px solid ${T.border}`, borderRadius: '3px 6px 3px 6px / 6px 3px 6px 3px',
-                cursor: 'pointer',
-              }}>Cancel</button>
+              <button type="button" onClick={disableTotp} disabled={!password || code.length !== 6 || loading} aria-busy={loading} style={createActionButtonStyle(t, 'danger', !password || code.length !== 6 || loading)}>
+                {loading ? 'Disabling…' : 'Disable TOTP'}
+              </button>
+              <button type="button" onClick={cancel} style={createActionButtonStyle(t, 'secondary', false)}>
+                Cancel
+              </button>
             </div>
           </div>
         )}
 
-        {/* Success and idle-mode error/success live region */}
         <div aria-live="polite" aria-atomic="true">
           {success && mode === 'idle' && (
-            <div style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: '#2E7D32', marginTop: '8px' }}>{success}</div>
+            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '0.8rem', color: toneTextColor(t, 'success'), marginTop: '8px' }}>{success}</div>
           )}
         </div>
       </div>
 
-      {/* Sessions */}
-      <div style={{
-        padding: '14px 16px', background: T.surface, border: `1.5px solid ${T.border}`,
-        borderRadius: '3px 8px 3px 8px / 8px 3px 8px 3px',
-      }}>
-        <div style={{ fontFamily: "'Caveat', cursive", fontSize: '1.05rem', fontWeight: 'bold', color: T.ink, marginBottom: '4px' }}>
+      <div style={{ padding: '14px 16px', background: t.surface, border: `1.5px solid ${t.border}`, borderRadius: '3px 8px 3px 8px / 8px 3px 8px 3px' }}>
+        <div style={{ fontFamily: "'Caveat', cursive", fontSize: '1.05rem', fontWeight: 'bold', color: t.ink, marginBottom: '4px' }}>
           Active Session
         </div>
-        <div style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: '#4A6B8A', lineHeight: 1.5 }}>
+        <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '0.78rem', color: t.muted, lineHeight: 1.5 }}>
           Your current session is active. Sessions expire after 30 days of inactivity.
           Logging out will revoke this session immediately.
         </div>
       </div>
 
-      {/* Password change */}
-      <div style={{
-        padding: '14px 16px', background: T.surface, border: `1.5px solid ${T.border}`,
-        borderRadius: '3px 8px 3px 8px / 8px 3px 8px 3px',
-        opacity: 0.6,
-      }}>
-        <div style={{ fontFamily: "'Caveat', cursive", fontSize: '1.05rem', fontWeight: 'bold', color: T.ink, marginBottom: '4px' }}>
+      <div style={{ padding: '14px 16px', background: t.surface, border: `1.5px solid ${t.border}`, borderRadius: '3px 8px 3px 8px / 8px 3px 8px 3px', opacity: 0.72 }}>
+        <div style={{ fontFamily: "'Caveat', cursive", fontSize: '1.05rem', fontWeight: 'bold', color: t.ink, marginBottom: '4px' }}>
           Change Passphrase
         </div>
-        <div style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: '#4A6B8A' }}>
+        <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '0.78rem', color: t.muted }}>
           Password change is not yet available in this alpha release. Reinstall with a new passphrase if needed.
         </div>
       </div>

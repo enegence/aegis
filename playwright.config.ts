@@ -1,5 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const externalBaseURL = process.env.AEGIS_APP_URL;
+const useManagedServers = !externalBaseURL;
+
 export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: false,
@@ -8,17 +11,33 @@ export default defineConfig({
   workers: 1,
   reporter: 'html',
   use: {
-    baseURL: process.env.AEGIS_APP_URL ?? 'http://localhost:8000',
+    baseURL: externalBaseURL ?? 'http://127.0.0.1:8201',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
-  projects: [
+  webServer: useManagedServers
+    ? {
+        command: 'npm run build && node tests/e2e/start-servers.mjs',
+        url: 'http://127.0.0.1:8202/ready',
+        reuseExistingServer: false,
+        timeout: 120_000,
+      }
+    : undefined,
+  projects: externalBaseURL ? [
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
+  ] : [
+    {
+      name: 'fresh-chromium',
+      testMatch: /setup\.spec\.ts|claim-flow\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'], baseURL: 'http://127.0.0.1:8200' },
+    },
+    {
+      name: 'owner-chromium',
+      testMatch: /core-flow\.spec\.ts|settings\.spec\.ts|claim-flow\.spec\.ts|responsive\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'], baseURL: 'http://127.0.0.1:8201' },
+    },
   ],
-  // E2E tests require a running Aegis server.
-  // Start manually: AEGIS_DB_PATH=./data/e2e-aegis.db NODE_ENV=test node server/dist/index.js
-  // Or use: npm run build && AEGIS_DB_PATH=./data/e2e.db node server/dist/index.js
 });

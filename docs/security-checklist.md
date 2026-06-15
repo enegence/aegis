@@ -226,7 +226,7 @@ Status: Alpha — see Known Limitations
 
 ## API Key Handling
 
-**Required behavior:** Dead Drop API keys (future). Relay API keys exist in SaaS only. No API keys in OSS URL query strings.
+**Required behavior:** Managed Dead Drop API keys (future). Relay API keys exist in SaaS only. No API keys in OSS URL query strings.
 
 **Known limitations:** OSS does not issue or store API keys in Phase 4/5. Heartbeat auth for relay connections lives entirely in SaaS.
 

@@ -20,8 +20,8 @@ const DEPLOYMENT_MODES = [
   },
   {
     id: 'dead_drop',
-    label: 'Dead Drop',
-    description: 'Encrypted packets are uploaded to S3-compatible storage so contacts can download them even if your server is offline.',
+    label: 'Packet Mirror',
+    description: 'Encrypted packets are mirrored to S3-compatible storage so the ciphertext survives local server loss.',
     limitation: 'Contacts can download encrypted packets from S3, but cannot decrypt them if the decryption key is unavailable (server offline with no relay escrow).',
   },
   {

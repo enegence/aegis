@@ -59,7 +59,7 @@ export async function completeSetup(page: Page, opts: {
 
 export async function login(page: Page, password = 'e2e-testpass-1234') {
   await page.goto('/');
-  await page.getByPlaceholder(/passphrase|password/i).fill(password);
+  await page.getByLabel(/passphrase|password/i).fill(password);
   await page.getByRole('button', { name: /log in/i }).click();
   await page.waitForURL('**/dashboard');
 }

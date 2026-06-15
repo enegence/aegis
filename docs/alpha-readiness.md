@@ -65,11 +65,11 @@ Using a fresh database (or `docker compose down -v && docker compose up -d`):
 - [ ] Packet appears in dashboard/packets list
 - [ ] Packet file exists on disk in `data/packets/`
 
-## S3 / Dead Drop (if enabled)
+## S3 / Packet Mirror (if enabled)
 
 - [ ] S3 credentials can be saved (access key masked after save)
 - [ ] Test connection succeeds
-- [ ] Worker uploads packet to S3 in Dead Drop mode
+- [ ] Worker uploads packet to S3 in Packet Mirror mode
 - [ ] Packet is not readable without encryption key
 
 ## Claim simulation
@@ -100,7 +100,7 @@ Using a fresh database (or `docker compose down -v && docker compose up -d`):
 ## Deployment modes
 
 - [ ] Vault Mode copy accurately describes limitations (not guaranteed release if host offline)
-- [ ] Dead Drop copy mentions S3 requirement
+- [ ] Packet Mirror copy mentions S3 requirement
 - [ ] Relay Monitoring copy clarifies it does not execute release without Relay Escrow
 - [ ] Relay Escrow copy mentions Relay subscription requirement
 

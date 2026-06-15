@@ -1,6 +1,6 @@
-# Storage Setup (S3-Compatible Dead Drop)
+# Storage Setup (S3-Compatible Packet Mirror)
 
-Configure an S3-compatible bucket to enable Dead Drop mode.
+Configure an S3-compatible bucket to enable Packet Mirror mode.
 
 ## Required settings (set via Settings → Storage)
 

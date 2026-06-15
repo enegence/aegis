@@ -9,10 +9,7 @@ import SecuritySettings from '../components/settings/SecuritySettings';
 import PacketSettings from '../components/settings/PacketSettings';
 import AppearanceSettings from '../components/settings/AppearanceSettings';
 import DangerZone from '../components/settings/DangerZone';
-
-const T = {
-  bg: '#DDE8F4', ink: '#0B1C2C', surface: '#C8D9ED', border: '#8AAAC8', accent: '#1A6B9A',
-};
+import { useTheme } from '../lib/theme';
 
 interface SettingsData {
   owner: { displayName: string; email: string; phone: string | null; timezone: string };
@@ -42,6 +39,7 @@ const TABS = [
 type TabId = typeof TABS[number]['id'];
 
 export default function Settings() {
+  const t = useTheme();
   const [activeTab, setActiveTab] = useState<TabId>('profile');
   const [data, setData] = useState<SettingsData | null>(null);
   const [error, setError] = useState('');
@@ -59,7 +57,7 @@ export default function Settings() {
 
   if (!data) {
     return (
-      <div style={{ padding: '32px', fontFamily: 'monospace', color: T.ink }}>
+      <div style={{ padding: '32px', fontFamily: "'JetBrains Mono',monospace", color: t.ink }}>
         {error || 'Loading…'}
       </div>
     );
@@ -68,14 +66,14 @@ export default function Settings() {
   return (
     <div>
       <div style={{ maxWidth: '780px', margin: '0 auto' }}>
-        <h1 style={{ fontFamily: "'Caveat', cursive, sans-serif", fontSize: '2rem', fontWeight: 'bold', color: T.ink, marginBottom: '20px' }}>
+        <h1 style={{ fontFamily: "'Caveat', cursive, sans-serif", fontSize: '2rem', fontWeight: 'bold', color: t.ink, marginBottom: '20px' }}>
           Settings
         </h1>
 
         {/* Tab bar */}
         <div style={{
           display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '20px',
-          borderBottom: `2px solid ${T.border}`, paddingBottom: '8px',
+          borderBottom: `2px solid ${t.border}`, paddingBottom: '8px',
         }}>
           {TABS.map(tab => (
             <button
@@ -83,13 +81,16 @@ export default function Settings() {
               type="button"
               onClick={() => setActiveTab(tab.id)}
               style={{
-                fontFamily: 'monospace', fontSize: '0.82rem', padding: '5px 12px',
-                background: activeTab === tab.id ? T.ink : 'transparent',
-                color: activeTab === tab.id ? T.bg : T.ink,
-                border: `1.5px solid ${activeTab === tab.id ? T.ink : T.border}`,
+                fontFamily: activeTab === tab.id ? "'Caveat',cursive" : "'Inter',system-ui,sans-serif",
+                fontSize: activeTab === tab.id ? '1.05rem' : '0.82rem',
+                fontWeight: activeTab === tab.id ? 700 : 600,
+                padding: '5px 12px',
+                background: activeTab === tab.id ? t.ink : 'transparent',
+                color: activeTab === tab.id ? t.bg : t.ink,
+                border: `1.5px solid ${activeTab === tab.id ? t.ink : t.border}`,
                 borderRadius: '3px 6px 3px 6px / 6px 3px 6px 3px',
                 cursor: 'pointer',
-                ...(tab.id === 'danger' && activeTab !== 'danger' ? { color: '#C0392B', borderColor: '#C0392B' } : {}),
+                ...(tab.id === 'danger' && activeTab !== 'danger' ? { color: t.danger, borderColor: t.danger } : {}),
               }}
             >
               {tab.label}
@@ -99,11 +100,11 @@ export default function Settings() {
 
         {/* Tab content */}
         <div style={{
-          padding: '20px', background: T.surface,
-          border: `2px solid ${T.border}`,
+          padding: '20px', background: t.surface,
+          border: `2px solid ${t.border}`,
           borderRadius: '3px 10px 3px 10px / 10px 3px 10px 3px',
         }}>
-          <h2 style={{ fontFamily: "'Caveat', cursive, sans-serif", fontSize: '1.4rem', color: T.ink, margin: '0 0 16px' }}>
+          <h2 style={{ fontFamily: "'Caveat', cursive, sans-serif", fontSize: '1.4rem', color: t.ink, margin: '0 0 16px' }}>
             {TABS.find(t => t.id === activeTab)?.label}
           </h2>
 

@@ -1,6 +1,10 @@
 # Notifications
 
-Aegis sends notifications via SMTP (email) or Telegram. Configure at least one provider before arming a switch.
+Aegis sends contacts a claim link when a switch triggers. The claim portal handles verification, packet download, key view, and acknowledgement. Notification channels should carry the same minimized claim-link payload; they should not split secrets or send estate details.
+
+For the OSS self-hosted version, outbound email is configured by bringing your own SMTP relay. Aegis Relay Escrow and Hosted deployments can handle delivery through the managed Aegis service.
+
+Configure and test at least one delivery channel before relying on a switch.
 
 ## SMTP (email)
 
@@ -15,6 +19,8 @@ Settings → SMTP section:
 | From email | Sender address shown to recipients |
 | TLS/SSL | Enable for port 465 or servers that require it |
 
+`setup.sh` can write these values into `.env` on first install. At startup, Aegis imports those environment values into encrypted app settings if they have not already been configured in the database. Use `AEGIS_SMTP_SECURE=true` for implicit TLS/SSL, usually port 465.
+
 After saving, use "Send test" to verify delivery before arming.
 
 ### Common providers
@@ -27,6 +33,8 @@ After saving, use "Send test" to verify delivery before arming.
 | SendGrid | smtp.sendgrid.net | 587 | Use "apikey" as username |
 
 ## Telegram
+
+Telegram is an optional secondary channel. It is useful for owners and contacts who already use Telegram, but email remains the primary OSS path because every trusted contact is expected to have an email address.
 
 Settings → Telegram section:
 

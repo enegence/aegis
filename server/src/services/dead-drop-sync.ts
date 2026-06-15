@@ -45,11 +45,14 @@ async function loadS3Config(
   const region = map['s3_region'];
   const bucket = map['s3_bucket'];
   const accessKeyIdEnc = map['s3_access_key_id_encrypted'];
+  const legacyAccessKeyId = map['s3_access_key_id'];
   const secretKeyEnc = map['s3_secret_access_key_encrypted'];
 
-  if (!region || !bucket || !accessKeyIdEnc || !secretKeyEnc) return null;
+  if (!region || !bucket || (!accessKeyIdEnc && !legacyAccessKeyId) || !secretKeyEnc) return null;
 
-  const accessKeyId = decryptField(accessKeyIdEnc, fieldEncryptionKey);
+  const accessKeyId = accessKeyIdEnc
+    ? decryptField(accessKeyIdEnc, fieldEncryptionKey)
+    : legacyAccessKeyId;
   const secretAccessKey = decryptField(secretKeyEnc, fieldEncryptionKey);
   if (!accessKeyId || !secretAccessKey) return null;
 
@@ -87,7 +90,7 @@ export async function syncPacketForSwitch(
   if (!sw) return { switchId, skipped: true, skipReason: 'switch not found' };
 
   if (!DEAD_DROP_MODES.has(sw.deploymentMode)) {
-    return { switchId, skipped: true, skipReason: `deployment mode ${sw.deploymentMode} does not use dead drop` };
+    return { switchId, skipped: true, skipReason: `deployment mode ${sw.deploymentMode} does not use Packet Mirror` };
   }
 
   if (sw.status !== 'armed' && sw.status !== 'warning') {

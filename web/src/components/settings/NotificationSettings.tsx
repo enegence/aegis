@@ -1,8 +1,8 @@
+import type { ReactNode } from 'react';
 import SmtpSettingsForm from './SmtpSettingsForm';
 import TelegramSettingsForm from './TelegramSettingsForm';
 import TestNotificationPanel from './TestNotificationPanel';
-
-const T = { ink: '#0B1C2C', surface: '#C8D9ED', border: '#8AAAC8' };
+import { useTheme } from '../../lib/theme';
 
 interface SmtpStatus {
   configured: boolean;
@@ -30,10 +30,11 @@ interface Props {
   onSaved: () => void;
 }
 
-function SubSection({ title, children }: { title: string; children: React.ReactNode }) {
+function SubSection({ title, children }: { title: string; children: ReactNode }) {
+  const t = useTheme();
   return (
-    <div style={{ padding: '16px', background: T.surface, border: `1.5px solid ${T.border}`, borderRadius: '3px 8px 3px 8px / 8px 3px 8px 3px', marginBottom: '14px' }}>
-      <h3 style={{ fontFamily: "'Caveat', cursive", fontSize: '1.1rem', fontWeight: 'bold', color: T.ink, margin: '0 0 12px' }}>
+    <div style={{ padding: '16px', background: t.surface, border: `1.5px solid ${t.border}`, borderRadius: '3px 8px 3px 8px / 8px 3px 8px 3px', marginBottom: '14px' }}>
+      <h3 style={{ fontFamily: "'Caveat', cursive", fontSize: '1.1rem', fontWeight: 'bold', color: t.ink, margin: '0 0 12px' }}>
         {title}
       </h3>
       {children}
@@ -42,6 +43,8 @@ function SubSection({ title, children }: { title: string; children: React.ReactN
 }
 
 export default function NotificationSettings({ data, onSaved }: Props) {
+  const t = useTheme();
+
   return (
     <div>
       <SubSection title="Email (SMTP)">
@@ -60,7 +63,7 @@ export default function NotificationSettings({ data, onSaved }: Props) {
         }} onSaved={onSaved} />
       </SubSection>
       <SubSection title="Test Notification">
-        <p style={{ fontFamily: 'monospace', fontSize: '0.82rem', color: '#4A6B8A', marginTop: 0, marginBottom: '12px' }}>
+        <p style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '0.82rem', color: t.muted, marginTop: 0, marginBottom: '12px' }}>
           Send a test message to verify your notification provider is working.
         </p>
         <TestNotificationPanel />

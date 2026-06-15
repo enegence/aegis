@@ -1,9 +1,9 @@
 name: CI
 on:
   push:
-    branches: [master, oss-phase-4, oss-phase-5]
+    branches: [main]
   pull_request:
-    branches: [master]
+    branches: [main]
 
 jobs:
   test:
@@ -16,10 +16,18 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci
-      - name: Build shared packages
-        run: npm run build --workspace=packages/shared --workspace=packages/contracts
+      - name: Audit dependencies
+        run: npm audit --workspaces
+      - name: Build shared package
+        run: npm run build --workspace=packages/shared
       - name: Run server tests
         run: npm test
         working-directory: server
+      - name: Run web tests
+        run: npm run test --workspace=web
+      - name: Run contract tests
+        run: npm run test --workspace=packages/contracts
       - name: Build full application (TypeScript + Vite)
         run: npm run build
+      - name: Build Docker image
+        run: docker build -t aegis-core:ci .

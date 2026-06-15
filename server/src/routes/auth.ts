@@ -6,8 +6,7 @@ import { createSession, deleteSession } from '../auth/session.js';
 import { deriveCsrfToken } from '../auth/csrf.js';
 import { writeAuditEvent } from '../services/audit.js';
 import { eq, count } from 'drizzle-orm';
-
-const APP_VERSION = '0.4.0-alpha';
+import { APP_VERSION } from '../version.js';
 
 const setupSchema = z.object({
   displayName: z.string().min(1).max(200),

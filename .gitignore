@@ -6,6 +6,7 @@ dist/
 *.db-shm
 *.db-wal
 data/
+.playwright-cli/
 .DS_Store
 server/static/
 .worktrees/

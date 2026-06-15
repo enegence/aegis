@@ -179,6 +179,67 @@ describe('SecuritySettings component — accessibility invariants', () => {
   });
 });
 
+// ─── Authenticated App Forms ─────────────────────────────────────────────────
+
+describe('Authenticated forms — accessibility invariants', () => {
+  const ownerSettings = read('components/settings/OwnerSettings.tsx');
+  const smtpSettings = read('components/settings/SmtpSettingsForm.tsx');
+  const telegramSettings = read('components/settings/TelegramSettingsForm.tsx');
+  const storageSettings = read('components/settings/StorageSettings.tsx');
+  const packetSettings = read('components/settings/PacketSettings.tsx');
+  const switchForm = read('components/switches/SwitchForm.tsx');
+
+  it('OwnerSettings labels are linked to their controls', () => {
+    for (const id of ['owner-display-name', 'owner-email', 'owner-phone', 'owner-timezone']) {
+      expect(ownerSettings).toContain(`htmlFor="${id}"`);
+      expect(ownerSettings).toContain(`id="${id}"`);
+    }
+  });
+
+  it('notification setting labels are linked to their controls', () => {
+    for (const id of ['smtp-host', 'smtp-port', 'smtp-user', 'smtp-password', 'smtp-from-email']) {
+      expect(smtpSettings).toContain(`htmlFor="${id}"`);
+      expect(smtpSettings).toContain(`id="${id}"`);
+    }
+    for (const id of ['telegram-bot-token', 'telegram-chat-id']) {
+      expect(telegramSettings).toContain(`htmlFor="${id}"`);
+      expect(telegramSettings).toContain(`id="${id}"`);
+    }
+  });
+
+  it('storage and packet setting labels are linked to their controls', () => {
+    for (const id of [
+      'storage-endpoint',
+      'storage-region',
+      'storage-prefix',
+      'storage-bucket',
+      'storage-access-key-id',
+      'storage-secret-access-key',
+      'storage-force-path-style',
+      'packet-retention-days',
+    ]) {
+      const source = id === 'packet-retention-days' ? packetSettings : storageSettings;
+      expect(source).toContain(`htmlFor="${id}"`);
+      expect(source).toContain(`id="${id}"`);
+    }
+  });
+
+  it('SwitchForm labels are linked to their controls', () => {
+    for (const id of [
+      'switch-name',
+      'switch-mode',
+      'switch-deployment-mode',
+      'switch-trigger-at',
+      'switch-heartbeat-interval-days',
+      'switch-warning-window-days',
+      'switch-grace-period-hours',
+    ]) {
+      expect(switchForm).toContain(`htmlFor="${id}"`);
+      expect(switchForm).toContain(`id="${id}"`);
+    }
+  });
+});
+
 // ─── ClaimPortal.tsx ─────────────────────────────────────────────────────────
 
 describe('ClaimPortal — accessibility invariants', () => {

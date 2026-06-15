@@ -12,12 +12,27 @@ import { eq } from 'drizzle-orm';
 // Mock S3 client so we don't make real network calls
 vi.mock('@aws-sdk/client-s3', () => {
   const mockSend = vi.fn();
+  const S3Client = vi.fn(function S3Client() {
+    return { send: mockSend };
+  });
+  const PutObjectCommand = vi.fn(function PutObjectCommand(args) {
+    return { _type: 'PutObject', ...args };
+  });
+  const HeadObjectCommand = vi.fn(function HeadObjectCommand(args) {
+    return { _type: 'HeadObject', ...args };
+  });
+  const GetObjectCommand = vi.fn(function GetObjectCommand(args) {
+    return { _type: 'GetObject', ...args };
+  });
+  const DeleteObjectCommand = vi.fn(function DeleteObjectCommand(args) {
+    return { _type: 'DeleteObject', ...args };
+  });
   return {
-    S3Client: vi.fn(() => ({ send: mockSend })),
-    PutObjectCommand: vi.fn((args) => ({ _type: 'PutObject', ...args })),
-    HeadObjectCommand: vi.fn((args) => ({ _type: 'HeadObject', ...args })),
-    GetObjectCommand: vi.fn((args) => ({ _type: 'GetObject', ...args })),
-    DeleteObjectCommand: vi.fn((args) => ({ _type: 'DeleteObject', ...args })),
+    S3Client,
+    PutObjectCommand,
+    HeadObjectCommand,
+    GetObjectCommand,
+    DeleteObjectCommand,
     __mockSend: mockSend,
   };
 });

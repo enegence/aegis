@@ -1,8 +1,8 @@
 # Security Review — Aegis Core (OSS)
 
-**Date:** 2026-05-14
-**Reviewer:** Claude / Automated (Phase 5 Task 1)
-**Scope:** OSS repo (`aegis/`) — all server code through Phase 4 + Phase 5 Task 1
+**Date:** 2026-06-15
+**Reviewer:** Automated QA pass
+**Scope:** OSS repo (`aegis/`) — server, web, setup, Docker, and documentation
 **Status:** Alpha baseline — not a formal security audit
 
 ---
@@ -35,6 +35,7 @@
 | CSRF protection | HMAC-SHA256 of session ID, required on all state-changing routes |
 | Startup validation | Production mode rejects `change-me` secrets and short keys |
 | TOTP | Secret stored encrypted, not plaintext. Disable requires password + valid code. |
+| Password changes | Current password proof required; no unauthenticated reset endpoints in OSS. |
 | CORS | Explicit origin allowlist; no wildcard with credentials |
 
 ---
@@ -43,9 +44,8 @@
 
 | Gap | Severity | Notes |
 |-----|----------|-------|
-| No login rate limiting | Medium | Argon2 latency is the only defense. Add server-level rate limiting in Phase 5. |
-| No TOTP recovery codes | Medium | If the owner loses their TOTP device, manual DB intervention is required. |
-| No password change flow | Low | Settings page does not yet allow password change with current-password proof. |
+| Login rate limiting is process-local | Medium | Server-level rate limiting exists, but counters are not shared across restarts or replicas. |
+| No hardware-token backup path | Low | TOTP recovery codes exist; hardware-token and passkey recovery are deferred. |
 | Claim PIN rate limit is in-memory | Medium | Resets on server restart. Move to DB-backed in Phase 5. |
 | Deterministic CSRF tokens | Low | Tokens do not expire independently; they live as long as the session. |
 | Single field encryption key for all data | Medium | Key rotation requires re-encrypting all rows. No rotation tooling yet. |
@@ -71,8 +71,9 @@ The following items are architectural decisions deferred to beta/GA:
 
 | Test file | What it proves |
 |-----------|----------------|
-| `tests/security-baseline.test.ts` | CSRF enforcement, session invalidation, startup validation, field encryption in DB, audit log redaction, TOTP secret storage |
+| `tests/security-baseline.test.ts` | CSRF enforcement, session invalidation, startup validation, field encryption in DB, audit log redaction, TOTP secret storage, OSS password-reset boundary |
 | `tests/auth-routes.test.ts` | Login success/fail, cookie set, CSRF token endpoint |
+| `tests/security-password.test.ts` | Password changes, TOTP recovery codes, rate-limit behavior |
 | `tests/totp.test.ts` | TOTP setup, confirm, login challenge, disable flow |
 | `tests/audit.test.ts` | PII key rejection, valid events accepted |
 | `tests/estate.test.ts` | CRUD, CSRF enforcement |
@@ -80,7 +81,7 @@ The following items are architectural decisions deferred to beta/GA:
 | `tests/claim-routes.test.ts` | Claim token validation, lifecycle |
 | `tests/packet-crypto.test.ts` | Encryption/decryption round-trip |
 
-Total test count at review: 340 passing (OSS server) + 6 todos for unimplemented gaps.
+Total test count at review: 515 passing server tests, 19 passing web tests, 24 passing contract tests, and 14 passing Playwright E2E tests.
 
 ---
 
@@ -90,5 +91,5 @@ This is an **automated alpha baseline review**, not a formal security audit. The
 
 **Recommendation:** Do not deploy to production with real user data until:
 1. Login rate limiting is implemented
-2. TOTP recovery codes are implemented
+2. Claim PIN rate limiting is made DB-backed
 3. A formal security review or pen test is conducted

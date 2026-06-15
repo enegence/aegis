@@ -19,7 +19,7 @@ test.describe('Core owner flow', () => {
 
   test('login with wrong password shows error', async ({ page }) => {
     await page.goto('/');
-    await page.getByPlaceholder(/passphrase|password/i).fill('wrongpassword');
+    await page.getByLabel(/passphrase|password/i).fill('wrongpassword');
     await page.getByRole('button', { name: /log in/i }).click();
     await expect(page.getByText(/invalid|incorrect|failed/i).first()).toBeVisible();
   });

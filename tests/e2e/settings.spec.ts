@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { login } from './helpers';
 
 test.describe('Settings page', () => {
   test.beforeEach(async ({ page }) => {
@@ -40,12 +41,9 @@ test.describe('Settings page', () => {
   });
 
   test('settings page renders tabs', async ({ page }) => {
+    await login(page, process.env.E2E_PASSWORD ?? 'e2e-testpass-1234');
     await page.goto('/settings');
-    // Should show tabs or login page
-    const content = await page.content();
-    // Either tab labels or login form
-    const hasTabs = content.includes('Profile') && content.includes('Deployment');
-    const hasLogin = content.includes('Log In') || content.includes('password') || content.includes('passphrase');
-    expect(hasTabs || hasLogin).toBe(true);
+    await expect(page.getByRole('button', { name: /^profile$/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^deployment$/i })).toBeVisible();
   });
 });

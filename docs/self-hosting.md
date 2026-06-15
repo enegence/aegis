@@ -23,7 +23,7 @@ cd aegis
 ./setup.sh
 
 # 3. Start the server
-docker compose up -d
+./start.sh
 
 # 4. Open in your browser
 open http://localhost:8000
@@ -45,9 +45,10 @@ Key variables:
 | `AEGIS_DATA_DIR` | Yes | Data directory for packet files. Default: `/data`. |
 | `AEGIS_APP_URL` | Yes | Your public-facing URL, used in claim notification links. |
 | `AEGIS_PORT` | No | Port to listen on. Default: `8000`. |
+| `AEGIS_HOST_PORT` | No | Docker host port to publish. Defaults to `AEGIS_PORT`. |
 | `AEGIS_HOST` | No | Bind address. Default: `0.0.0.0`. |
 
-Notification and storage credentials are configured in the Settings UI after first login, not in `.env`.
+Notification and storage credentials can be configured during `setup.sh` or later in the Settings UI.
 
 ## Reverse proxy
 

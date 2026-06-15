@@ -5,6 +5,9 @@
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { buildApp } from '../src/index.js';
+import { appSettings } from '../src/db/schema.js';
+import { decryptField } from '../src/services/field-encrypt.js';
+import { eq } from 'drizzle-orm';
 
 vi.mock('../src/services/notifications.js', () => ({
   dispatchNotification: vi.fn().mockResolvedValue(undefined),
@@ -133,6 +136,15 @@ describe('consolidated settings API', () => {
     const body = JSON.parse(check.payload);
     expect(body.storage.s3Configured).toBe(true);
     expect(body.storage.bucket).toBe('my-aegis-bucket');
+
+    const rows = await app.db
+      .select()
+      .from(appSettings)
+      .where(eq(appSettings.key, 's3_access_key_id_encrypted'));
+    expect(rows).toHaveLength(1);
+    expect(rows[0].encrypted).toBe(true);
+    expect(decryptField(rows[0].value!, app.config.fieldEncryptionKey)).toBe('AKIATEST1234');
+
     // Secret must not appear in response
     expect(JSON.stringify(body)).not.toContain('super-secret-s3-key');
   });

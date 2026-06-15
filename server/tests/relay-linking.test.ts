@@ -129,6 +129,13 @@ describe('Relay link-exchange and unlink', () => {
             method: 'POST',
           }),
         );
+        const [relayUrl, relayRequest] = mockFetch.mock.calls[0]!;
+        expect(relayUrl).not.toContain('?');
+        expect(relayUrl).not.toContain('VALIDCODE');
+        expect(JSON.parse((relayRequest as RequestInit).body as string)).toMatchObject({
+          code: 'VALIDCODE',
+          state: 'oss-link',
+        });
       } finally {
         global.fetch = origFetch;
       }

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { Switch } from '@aegis/shared';
-
-const T = { ink: '#0B1C2C', accent: '#1A6B9A', surface: '#C8D9ED', border: '#8AAAC8', muted: '#4A6B8A' };
+import { useTheme } from '../../lib/theme';
+import { toneTextColor } from '../../lib/themeStyles';
 
 function pad(n: number) { return String(n).padStart(2, '0'); }
 
@@ -22,9 +22,8 @@ interface Props {
 }
 
 export default function CountdownCard({ nextSwitch, nextActionAt }: Props) {
-  const [remaining, setRemaining] = useState<number>(() =>
-    nextActionAt ? new Date(nextActionAt).getTime() - Date.now() : 0
-  );
+  const t = useTheme();
+  const [remaining, setRemaining] = useState<number>(() => nextActionAt ? new Date(nextActionAt).getTime() - Date.now() : 0);
 
   useEffect(() => {
     if (!nextActionAt) return;
@@ -37,48 +36,28 @@ export default function CountdownCard({ nextSwitch, nextActionAt }: Props) {
 
   if (!nextSwitch || !nextActionAt) {
     return (
-      <div style={{
-        padding: '24px', background: T.surface,
-        border: `2px dashed ${T.border}`,
-        borderRadius: '3px 10px 3px 10px / 10px 3px 10px 3px',
-        textAlign: 'center', fontFamily: 'monospace', color: '#4A6B8A',
-        marginBottom: '20px',
-      }}>
+      <div style={{ padding: '24px', background: t.surface, border: `2px dashed ${t.border}`, borderRadius: '3px 10px 3px 10px / 10px 3px 10px 3px', textAlign: 'center', fontFamily: "'JetBrains Mono',monospace", color: t.muted, marginBottom: '20px' }}>
         No active switches
       </div>
     );
   }
 
   const isPast = remaining <= 0;
-  const accentColor = nextSwitch.status === 'warning' ? '#8B6914' : T.accent;
-  const label =
-    nextSwitch.mode === 'heartbeat'
-      ? nextSwitch.status === 'warning'
-        ? 'Grace expires'
-        : 'Check-in due'
-      : 'Trigger';
+  const accentColor = nextSwitch.status === 'warning' ? toneTextColor(t, 'warning') : t.accent;
+  const label = nextSwitch.mode === 'heartbeat' ? (nextSwitch.status === 'warning' ? 'Grace expires' : 'Check-in due') : 'Trigger';
 
   return (
-    <div style={{
-      padding: '24px', background: T.surface,
-      border: `2px solid ${accentColor}`,
-      borderRadius: '3px 10px 3px 10px / 10px 3px 10px 3px',
-      marginBottom: '20px', textAlign: 'center',
-    }}>
-      <div style={{ fontFamily: 'monospace', fontSize: '0.7rem', color: T.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>
+    <div style={{ padding: '24px', background: t.surface, border: `2px solid ${accentColor}`, borderRadius: '3px 10px 3px 10px / 10px 3px 10px 3px', marginBottom: '20px', textAlign: 'center' }}>
+      <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '0.7rem', color: t.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>
         {label}
       </div>
-      <div style={{
-        fontFamily: "'Courier New', monospace", fontSize: '2.8rem', fontWeight: 'bold',
-        color: isPast ? '#C0392B' : accentColor, letterSpacing: '0.04em',
-        lineHeight: 1.1,
-      }}>
+      <div style={{ fontFamily: "'Courier New', monospace", fontSize: '2.8rem', fontWeight: 'bold', color: isPast ? t.danger : accentColor, letterSpacing: '0.04em', lineHeight: 1.1 }}>
         {isPast ? 'OVERDUE' : formatCountdown(remaining)}
       </div>
-      <div style={{ fontFamily: "'Caveat', cursive, sans-serif", fontSize: '1rem', color: T.ink, marginTop: '6px' }}>
+      <div style={{ fontFamily: "'Caveat', cursive, sans-serif", fontSize: '1rem', color: t.ink, marginTop: '6px' }}>
         {nextSwitch.name}
       </div>
-      <div style={{ fontFamily: 'monospace', fontSize: '0.7rem', color: T.muted, marginTop: '2px' }}>
+      <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '0.7rem', color: t.muted, marginTop: '2px' }}>
         {new Date(nextActionAt).toLocaleString()}
       </div>
     </div>

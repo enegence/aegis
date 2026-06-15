@@ -3,7 +3,7 @@ services:
     build: .
     restart: unless-stopped
     ports:
-      - "${AEGIS_PORT:-8000}:${AEGIS_PORT:-8000}"
+      - "${AEGIS_HOST_PORT:-8000}:${AEGIS_PORT:-8000}"
     volumes:
       - ./data:/data
     env_file:

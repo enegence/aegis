@@ -1,23 +1,7 @@
 import { useState } from 'react';
 import { put } from '../../lib/api';
-
-const T = {
-  bg: '#DDE8F4', ink: '#0B1C2C', accent: '#1A6B9A',
-  surface: '#C8D9ED', border: '#8AAAC8', danger: '#C0392B',
-};
-
-const inputStyle = {
-  width: '100%', background: T.bg, border: `1px solid ${T.border}`,
-  color: T.ink, padding: '6px 10px', borderRadius: '4px',
-  fontFamily: 'monospace', fontSize: '0.85rem', outline: 'none',
-  boxSizing: 'border-box' as const,
-};
-
-const labelStyle = {
-  fontFamily: 'monospace', fontSize: '0.72rem', color: '#4A6B8A',
-  textTransform: 'uppercase' as const, letterSpacing: '0.04em',
-  display: 'block', marginBottom: '3px',
-};
+import { useTheme } from '../../lib/theme';
+import { createActionButtonStyle, createInputStyle, createLabelStyle, toneTextColor } from '../../lib/themeStyles';
 
 interface PacketsData {
   retentionDays: number | null;
@@ -29,6 +13,9 @@ interface Props {
 }
 
 export default function PacketSettings({ data, onSaved }: Props) {
+  const t = useTheme();
+  const inputStyle = createInputStyle(t);
+  const labelStyle = createLabelStyle(t);
   const [retentionDays, setRetentionDays] = useState(
     data.retentionDays != null ? String(data.retentionDays) : '',
   );
@@ -38,7 +25,9 @@ export default function PacketSettings({ data, onSaved }: Props) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSaving(true); setError(''); setSuccess('');
+    setSaving(true);
+    setError('');
+    setSuccess('');
     try {
       const days = retentionDays.trim() === '' ? null : parseInt(retentionDays, 10);
       await put('/api/settings/packets', { retentionDays: days });
@@ -53,15 +42,16 @@ export default function PacketSettings({ data, onSaved }: Props) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-      <p style={{ fontFamily: 'monospace', fontSize: '0.82rem', color: '#4A6B8A', margin: 0, lineHeight: 1.5 }}>
+      <p style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '0.82rem', color: t.muted, margin: 0, lineHeight: 1.5 }}>
         Packets are encrypted archives of your estate information built by the worker.
         Retention controls how long old packets are kept after a new one is generated.
       </p>
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         <div>
-          <label style={labelStyle}>Retention Days (blank = keep forever)</label>
+          <label htmlFor="packet-retention-days" style={labelStyle}>Retention Days (blank = keep forever)</label>
           <input
+            id="packet-retention-days"
             style={{ ...inputStyle, maxWidth: '200px' }}
             type="number"
             min={0}
@@ -71,21 +61,18 @@ export default function PacketSettings({ data, onSaved }: Props) {
             placeholder="e.g. 90"
           />
           {retentionDays && (
-            <div style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: '#4A6B8A', marginTop: '4px' }}>
+            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '0.75rem', color: t.muted, marginTop: '4px' }}>
               Old packets deleted after {retentionDays} days
             </div>
           )}
         </div>
 
-        {error && <div style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: T.danger }}>{error}</div>}
-        {success && <div style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: '#2E7D32' }}>{success}</div>}
+        {error && <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '0.8rem', color: t.danger }}>{error}</div>}
+        {success && <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '0.8rem', color: toneTextColor(t, 'success') }}>{success}</div>}
 
-        <button type="submit" disabled={saving} style={{
-          fontFamily: 'monospace', fontSize: '0.85rem', padding: '7px 16px', alignSelf: 'flex-start',
-          background: saving ? T.border : T.accent, color: '#fff',
-          border: `1.5px solid ${T.accent}`, borderRadius: '3px 6px 3px 6px / 6px 3px 6px 3px',
-          cursor: saving ? 'not-allowed' : 'pointer',
-        }}>{saving ? 'Saving…' : 'Save Packets'}</button>
+        <button type="submit" disabled={saving} style={{ ...createActionButtonStyle(t, 'primary', saving), alignSelf: 'flex-start' }}>
+          {saving ? 'Saving…' : 'Save Packets'}
+        </button>
       </form>
     </div>
   );

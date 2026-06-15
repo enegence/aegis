@@ -1,7 +1,10 @@
 import { config as loadDotenv } from 'dotenv';
 import { resolve } from 'path';
 
-loadDotenv({ path: resolve(process.cwd(), '../.env') });
+if (process.env.NODE_ENV !== 'test') {
+  loadDotenv({ path: resolve(process.cwd(), '.env') });
+  loadDotenv({ path: resolve(process.cwd(), '../.env') });
+}
 
 export interface AppConfig {
   port: number;
@@ -20,7 +23,7 @@ export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     host: process.env.AEGIS_HOST || '0.0.0.0',
     dbPath: process.env.AEGIS_DB_PATH || './data/aegis.db',
     dataDir: process.env.AEGIS_DATA_DIR || './data',
-    appUrl: process.env.AEGIS_APP_URL || 'http://localhost:8000',
+    appUrl: process.env.AEGIS_APP_URL || 'http://localhost',
     secretKey: process.env.AEGIS_SECRET_KEY || 'dev-secret-key-change-me',
     fieldEncryptionKey: process.env.AEGIS_FIELD_ENCRYPTION_KEY || 'dev-field-key-change-me-32bytes!!',
     testing: false,

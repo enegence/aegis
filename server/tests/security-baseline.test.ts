@@ -2,7 +2,6 @@
  * Security Baseline Tests — Aegis OSS
  *
  * Verifies that core security invariants are actually implemented.
- * For each feature not yet implemented, an it.todo() placeholder documents the gap.
  *
  * Coverage:
  *   - CSRF protection (no token rejected, invalid token rejected, valid token accepted)
@@ -629,18 +628,70 @@ describe('TOTP security', () => {
     expect(badPwRes.statusCode).toBe(401);
   });
 
-  it.skip('TOTP recovery codes can be used once and cannot be reused — covered by security-password.test.ts');
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Not-yet-implemented features
+// Security Feature Boundaries
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe('Security features — not yet implemented (documented gaps)', () => {
-  it.skip('password change requires current-password proof — covered by security-password.test.ts');
-  it.todo('claim PIN brute-force attempts are throttled after N wrong attempts — not yet implemented');
-  it.todo('password reset token not reusable — OSS has no password reset; handled by SaaS only');
-  it.todo('password reset token stored as hash — OSS has no password reset; handled by SaaS only');
-  it.todo('account deletion zeroes encrypted fields before delete — not yet implemented');
-  it.todo('relay API key is never passed in URL query string — enforced at linking flow level, no unit test yet');
+describe('Security feature boundaries', () => {
+  let app: Awaited<ReturnType<typeof buildApp>>;
+  let cookies: string;
+  let csrfToken: string;
+
+  beforeAll(async () => {
+    app = await buildApp({ testing: true, dbPath: ':memory:' });
+    await setupOwner(app);
+    cookies = await login(app);
+    csrfToken = await getCsrf(app, cookies);
+  });
+
+  afterAll(() => app.close());
+
+  it('password change requires current-password proof', async () => {
+    const missingCurrent = await app.inject({
+      method: 'POST',
+      url: '/api/security/password',
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken, 'content-type': 'application/json' },
+      payload: { newPassword: 'new-testpass-1234' },
+    });
+    expect(missingCurrent.statusCode).toBe(400);
+
+    const wrongCurrent = await app.inject({
+      method: 'POST',
+      url: '/api/security/password',
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken, 'content-type': 'application/json' },
+      payload: { currentPassword: 'wrong-password', newPassword: 'new-testpass-1234' },
+    });
+    expect(wrongCurrent.statusCode).toBe(401);
+  });
+
+  it('OSS build exposes no password reset endpoints', async () => {
+    for (const url of ['/api/auth/password-reset', '/api/auth/reset-password', '/api/password-reset']) {
+      const res = await app.inject({
+        method: 'POST',
+        url,
+        headers: { 'content-type': 'application/json' },
+        payload: { email: 'baseline@test.com' },
+      });
+      expect(res.statusCode).toBe(404);
+    }
+  });
+
+  it('OSS build exposes no account deletion or factory-reset endpoint', async () => {
+    const deleteOwner = await app.inject({
+      method: 'DELETE',
+      url: '/api/settings/owner',
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken },
+    });
+    expect(deleteOwner.statusCode).toBe(404);
+
+    const factoryReset = await app.inject({
+      method: 'POST',
+      url: '/api/settings/danger/factory-reset',
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken, 'content-type': 'application/json' },
+      payload: {},
+    });
+    expect(factoryReset.statusCode).toBe(404);
+  });
 });

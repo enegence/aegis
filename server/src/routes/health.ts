@@ -2,8 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { eq, count, inArray } from 'drizzle-orm';
 import { workerHeartbeats, releaseRuns, contactClaims, notificationDeliveries, appSettings } from '../db/schema.js';
 import { getActiveAlerts } from '../services/alerts.js';
-
-const APP_VERSION = '0.1.0';
+import { APP_VERSION } from '../version.js';
 const startTime = Date.now();
 
 export async function healthRoutes(app: FastifyInstance) {

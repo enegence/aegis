@@ -8,7 +8,7 @@ Aegis Core stores everything in two places:
 |------|----------|---------------------|
 | `.env` | Encryption keys, session secret, provider credentials | **Yes** — without this, the database is unrecoverable |
 | `data/aegis.db` | All application state: owner account, estate items, contacts, switches, packets, audit log | **Yes** |
-| `data/packets/` | Local packet archives (if Vault or Dead Drop mode, before upload) | Recommended |
+| `data/packets/` | Local packet archives (if Vault or Packet Mirror mode, before upload) | Recommended |
 | `docker-compose.yml` (if customized) | Custom port, volume, or network config | Recommended |
 
 ## Critical warning
@@ -61,9 +61,9 @@ echo "Backup complete: $BACKUP_DIR"
 
 Save as `backup.sh`, make executable (`chmod +x backup.sh`), and run via cron or manually before updates.
 
-## S3 / Dead Drop backups
+## S3 / Packet Mirror backups
 
-If you use Dead Drop mode, packets are uploaded to S3-compatible storage. The S3 bucket contains encrypted packet archives. These are useful only if you also have:
+If you use Packet Mirror mode, packets are uploaded to S3-compatible storage. The S3 bucket contains encrypted packet archives. These are useful only if you also have:
 
 1. The encryption key (`AEGIS_FIELD_ENCRYPTION_KEY` in `.env`)
 2. The packet metadata from the database (`data/aegis.db`)

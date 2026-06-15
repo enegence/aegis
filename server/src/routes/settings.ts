@@ -29,7 +29,7 @@ const S3UpdateSchema = z.object({
   region: z.string().min(1),
   bucket: z.string().min(1),
   prefix: z.string().default('aegis'),
-  accessKeyId: z.string().min(1),
+  accessKeyId: z.string().optional().default(''),
   secretAccessKey: z.string().optional(), // empty = keep existing
   forcePathStyle: z.boolean().default(false),
 });
@@ -209,7 +209,9 @@ export async function settingsRoutes(app: FastifyInstance) {
     const s3Region = await getPlainSetting(db, 's3_region');
     const s3Prefix = await getPlainSetting(db, 's3_prefix');
     const s3Endpoint = await getPlainSetting(db, 's3_endpoint');
-    const s3HasKey = (await getSettingRow(db, 's3_secret_access_key_encrypted'))?.value != null;
+    const s3HasAccessKey = (await getSettingRow(db, 's3_access_key_id_encrypted'))?.value != null
+      || (await getSettingRow(db, 's3_access_key_id'))?.value != null;
+    const s3HasSecretKey = (await getSettingRow(db, 's3_secret_access_key_encrypted'))?.value != null;
     const s3LastVerified = await getPlainSetting(db, 's3_last_verified_at');
 
     // Relay
@@ -249,12 +251,12 @@ export async function settingsRoutes(app: FastifyInstance) {
         },
       },
       storage: {
-        s3Configured: Boolean(s3Bucket && s3HasKey),
+        s3Configured: Boolean(s3Bucket && s3HasAccessKey && s3HasSecretKey),
         bucket: s3Bucket,
         region: s3Region,
         prefix: s3Prefix,
         endpoint: s3Endpoint,
-        hasAccessKey: s3HasKey,
+        hasAccessKey: s3HasAccessKey && s3HasSecretKey,
         lastVerifiedAt: s3LastVerified,
       },
       relay: {
@@ -333,15 +335,34 @@ export async function settingsRoutes(app: FastifyInstance) {
     const body = parseResult.data;
     const fek = app.config.fieldEncryptionKey;
     const db = app.db;
+    const existingAccessKeyRow = await getSettingRow(db, 's3_access_key_id_encrypted');
+    const existingLegacyAccessKeyRow = await getSettingRow(db, 's3_access_key_id');
+    const existingSecretKeyRow = await getSettingRow(db, 's3_secret_access_key_encrypted');
+    const shouldKeepExistingAccessKey =
+      body.accessKeyId.length === 0 &&
+      (existingAccessKeyRow?.value != null || existingLegacyAccessKeyRow?.value != null);
+    const shouldKeepExistingSecretKey =
+      (!body.secretAccessKey || body.secretAccessKey.length === 0) &&
+      existingSecretKeyRow?.value != null;
+
+    if (body.accessKeyId.length === 0 && !shouldKeepExistingAccessKey) {
+      return reply.status(400).send({ error: 'S3 access key ID is required' });
+    }
+    if ((!body.secretAccessKey || body.secretAccessKey.length === 0) && !shouldKeepExistingSecretKey) {
+      return reply.status(400).send({ error: 'S3 secret access key is required' });
+    }
 
     if (body.endpoint !== undefined) await upsertSetting(db, 's3_endpoint', body.endpoint, false);
     await upsertSetting(db, 's3_region', body.region, false);
     await upsertSetting(db, 's3_bucket', body.bucket, false);
     await upsertSetting(db, 's3_prefix', body.prefix, false);
     await upsertSetting(db, 's3_force_path_style', String(body.forcePathStyle), false);
-    await upsertSetting(db, 's3_access_key_id', body.accessKeyId, false);
+    if (!shouldKeepExistingAccessKey) {
+      const encryptedAccessKeyId = encryptField(body.accessKeyId, fek)!;
+      await upsertSetting(db, 's3_access_key_id_encrypted', encryptedAccessKeyId, true);
+    }
 
-    if (body.secretAccessKey && body.secretAccessKey.length > 0) {
+    if (!shouldKeepExistingSecretKey && body.secretAccessKey && body.secretAccessKey.length > 0) {
       const encrypted = encryptField(body.secretAccessKey, fek)!;
       await upsertSetting(db, 's3_secret_access_key_encrypted', encrypted, true);
     }

@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { testNotification } from '../../lib/settings';
-
-const T = {
-  ink: '#0B1C2C', accent: '#1A6B9A', border: '#8AAAC8',
-  surface: '#C8D9ED', danger: '#C0392B',
-};
+import { useTheme } from '../../lib/theme';
+import { createActionButtonStyle, createInputStyle, createLabelStyle, toneTextColor } from '../../lib/themeStyles';
 
 export default function TestNotificationPanel() {
+  const t = useTheme();
+  const selectStyle = createInputStyle(t, { width: 'auto', minWidth: 180 });
+  const labelStyle = createLabelStyle(t);
   const [channel, setChannel] = useState<'email' | 'telegram'>('email');
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
@@ -30,37 +30,21 @@ export default function TestNotificationPanel() {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-        <select
-          value={channel}
-          onChange={e => setChannel(e.target.value as 'email' | 'telegram')}
-          style={{
-            background: T.surface, border: `1px solid ${T.border}`,
-            color: T.ink, padding: '6px 10px', borderRadius: '4px',
-            fontFamily: 'monospace', fontSize: '0.85rem', outline: 'none',
-          }}
-        >
-          <option value="email">Email (SMTP)</option>
-          <option value="telegram">Telegram</option>
-        </select>
+        <div>
+          <label htmlFor="test-notification-channel" style={labelStyle}>Channel</label>
+          <select id="test-notification-channel" value={channel} onChange={e => setChannel(e.target.value as 'email' | 'telegram')} style={selectStyle}>
+            <option value="email">Email (SMTP)</option>
+            <option value="telegram">Telegram</option>
+          </select>
+        </div>
 
-        <button
-          onClick={sendTest}
-          disabled={sending}
-          style={{
-            fontFamily: 'monospace', fontSize: '0.85rem', padding: '7px 16px',
-            background: sending ? T.border : T.accent, color: '#fff',
-            border: `1.5px solid ${T.accent}`,
-            borderRadius: '3px 6px 3px 6px / 6px 3px 6px 3px',
-            cursor: sending ? 'not-allowed' : 'pointer',
-          }}
-        >{sending ? 'Sending…' : 'Send test'}</button>
+        <button onClick={sendTest} disabled={sending} style={createActionButtonStyle(t, 'outline', sending)}>
+          {sending ? 'Sending…' : 'Send test'}
+        </button>
       </div>
 
       {result && (
-        <div style={{
-          marginTop: '10px', fontFamily: 'monospace', fontSize: '0.82rem',
-          color: result.ok ? '#2E7D32' : T.danger,
-        }}>
+        <div style={{ marginTop: '10px', fontFamily: "'JetBrains Mono',monospace", fontSize: '0.82rem', color: result.ok ? toneTextColor(t, 'success') : t.danger }}>
           {result.ok ? '✓' : '✗'} {result.message}
         </div>
       )}

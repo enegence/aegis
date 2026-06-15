@@ -373,7 +373,28 @@ describe('Dashboard API', () => {
     expect(body.health.database).toBe('ok');
     expect(body.health.status).toBe('ok');
     expect(typeof body.health.uptime).toBe('number');
-    expect(body.health.version).toBe('0.2.0');
+    expect(body.health.version).toBeDefined();
+  });
+
+  it('reports the same app version from setup status, public health, and dashboard health', async () => {
+    const healthRes = await app.inject({ method: 'GET', url: '/health' });
+    expect(healthRes.statusCode).toBe(200);
+    const health = JSON.parse(healthRes.payload);
+
+    const setupRes = await app.inject({ method: 'GET', url: '/api/setup/status' });
+    expect(setupRes.statusCode).toBe(200);
+    const setup = JSON.parse(setupRes.payload);
+
+    const dashboardRes = await app.inject({
+      method: 'GET',
+      url: '/api/dashboard',
+      headers: { cookie: cookies },
+    });
+    expect(dashboardRes.statusCode).toBe(200);
+    const dashboard = JSON.parse(dashboardRes.payload);
+
+    expect(health.version).toBe(setup.appVersion);
+    expect(dashboard.health.version).toBe(health.version);
   });
 
   // ─── 8. relayConfigured and storageConfigured === false ─────────────────────

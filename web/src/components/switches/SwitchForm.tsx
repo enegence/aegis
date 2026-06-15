@@ -1,15 +1,12 @@
 import { useState, useEffect } from 'react';
 import { get, post, put } from '../../lib/api';
 import type { Switch, Contact, EstateItem } from '@aegis/shared';
-
-const T = {
-  bg: '#DDE8F4', ink: '#0B1C2C', accent: '#1A6B9A',
-  surface: '#C8D9ED', border: '#8AAAC8', danger: '#C0392B',
-};
+import { useTheme } from '../../lib/theme';
+import { createActionButtonStyle, createInputStyle, createLabelStyle, toneTextColor } from '../../lib/themeStyles';
 
 const DEPLOYMENT_COPY: Record<string, string> = {
   vault: 'Vault Mode stores and organizes your legacy information locally. It does not guarantee automated release if this machine is offline, destroyed, inaccessible, or unable to notify your contacts.',
-  dead_drop: 'Dead Drop mode uploads an encrypted packet to S3-compatible storage. Your release material survives server loss, but automated notification may still require this host.',
+  dead_drop: 'Packet Mirror uploads an encrypted packet to S3-compatible storage. Your release material survives server loss, but automated notification may still require this host.',
   relay_monitoring: 'Relay Monitoring lets Aegis Relay detect when you go offline and send alerts. Final release may still require your local host.',
   relay_escrow: 'Relay Escrow enables Aegis Relay to execute your release policy if you remain offline beyond your threshold. Requires explicit trust acknowledgement.',
   hosted: 'Hosted mode delegates full release management to Aegis DMS servers. No local host required.',
@@ -21,51 +18,26 @@ interface Props {
   onCancel: () => void;
 }
 
-const inputStyle = {
-  width: '100%', background: T.bg, borderColor: T.border,
-  color: T.ink, padding: '6px 10px', borderRadius: '4px',
-  fontFamily: 'monospace', fontSize: '0.85rem', border: `1px solid ${T.border}`,
-  outline: 'none', boxSizing: 'border-box' as const,
-};
-
-const labelStyle = {
-  fontFamily: 'monospace', fontSize: '0.75rem', color: '#4A6B8A',
-  textTransform: 'uppercase' as const, letterSpacing: '0.04em',
-  display: 'block', marginBottom: '4px',
-};
-
 export default function SwitchForm({ existing, onSaved, onCancel }: Props) {
+  const t = useTheme();
+  const inputStyle = createInputStyle(t);
+  const labelStyle = createLabelStyle(t);
   const [name, setName] = useState(existing?.name ?? '');
   const [mode, setMode] = useState<'trip' | 'heartbeat'>(existing?.mode ?? 'heartbeat');
   const [deploymentMode, setDeploymentMode] = useState<string>(existing?.deploymentMode ?? 'vault');
-  const [triggerAt, setTriggerAt] = useState(
-    existing?.triggerAt ? existing.triggerAt.slice(0, 16) : ''
-  );
-  const [heartbeatIntervalDays, setHeartbeatIntervalDays] = useState(
-    String(existing?.heartbeatIntervalDays ?? 7)
-  );
-  const [warningWindowDays, setWarningWindowDays] = useState(
-    String(existing?.warningWindowDays ?? 3)
-  );
-  const [gracePeriodHours, setGracePeriodHours] = useState(
-    String(existing?.gracePeriodHours ?? 72)
-  );
-  const [selectedContactIds, setSelectedContactIds] = useState<number[]>(
-    existing?.selectedContactIds ?? []
-  );
-  const [selectedEstateItemIds, setSelectedEstateItemIds] = useState<number[]>(
-    existing?.selectedEstateItemIds ?? []
-  );
+  const [triggerAt, setTriggerAt] = useState(existing?.triggerAt ? existing.triggerAt.slice(0, 16) : '');
+  const [heartbeatIntervalDays, setHeartbeatIntervalDays] = useState(String(existing?.heartbeatIntervalDays ?? 7));
+  const [warningWindowDays, setWarningWindowDays] = useState(String(existing?.warningWindowDays ?? 3));
+  const [gracePeriodHours, setGracePeriodHours] = useState(String(existing?.gracePeriodHours ?? 72));
+  const [selectedContactIds, setSelectedContactIds] = useState<number[]>(existing?.selectedContactIds ?? []);
+  const [selectedEstateItemIds, setSelectedEstateItemIds] = useState<number[]>(existing?.selectedEstateItemIds ?? []);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [estateItems, setEstateItems] = useState<EstateItem[]>([]);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    Promise.all([
-      get<Contact[]>('/api/contacts'),
-      get<EstateItem[]>('/api/estate-items'),
-    ])
+    Promise.all([get<Contact[]>('/api/contacts'), get<EstateItem[]>('/api/estate-items')])
       .then(([contactRows, estateRows]) => {
         setContacts(Array.isArray(contactRows) ? contactRows : []);
         setEstateItems(Array.isArray(estateRows) ? estateRows : []);
@@ -88,10 +60,7 @@ export default function SwitchForm({ existing, onSaved, onCancel }: Props) {
       name,
       mode,
       deploymentMode,
-      triggerAt:
-        mode === 'trip' && triggerAt
-          ? new Date(triggerAt).toISOString()
-          : undefined,
+      triggerAt: mode === 'trip' && triggerAt ? new Date(triggerAt).toISOString() : undefined,
       heartbeatIntervalDays: mode === 'heartbeat' ? parseInt(heartbeatIntervalDays) : undefined,
       warningWindowDays: parseInt(warningWindowDays),
       gracePeriodHours: parseInt(gracePeriodHours),
@@ -113,23 +82,23 @@ export default function SwitchForm({ existing, onSaved, onCancel }: Props) {
   return (
     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
       <div>
-        <label style={labelStyle}>Name</label>
-        <input style={inputStyle} value={name} onChange={e => setName(e.target.value)} required placeholder="e.g. Primary switch" />
+        <label htmlFor="switch-name" style={labelStyle}>Name</label>
+        <input id="switch-name" style={inputStyle} value={name} onChange={e => setName(e.target.value)} required placeholder="e.g. Primary switch" />
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
         <div>
-          <label style={labelStyle}>Mode</label>
-          <select style={inputStyle} value={mode} onChange={e => setMode(e.target.value as 'trip' | 'heartbeat')}>
+          <label htmlFor="switch-mode" style={labelStyle}>Mode</label>
+          <select id="switch-mode" style={inputStyle} value={mode} onChange={e => setMode(e.target.value as 'trip' | 'heartbeat')}>
             <option value="heartbeat">Heartbeat</option>
             <option value="trip">Trip (date-based)</option>
           </select>
         </div>
         <div>
-          <label style={labelStyle}>Deployment mode</label>
-          <select style={inputStyle} value={deploymentMode} onChange={e => setDeploymentMode(e.target.value)}>
+          <label htmlFor="switch-deployment-mode" style={labelStyle}>Deployment mode</label>
+          <select id="switch-deployment-mode" style={inputStyle} value={deploymentMode} onChange={e => setDeploymentMode(e.target.value)}>
             <option value="vault">Vault</option>
-            <option value="dead_drop">Dead Drop</option>
+            <option value="dead_drop">Packet Mirror</option>
             <option value="relay_monitoring">Relay Monitoring</option>
             <option value="relay_escrow">Relay Escrow</option>
             <option value="hosted">Hosted</option>
@@ -137,110 +106,76 @@ export default function SwitchForm({ existing, onSaved, onCancel }: Props) {
         </div>
       </div>
 
-      <div style={{
-        fontFamily: 'monospace', fontSize: '0.75rem', color: '#4A6B8A',
-        padding: '8px 10px', background: '#B8CBE0',
-        borderRadius: '4px', borderLeft: `3px solid ${T.accent}`,
-      }}>
+      <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '0.75rem', color: t.muted, padding: '8px 10px', background: t.surface, borderRadius: '4px', borderLeft: `3px solid ${t.accent}` }}>
         {DEPLOYMENT_COPY[deploymentMode]}
       </div>
 
       {mode === 'trip' && (
         <div>
-          <label style={labelStyle}>Trigger date/time</label>
-          <input style={inputStyle} type="datetime-local" value={triggerAt} onChange={e => setTriggerAt(e.target.value)} required />
+          <label htmlFor="switch-trigger-at" style={labelStyle}>Trigger date/time</label>
+          <input id="switch-trigger-at" style={inputStyle} type="datetime-local" value={triggerAt} onChange={e => setTriggerAt(e.target.value)} required />
         </div>
       )}
 
       {mode === 'heartbeat' && (
         <div>
-          <label style={labelStyle}>Heartbeat interval (days)</label>
-          <input style={inputStyle} type="number" min={1} max={365} value={heartbeatIntervalDays}
-            onChange={e => setHeartbeatIntervalDays(e.target.value)} required />
+          <label htmlFor="switch-heartbeat-interval-days" style={labelStyle}>Heartbeat interval (days)</label>
+          <input id="switch-heartbeat-interval-days" style={inputStyle} type="number" min={1} max={365} value={heartbeatIntervalDays} onChange={e => setHeartbeatIntervalDays(e.target.value)} required />
         </div>
       )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
         <div>
-          <label style={labelStyle}>Warning window (days)</label>
-          <input style={inputStyle} type="number" min={0} value={warningWindowDays}
-            onChange={e => setWarningWindowDays(e.target.value)} />
+          <label htmlFor="switch-warning-window-days" style={labelStyle}>Warning window (days)</label>
+          <input id="switch-warning-window-days" style={inputStyle} type="number" min={0} value={warningWindowDays} onChange={e => setWarningWindowDays(e.target.value)} />
         </div>
         <div>
-          <label style={labelStyle}>Grace period (hours)</label>
-          <input style={inputStyle} type="number" min={1} value={gracePeriodHours}
-            onChange={e => setGracePeriodHours(e.target.value)} />
+          <label htmlFor="switch-grace-period-hours" style={labelStyle}>Grace period (hours)</label>
+          <input id="switch-grace-period-hours" style={inputStyle} type="number" min={1} value={gracePeriodHours} onChange={e => setGracePeriodHours(e.target.value)} />
         </div>
       </div>
 
       {contacts.length > 0 && (
         <div>
-          <label style={labelStyle}>Contacts to notify</label>
+          <div style={labelStyle}>Contacts to notify</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-            {contacts.map(c => (
-              <label key={c.id} style={{
-                display: 'flex', alignItems: 'center', gap: '4px',
-                fontFamily: 'monospace', fontSize: '0.8rem', color: T.ink,
-                cursor: 'pointer',
-                padding: '3px 8px', borderRadius: '4px',
-                background: selectedContactIds.includes(c.id) ? T.accent + '22' : T.bg,
-                border: `1px solid ${selectedContactIds.includes(c.id) ? T.accent : T.border}`,
-              }}>
-                <input
-                  type="checkbox"
-                  checked={selectedContactIds.includes(c.id)}
-                  onChange={() => setSelectedContactIds(toggleId(selectedContactIds, c.id))}
-                  style={{ accentColor: T.accent }}
-                />
-                {c.fullName}
-              </label>
-            ))}
+            {contacts.map(c => {
+              const active = selectedContactIds.includes(c.id);
+              return (
+                <label key={c.id} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontFamily: "'Inter',system-ui,sans-serif", fontSize: '0.8rem', color: t.ink, cursor: 'pointer', padding: '3px 8px', borderRadius: '4px', background: active ? `${t.accent}22` : t.bg, border: `1px solid ${active ? t.accent : t.border}` }}>
+                  <input type="checkbox" checked={active} onChange={() => setSelectedContactIds(toggleId(selectedContactIds, c.id))} style={{ accentColor: t.accent }} />
+                  {c.fullName}
+                </label>
+              );
+            })}
           </div>
         </div>
       )}
 
       {estateItems.length > 0 && (
         <div>
-          <label style={labelStyle}>Estate items to include</label>
+          <div style={labelStyle}>Estate items to include</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-            {estateItems.map(item => (
-              <label key={item.id} style={{
-                display: 'flex', alignItems: 'center', gap: '4px',
-                fontFamily: 'monospace', fontSize: '0.8rem', color: T.ink,
-                cursor: 'pointer',
-                padding: '3px 8px', borderRadius: '4px',
-                background: selectedEstateItemIds.includes(item.id) ? T.accent + '22' : T.bg,
-                border: `1px solid ${selectedEstateItemIds.includes(item.id) ? T.accent : T.border}`,
-              }}>
-                <input
-                  type="checkbox"
-                  checked={selectedEstateItemIds.includes(item.id)}
-                  onChange={() => setSelectedEstateItemIds(toggleId(selectedEstateItemIds, item.id))}
-                  style={{ accentColor: T.accent }}
-                />
-                {item.category}: {item.title}
-              </label>
-            ))}
+            {estateItems.map(item => {
+              const active = selectedEstateItemIds.includes(item.id);
+              return (
+                <label key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontFamily: "'Inter',system-ui,sans-serif", fontSize: '0.8rem', color: t.ink, cursor: 'pointer', padding: '3px 8px', borderRadius: '4px', background: active ? `${t.accent}22` : t.bg, border: `1px solid ${active ? t.accent : t.border}` }}>
+                  <input type="checkbox" checked={active} onChange={() => setSelectedEstateItemIds(toggleId(selectedEstateItemIds, item.id))} style={{ accentColor: t.accent }} />
+                  {item.category}: {item.title}
+                </label>
+              );
+            })}
           </div>
         </div>
       )}
 
-      {error && <div style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: T.danger }}>{error}</div>}
+      {error && <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '0.8rem', color: t.danger }}>{error}</div>}
 
       <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-        <button type="button" onClick={onCancel} style={{
-          fontFamily: 'monospace', fontSize: '0.85rem', padding: '6px 16px',
-          background: T.surface, border: `1.5px solid ${T.border}`,
-          borderRadius: '3px 6px 3px 6px / 6px 3px 6px 3px',
-          color: T.ink, cursor: 'pointer',
-        }}>Cancel</button>
-        <button type="submit" disabled={saving} style={{
-          fontFamily: 'monospace', fontSize: '0.85rem', padding: '6px 16px',
-          background: saving ? T.border : T.accent, color: '#fff',
-          border: `1.5px solid ${saving ? T.border : T.accent}`,
-          borderRadius: '3px 6px 3px 6px / 6px 3px 6px 3px',
-          cursor: saving ? 'not-allowed' : 'pointer',
-        }}>{saving ? 'Saving…' : existing ? 'Save changes' : 'Create switch'}</button>
+        <button type="button" onClick={onCancel} style={createActionButtonStyle(t, 'secondary', false)}>Cancel</button>
+        <button type="submit" disabled={saving} style={createActionButtonStyle(t, 'primary', saving)}>
+          {saving ? 'Saving…' : existing ? 'Save changes' : 'Create switch'}
+        </button>
       </div>
     </form>
   );

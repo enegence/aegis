@@ -64,7 +64,7 @@ export async function getSmtpConfig(db: AegisDb): Promise<SmtpConfig | null> {
     user,
     password,
     fromEmail,
-    secure: secureStr === 'true',
+    secure: secureStr === null ? undefined : secureStr === 'true',
   };
 }
 

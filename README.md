@@ -1,6 +1,6 @@
 # Aegis Core
 
-Open-source, self-hosted digital legacy switch (AGPL-3.0).
+Open-source, self-hosted digital legacy switch (AGPL-3.0-only).
 
 Aegis Core lets you organize your estate information, designate trusted contacts, and configure automated release if you become unavailable or incapacitated.
 
@@ -9,9 +9,9 @@ Aegis Core lets you organize your estate information, designate trusted contacts
 - Stores encrypted estate items (financial accounts, property, digital assets, executor instructions)
 - Manages trusted contacts with priority ordering and per-contact notification channels
 - Runs a dead man's switch in **trip** (date-based) or **heartbeat** (check-in) mode
-- Notifies contacts via SMTP email or Telegram when a switch triggers
+- Notifies contacts with a claim link when a switch triggers
 - Generates encrypted release packets and delivers decryption keys to verified contacts
-- Optionally integrates with [Aegis Relay](https://aegis.dms) for cloud monitoring and escrow
+- Optionally integrates with [Aegis Relay](https://aegis-dms.com) for cloud monitoring and escrow
 
 ## What it is NOT
 
@@ -25,7 +25,7 @@ Aegis Core lets you organize your estate information, designate trusted contacts
 | Mode | Storage | Release | Requirement |
 |------|---------|---------|-------------|
 | **Vault** | Local disk | This host must be reachable | None |
-| **Dead Drop** | S3-compatible | Works even if host is gone | S3 credentials |
+| **Packet Mirror** | S3-compatible | Packet copy survives host loss | S3 credentials |
 | **Relay Monitoring** | Local or S3 | This host must still execute | Aegis Relay subscription |
 | **Relay Escrow** | Relay server | Relay executes if host is gone | Aegis Relay subscription |
 | **Hosted** | Aegis cloud | Fully managed | Aegis Hosted subscription |
@@ -44,7 +44,7 @@ cd aegis
 ./setup.sh
 
 # Start
-docker compose up -d
+./start.sh
 
 # Open
 open http://localhost:8000
@@ -69,7 +69,7 @@ On first visit, Aegis prompts you to create an owner account. No config files be
 After setup, the Settings page lets you configure:
 
 - Notification providers (SMTP, Telegram)
-- S3-compatible storage for Dead Drop mode
+- S3-compatible storage for Packet Mirror mode
 - Relay connection (if subscribed)
 - Two-factor authentication (TOTP)
 
@@ -85,6 +85,7 @@ See [`.env.example`](.env.example) for all available variables.
 | `AEGIS_DATA_DIR` | Yes | `/data` |
 | `AEGIS_APP_URL` | Yes | `http://localhost:8000` |
 | `AEGIS_PORT` | No | `8000` |
+| `AEGIS_HOST_PORT` | No | `8000` |
 | `AEGIS_HOST` | No | `0.0.0.0` |
 
 Generate secrets with `./setup.sh` or manually:
@@ -128,7 +129,8 @@ See [docs/threat-model.md](docs/threat-model.md) and [docs/key-management.md](do
 | [Self-hosting](docs/self-hosting.md) | Requirements, reverse proxy, Unraid, VPN notes |
 | [Notification setup](docs/notifications.md) | SMTP and Telegram configuration |
 | [Storage setup](docs/storage-setup.md) | S3, R2, MinIO, B2 |
-| [Release modes](docs/release-modes.md) | Vault, Dead Drop, Relay, Hosted |
+| [Packet Mirror](docs/packet-mirror.md) | S3-backed encrypted packet copy |
+| [Release modes](docs/release-modes.md) | Vault, Packet Mirror, Relay, Hosted |
 | [Key management](docs/key-management.md) | Encryption model, release flow |
 | [Threat model](docs/threat-model.md) | What Aegis protects against and doesn't |
 | [Backup and restore](docs/backups.md) | Data protection procedures |
@@ -143,4 +145,4 @@ See [docs/threat-model.md](docs/threat-model.md) and [docs/key-management.md](do
 
 ## License
 
-AGPL-3.0. See [LICENSE](LICENSE).
+AGPL-3.0-only. See [LICENSE](LICENSE).

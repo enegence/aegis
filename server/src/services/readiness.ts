@@ -166,17 +166,17 @@ function checkStorageConfiguredForDeadDrop(sw: SwitchRecord): ReadinessCheck {
   if (sw.deploymentMode === 'dead_drop') {
     return {
       id: 'storage_configured_for_dead_drop',
-      label: 'Storage configured for dead drop',
+      label: 'Storage configured for Packet Mirror',
       status: 'not_ready',
       required: true,
-      message: 'Dead drop mode requires external storage configuration, which is available in Phase 3.',
-      resolutionHint: 'Switch to vault mode or wait for Phase 3 dead drop storage support.',
+      message: 'Packet Mirror mode requires external S3-compatible storage configuration.',
+      resolutionHint: 'Configure storage in Settings or switch to vault mode.',
     };
   }
 
   return {
     id: 'storage_configured_for_dead_drop',
-    label: 'Storage configured for dead drop',
+    label: 'Storage configured for Packet Mirror',
     status: 'ready',
     required: false,
     message: `Deployment mode is '${sw.deploymentMode}' — no external storage required.`,

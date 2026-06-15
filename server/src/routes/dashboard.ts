@@ -6,8 +6,7 @@ import { getSmtpConfig, getTelegramConfig } from '../services/notifications.js';
 import { getActiveReleaseRunFull } from '../repositories/release-run-repository.js';
 import type { SwitchRecord } from '../services/switch-repository.js';
 import type { Switch, HealthStatus, DashboardSummary } from '@aegis/shared';
-
-const APP_VERSION = '0.2.0';
+import { APP_VERSION } from '../version.js';
 
 function switchRecordToSwitch(sw: SwitchRecord): Switch {
   return {

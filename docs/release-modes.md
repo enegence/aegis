@@ -11,6 +11,8 @@ A **release mode** (also called **deployment mode**) determines where your relea
 
 Mode is set at switch level. Valid values: `vault | dead_drop | relay_monitoring | relay_escrow`
 
+The internal value `dead_drop` currently represents Packet Mirror mode for backwards compatibility. User-facing copy reserves "Dead Drop" for the future managed Aegis API release service.
+
 > **Hosted mode** (`hosted`) is managed by Aegis DMS Site (SaaS) and is not available in self-hosted OSS.
 
 ---
@@ -40,11 +42,11 @@ Your switch information lives entirely on this local server. When the switch tri
 
 ---
 
-## Dead Drop
+## Packet Mirror
 
 **`deploymentMode: "dead_drop"`**
 
-Your encrypted packet is uploaded to S3-compatible storage while you are alive. If this server disappears, the ciphertext survives in S3.
+Your encrypted packet is mirrored to S3-compatible storage while you are alive. If this server disappears, the ciphertext survives in S3.
 
 **Trust model:** You trust S3/R2 to store ciphertext. You trust no one else with the key.
 
@@ -61,7 +63,7 @@ Your encrypted packet is uploaded to S3-compatible storage while you are alive. 
 
 **Limitation:** S3 has the ciphertext but not the key. This server still needs to be alive to serve the key. If both the server AND S3 survive, contacts can decrypt. If the server dies, they have the packet but not the key.
 
-**Use when:** You want material to survive server loss, but are comfortable with the server being required for key delivery.
+**Use when:** You want encrypted material to survive server loss, but are comfortable with the server being required for key delivery.
 
 ---
 
@@ -120,7 +122,7 @@ The Aegis Relay SaaS holds an encrypted copy of your release material. If you re
 | Mode | Local server required for release? | Third-party stores keys? | Resilience to server loss |
 |------|-------------------------------------|--------------------------|---------------------------|
 | vault | Yes | No | Low |
-| dead_drop | Yes (for key) | No (S3 = ciphertext only) | Medium (packet survives) |
+| Packet Mirror (`dead_drop`) | Yes (for key) | No (S3 = ciphertext only) | Medium (packet survives) |
 | relay_monitoring | Yes | No | Low (alerts only) |
 | relay_escrow | No | Yes (Relay SaaS) | High |
 
