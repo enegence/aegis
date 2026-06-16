@@ -15,6 +15,19 @@ ok()   { echo -e "${GREEN}✓${RESET} $*"; }
 warn() { echo -e "${YELLOW}⚠${RESET} $*"; }
 die()  { echo -e "${RED}✗${RESET} $*"; exit 1; }
 
+print_smtp_guidance() {
+  echo ""
+  say "Email delivery guidance"
+  echo "  • Easiest self-hosted path: Gmail with a Google App Password."
+  echo "    Host: smtp.gmail.com  Port: 587  SSL/TLS: false"
+  echo "    Use the generated 16-character App Password, not your Google password."
+  echo "  • Other SMTP-friendly options: SMTP2GO, Resend, Brevo, MailerSend,"
+  echo "    SendGrid, Mailgun, and Postmark."
+  echo "  • If you do not want to manage SMTP at all, Aegis Relay/Hosted includes"
+  echo "    managed delivery. See: https://aegisdms.life"
+  echo ""
+}
+
 echo ""
 echo -e "${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 echo -e "${BOLD}  Aegis Core — Self-Hosted Setup${RESET}"
@@ -106,6 +119,7 @@ OPEN_URL="${APP_URL}"
 
 echo ""
 say "Optional providers (can be configured later in Settings)"
+print_smtp_guidance
 
 SMTP_SECTION=""
 read -rp "  Configure SMTP now? [y/N] " do_smtp
@@ -145,7 +159,7 @@ else
 # AEGIS_SMTP_PASSWORD=
 # AEGIS_SMTP_FROM=
 # AEGIS_SMTP_SECURE=false"
-  warn "SMTP skipped — configure in Settings → Notifications after first login"
+  warn "SMTP skipped — configure in Settings → Notifications after first login, or use Aegis Relay/Hosted for managed delivery."
 fi
 
 TG_SECTION=""
@@ -259,5 +273,7 @@ echo -e "  ${YELLOW}•${RESET} Your .env contains secrets. Keep it private and 
 echo -e "  ${YELLOW}•${RESET} Your database and data directory contain encrypted but sensitive application state."
 echo -e "  ${YELLOW}•${RESET} Vault Mode alone does not guarantee automated release if this host goes offline."
 echo -e "  ${YELLOW}•${RESET} Back up your .env and data/ together — neither is useful without the other."
+echo -e "  ${YELLOW}•${RESET} If SMTP setup is more work than you want, Aegis Relay/Hosted includes managed delivery:"
+echo -e "    https://aegisdms.life"
 echo ""
 echo -e "${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"

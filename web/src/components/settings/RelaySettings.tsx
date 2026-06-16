@@ -89,8 +89,8 @@ export default function RelaySettings({ data, onSaved }: Props) {
 
       <div style={{ padding: '10px 14px', background: t.surface, border: `1.5px solid ${t.border}`, borderRadius: '3px 8px 3px 8px / 8px 3px 8px 3px', fontFamily: "'JetBrains Mono',monospace", fontSize: '0.78rem', color: t.muted, lineHeight: 1.5 }}>
         To connect to Aegis Relay: create or log in to an account at{' '}
-        <a href="https://aegis-dms.com" target="_blank" rel="noreferrer" style={{ color: t.accent }}>
-          aegis-dms.com
+        <a href="https://aegisdms.life" target="_blank" rel="noreferrer" style={{ color: t.accent }}>
+          aegisdms.life
         </a>
         , go to your account settings, and generate a link code. Paste the code and the Relay URL below.
         The link code is single-use and expires in 10 minutes.
@@ -100,11 +100,11 @@ export default function RelaySettings({ data, onSaved }: Props) {
         <form onSubmit={handleLinkExchange} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <div>
             <label htmlFor="relay-url" style={labelStyle}>Relay URL</label>
-            <input id="relay-url" style={inputStyle} type="url" value={relayUrl} onChange={e => setRelayUrl(e.target.value)} placeholder="https://relay.aegis-dms.com" required />
+            <input id="relay-url" style={inputStyle} type="url" value={relayUrl} onChange={e => setRelayUrl(e.target.value)} placeholder="https://relay.aegisdms.life" required />
           </div>
 
           <div>
-            <label htmlFor="relay-link-code" style={labelStyle}>Link Code (from aegis-dms.com)</label>
+            <label htmlFor="relay-link-code" style={labelStyle}>Link Code (from aegisdms.life)</label>
             <input id="relay-link-code" style={inputStyle} type="text" value={linkCode} onChange={e => setLinkCode(e.target.value)} placeholder="Paste your link code here" required />
           </div>
 

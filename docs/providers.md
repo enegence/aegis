@@ -198,13 +198,15 @@ mc cors set local/aegis --config '{
 
 ### Common Patterns
 
-Aegis Core OSS uses SMTP (STARTTLS or SSL/TLS) for email delivery. Self-hosted users provide their own relay credentials. Aegis Relay Escrow and Hosted deployments can use managed Aegis delivery instead.
+Aegis Core OSS uses SMTP (STARTTLS or SSL/TLS) for email delivery. Self-hosted users provide their own relay credentials. Aegis Relay Escrow and Hosted deployments can use managed Aegis delivery through [aegisdms.life](https://aegisdms.life).
 
 The recommended order for self-hosted users is:
 
 1. Use an existing mailbox/provider SMTP account, with Gmail as the simplest documented preset for many home users.
 2. Use a transactional SMTP provider if reliability and deliverability matter more than setup simplicity.
 3. Use a self-hosted mail server only if you already know how to operate DNS, SPF, DKIM, DMARC, and mail reputation.
+
+If SMTP setup is not worth your time, use Aegis Relay or Hosted instead. That path is intentionally the low-friction option for people who only need Aegis notifications and do not want to maintain a separate email provider.
 
 All providers below work with standard SMTP settings.
 
