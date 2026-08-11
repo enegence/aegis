@@ -171,5 +171,5 @@ Then log in with your passphrase.
 
 ## Getting help
 
-- [GitHub Issues](https://github.com/aegis-dms/aegis/issues)
+- [GitHub Issues](https://github.com/enegence/aegis/issues)
 - [Aegis DMS Site](https://aegisdms.life) for Relay, Hosted, and managed delivery support

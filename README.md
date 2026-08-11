@@ -37,7 +37,7 @@ Vault Mode is the default. **It does not guarantee automated release if this hos
 ### Docker Compose (recommended)
 
 ```bash
-git clone https://github.com/aegis-dms/aegis.git
+git clone https://github.com/enegence/aegis.git
 cd aegis
 
 # Generate secrets and write .env interactively
@@ -53,7 +53,7 @@ open http://localhost:8000
 ### Without Docker
 
 ```bash
-git clone https://github.com/aegis-dms/aegis.git
+git clone https://github.com/enegence/aegis.git
 cd aegis
 cp .env.example .env   # Edit .env with your secrets
 npm install

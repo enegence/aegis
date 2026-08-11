@@ -16,7 +16,7 @@ Alternatively, run without Docker: Node.js 20+, SQLite.
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/aegis-dms/aegis.git
+git clone https://github.com/enegence/aegis.git
 cd aegis
 
 # 2. Run the interactive setup script to generate your .env
