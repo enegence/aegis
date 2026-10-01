@@ -268,4 +268,49 @@ describe('Relay link-exchange and unlink', () => {
       expect(events.some(e => e.eventType === 'relay_unlinked')).toBe(true);
     });
   });
+
+  describe('link-exchange against the real Relay response shape', () => {
+    async function exchangeWith(responseBody: Record<string, unknown>, relayUrl: string) {
+      const mockFetch = vi.fn().mockResolvedValueOnce({ ok: true, status: 201, json: async () => responseBody });
+      const origFetch = global.fetch;
+      global.fetch = mockFetch as any;
+      try {
+        const res = await app.inject({
+          method: 'POST', url: '/api/settings/relay/link-exchange',
+          headers: { cookie: cookies, 'x-csrf-token': csrfToken, 'content-type': 'application/json' },
+          payload: { relayUrl, code: 'a'.repeat(64) + '.' + 'b'.repeat(32) },
+        });
+        return { res, mockFetch };
+      } finally {
+        global.fetch = origFetch;
+      }
+    }
+
+    async function storedRelayUrl() {
+      const { appSettings } = await import('../src/db/schema.js');
+      const { eq } = await import('drizzle-orm');
+      const [row] = await app.db.select().from(appSettings).where(eq(appSettings.key, 'relay_url'));
+      return row?.value;
+    }
+
+    it('stores the base URL, not the heartbeat endpoint, and posts to the exchange path once', async () => {
+      const { res, mockFetch } = await exchangeWith({
+        relayBaseUrl: 'https://aegisdms.life',
+        relayEndpoint: 'https://aegisdms.life/api/relay/heartbeat',
+        apiKey: 'rlk_test', connectionId: '0b1f6a3e-0c7c-4f7e-9d0a-2f6c5d4b3a21',
+      }, 'https://aegisdms.life/api/relay/link/exchange/');
+      expect(res.statusCode).toBe(200);
+      expect(mockFetch.mock.calls[0][0]).toBe('https://aegisdms.life/api/relay/link/exchange');
+      expect(await storedRelayUrl()).toBe('https://aegisdms.life');
+    });
+
+    it('derives the base URL from an older Relay that only returns the heartbeat endpoint', async () => {
+      const { res } = await exchangeWith({
+        relayEndpoint: 'https://relay.example.org/api/relay/heartbeat',
+        apiKey: 'rlk_test2', connectionId: '0b1f6a3e-0c7c-4f7e-9d0a-2f6c5d4b3a22',
+      }, 'https://relay.example.org');
+      expect(res.statusCode).toBe(200);
+      expect(await storedRelayUrl()).toBe('https://relay.example.org');
+    });
+  });
 });

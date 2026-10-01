@@ -13,6 +13,7 @@ import {
 } from '../repositories/release-run-repository.js';
 import { writeAuditEvent } from '../services/audit.js';
 import { purgeExpiredIdempotencyKeys } from '../services/idempotency-keys.js';
+import { sendRelayHeartbeatIfDue } from '../services/relay-client.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -285,6 +286,18 @@ export async function runWorkerOnce(
   // 4. Progress active release runs (cascade loop)
   if (syncConfig?.fieldEncryptionKey) {
     await progressReleaseRuns(db, now, syncConfig);
+  }
+
+  // 5. Aegis Relay heartbeat (at most once per interval; no-op when unlinked).
+  if (syncConfig?.fieldEncryptionKey) {
+    try {
+      const hb = await sendRelayHeartbeatIfDue(db, syncConfig.fieldEncryptionKey, now);
+      if (!hb.sent && hb.reason !== 'not_due' && hb.reason !== 'not_linked') {
+        console.warn(`[worker] relay heartbeat not accepted: ${hb.reason}`);
+      }
+    } catch (err) {
+      console.error('[worker] relay heartbeat error:', err instanceof Error ? err.message : 'unknown');
+    }
   }
 
   return result;

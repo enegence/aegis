@@ -104,7 +104,7 @@ E2E tests: configured; require live server to run
 - **Factory reset disabled**: DangerZone button is present but inoperative. Documented.
 - **E2E tests require manual server start**: Playwright is not yet wired to a `webServer` option because the server needs `.env` to start. E2E tests run against a separately started server.
 - **Pre-existing 9 TS errors in auth.ts**: Reduced to 0 in this task by fixing `handleSetup` type. All clean.
-- **Relay Escrow is a stub**: The API accepts relay settings but escrow execution is not implemented in alpha (requires Relay subscription and backend).
+- **Relay Escrow is a stub**: The API accepts relay settings but escrow execution is not implemented in alpha (requires Relay subscription and backend). _(Superseded 2026-10-01: Core now sends heartbeats and uploads escrow packets; see docs/release-modes.md.)_
 - **Manual smoke test not performed**: No live UI test was possible in headless environment. All API-level flows are tested. UI rendering verified via TypeScript compilation and build success.
 
 ## Recommended next phase (OSS Phase 5)
@@ -112,7 +112,7 @@ E2E tests: configured; require live server to run
 - TOTP recovery codes
 - Password change flow
 - Scheduled S3 cleanup based on retention policy
-- Relay heartbeat polling (worker sends periodic pings to relay_url)
+- Relay heartbeat polling (worker sends periodic pings to relay_url) _(done 2026-10-01: `server/src/services/relay-client.ts`)_
 - Rate limiting on setup/login endpoints
 - CORS tightening (production only)
 - Production HTTPS enforcer (redirect HTTP to HTTPS when behind reverse proxy)
