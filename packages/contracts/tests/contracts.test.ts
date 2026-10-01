@@ -138,3 +138,39 @@ describe('StorageObjectMetaSchema', () => {
     expect(StorageObjectMetaSchema.safeParse(bad).success).toBe(false);
   });
 });
+
+// ── Relay wire contracts (mirrors of aegis-dms-site; keep identical) ─────────
+import { HeartbeatSchema, RelayPacketUploadSchema } from '../src/index.js';
+
+describe('Relay wire contracts', () => {
+  it('accepts the heartbeat body Aegis Core sends', () => {
+    expect(HeartbeatSchema.safeParse({
+      version: 1,
+      relayConnectionId: '0b1f6a3e-0c7c-4f7e-9d0a-2f6c5d4b3a21',
+      timestamp: new Date().toISOString(),
+      mode: 'relay_escrow',
+      switchCount: 2,
+      metadata: { contractVersion: 1, heartbeatIntervalSeconds: 900 },
+    }).success).toBe(true);
+  });
+
+  it('accepts the packet upload body and rejects bad base64 or integer packet ids', () => {
+    const body = {
+      version: 1,
+      relayConnectionId: '0b1f6a3e-0c7c-4f7e-9d0a-2f6c5d4b3a21',
+      envelope: {
+        version: 1,
+        packetId: '7c9e6679-7425-40de-944b-e07fc1f90ae7',
+        sourceApp: 'aegis_core',
+        encryptionAlgorithm: 'aes-256-gcm',
+        keyId: '7c9e6679-7425-40de-944b-e07fc1f90ae7',
+        contentHash: 'a'.repeat(64),
+        createdAt: new Date().toISOString(),
+      },
+      encryptedData: Buffer.from('ciphertext-bytes').toString('base64'),
+    };
+    expect(RelayPacketUploadSchema.safeParse(body).success).toBe(true);
+    expect(RelayPacketUploadSchema.safeParse({ ...body, encryptedData: 'not base64!' }).success).toBe(false);
+    expect(RelayPacketUploadSchema.safeParse({ ...body, envelope: { ...body.envelope, packetId: 12 } }).success).toBe(false);
+  });
+});

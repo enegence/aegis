@@ -80,7 +80,7 @@ The Aegis Relay SaaS monitors your heartbeats and alerts contacts if your instan
 **What you retain:** Keys, estate data, and the local server.
 
 **Release path (via Relay monitoring):**
-1. Your OSS instance sends periodic heartbeats to Relay SaaS
+1. Your OSS instance sends periodic heartbeats to Relay SaaS (the worker posts to `{relayUrl}/api/relay/heartbeat` every `AEGIS_RELAY_HEARTBEAT_SECONDS`, default 300, with a Bearer API key; see `server/src/services/relay-client.ts`). Settings → Relay shows the last heartbeat and the last error, and **Send Heartbeat** sends one immediately.
 2. If heartbeats stop, Relay sends offline alerts to configured contacts
 3. Contacts use those alerts as a cue to contact each other or follow up
 4. Actual packet release still requires this server to be accessible
@@ -104,12 +104,13 @@ The Aegis Relay SaaS holds an encrypted copy of your release material. If you re
 **What you retain:** The encryption key (theoretically). In practice, for v1, Relay can decrypt because it holds both the material and the key (server-side encryption).
 
 **Release path (via Relay Escrow):**
-1. Your OSS instance links to Relay via auth-code exchange (Phase 5)
-2. You upload encrypted escrow material to Relay
-3. Relay monitors heartbeats
-4. If offline threshold exceeded → Relay executes release policy directly
-5. Contacts receive claim notifications from Relay's servers
-6. Relay serves the packet key to verified contacts
+1. Your OSS instance links to Relay: in the Relay web app generate a link code (one value, `<code>.<state>`), then paste it with the Relay base URL in Settings → Relay.
+2. Set the switch's deployment mode to Relay Escrow. In Settings → Relay, choose **Upload packet to Relay**. Core builds a fresh packet, uploads only the ciphertext to `POST {relayUrl}/api/relay/packets`, and shows you the packet's release key once.
+3. In the Relay web app, open Relay → Escrow, acknowledge the trust policy, choose the uploaded packet, and paste the release key as the escrow material. Re-upload and update escrow after you change the switch's contents.
+4. Relay monitors heartbeats
+5. If offline threshold exceeded → Relay executes release policy directly
+6. Contacts receive claim notifications from Relay's servers
+7. Relay serves the packet and escrowed key to verified contacts, and the claim portal can open the packet in the contact's browser
 
 **Alpha limitation:** No zero-knowledge escrow in v1. Relay SaaS can decrypt your material. This will be documented in the consent acknowledgement UI.
 

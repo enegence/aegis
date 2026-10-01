@@ -1,3 +1,7 @@
+import { buildHeartbeatBody, getRelayCredentials, normalizeRelayBaseUrl, postHeartbeat, uploadPacketForEscrow, RelayUploadError } from '../services/relay-client.js';
+import { buildPacket as buildEscrowPacket } from '../services/packet-builder.js';
+import { loadPacketKey } from '../repositories/packet-repository.js';
+import { readFileSync } from 'fs';
 import type { FastifyInstance } from 'fastify';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
@@ -218,6 +222,7 @@ export async function settingsRoutes(app: FastifyInstance) {
     const relayUrl = await getPlainSetting(db, 'relay_url');
     const relayHasKey = (await getSettingRow(db, 'relay_api_key_encrypted'))?.value != null;
     const relayLastHeartbeat = await getPlainSetting(db, 'relay_last_heartbeat_at');
+    const relayLastHeartbeatError = await getPlainSetting(db, 'relay_last_heartbeat_error');
     const relayConnectionId = await getPlainSetting(db, 'relay_connection_id');
 
     // Deployment mode and packets
@@ -264,6 +269,7 @@ export async function settingsRoutes(app: FastifyInstance) {
         relayUrl,
         apiKeyConfigured: relayHasKey,
         lastHeartbeatAt: relayLastHeartbeat,
+        lastHeartbeatError: relayLastHeartbeatError || null,
         connectionId: relayConnectionId,
       },
       security: {
@@ -439,18 +445,60 @@ export async function settingsRoutes(app: FastifyInstance) {
       return reply.send({ ok: false, message: 'Relay not configured', checkedAt: new Date().toISOString() });
     }
 
+    // Same contract and endpoint the worker uses (services/relay-client.ts).
+    const creds = await getRelayCredentials(db, app.config.fieldEncryptionKey);
+    if (!creds) {
+      return reply.send({ ok: false, message: 'Relay not linked. Link this instance from Relay settings first.', checkedAt: new Date().toISOString() });
+    }
+    const now = new Date();
+    const result = await postHeartbeat(creds, await buildHeartbeatBody(db, creds.connectionId, now));
+    if (result.sent) await upsertSetting(db, 'relay_last_heartbeat_at', now.toISOString(), false);
+    const message = result.sent
+      ? 'Relay reachable; heartbeat accepted'
+      : result.reason === 'network_error' ? 'Relay unreachable'
+        : result.reason === 'http_401' ? 'Relay rejected the API key. Re-link this instance.'
+          : result.reason === 'http_403' ? 'Relay requires an active subscription.'
+            : `Relay returned ${result.reason.replace('http_', '')}`;
+    return reply.send({ ok: result.sent, message, checkedAt: now.toISOString() });
+  });
+
+  // POST /api/settings/relay/escrow-upload — upload a relay_escrow switch's
+  // current packet to Aegis Relay and return its key once for the owner to
+  // escrow in the Relay web app (explicit consent stays in Relay).
+  app.post('/api/settings/relay/escrow-upload', {
+    preHandler: [app.requireAuth, app.requireCsrf],
+  }, async (req, reply) => {
+    const switchId = Number((req.body as { switchId?: unknown } | undefined)?.switchId);
+    if (!Number.isInteger(switchId) || switchId <= 0) {
+      return reply.status(400).send({ error: 'Validation failed' });
+    }
     try {
-      const apiKey = decryptField(relayKeyRow.value, app.config.fieldEncryptionKey);
-      const res = await fetch(`${relayUrl}/api/heartbeat`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ event: 'test' }),
-        signal: AbortSignal.timeout(8000),
+      const result = await uploadPacketForEscrow({
+        db: app.db,
+        fieldEncryptionKey: app.config.fieldEncryptionKey,
+        dataDir: app.config.dataDir,
+        buildPacket: buildEscrowPacket,
+        loadPacketKey,
+        readFile: (path) => readFileSync(path),
+      }, switchId);
+      await writeAuditEvent(app.db, {
+        switchId,
+        eventType: 'relay_packet_uploaded',
+        actorType: 'owner',
+        actorId: String(req.ownerId),
+        metadata: { relayPacketId: result.relayPacketId, version: result.version, duplicate: result.duplicate, keyId: result.keyId },
       });
-      const ok = res.ok;
-      return reply.send({ ok, message: ok ? 'Relay reachable' : `Relay returned ${res.status}`, checkedAt: new Date().toISOString() });
-    } catch {
-      return reply.send({ ok: false, message: 'Relay unreachable', checkedAt: new Date().toISOString() });
+      return reply.header('Cache-Control', 'no-store').send(result);
+    } catch (err) {
+      if (err instanceof RelayUploadError) {
+        if (err.code === 'switch_not_found') return reply.status(404).send({ error: err.code });
+        if (err.code === 'relay_not_linked' || err.code === 'switch_not_relay_escrow') return reply.status(409).send({ error: err.code });
+        if (err.code === 'packet_unavailable') return reply.status(422).send({ error: err.code });
+        if (err.code === 'relay_unreachable') return reply.status(502).send({ error: err.code });
+        return reply.status(502).send({ error: 'relay_rejected', status: err.status, relayError: err.relayError });
+      }
+      if (err instanceof Error && err.name === 'PacketBuildError') return reply.status(422).send({ error: 'packet_build_failed', message: err.message });
+      throw err;
     }
   });
 
@@ -555,12 +603,14 @@ export async function settingsRoutes(app: FastifyInstance) {
     if (!parseResult.success) {
       return reply.status(400).send({ error: 'Validation failed', issues: parseResult.error.issues });
     }
-    const { relayUrl, code, instanceId } = parseResult.data;
+    const { code, instanceId } = parseResult.data;
+    // Owners may paste the base URL or the exchange URL; always use the base.
+    const relayUrl = normalizeRelayBaseUrl(parseResult.data.relayUrl);
     const fek = app.config.fieldEncryptionKey;
     const db = app.db;
 
     // Call SaaS exchange endpoint
-    let exchangeResult: { relayEndpoint: string; apiKey: string; connectionId: string };
+    let exchangeResult: { relayBaseUrl?: string; relayEndpoint?: string; apiKey: string; connectionId: string };
     try {
       const res = await fetch(`${relayUrl}/api/relay/link/exchange`, {
         method: 'POST',
@@ -580,13 +630,16 @@ export async function settingsRoutes(app: FastifyInstance) {
         return reply.status(502).send({ error: 'Relay server returned an error' });
       }
 
-      exchangeResult = await res.json() as { relayEndpoint: string; apiKey: string; connectionId: string };
+      exchangeResult = await res.json() as { relayBaseUrl?: string; relayEndpoint?: string; apiKey: string; connectionId: string };
     } catch {
       return reply.status(502).send({ error: 'Could not reach relay server' });
     }
 
     // Store settings: relayUrl plaintext, apiKey encrypted, connectionId plaintext
-    await upsertSetting(db, 'relay_url', exchangeResult.relayEndpoint ?? relayUrl, false);
+    // relayEndpoint from Relay is the heartbeat URL, not a base URL. Prefer the
+    // explicit relayBaseUrl (newer Relay), else derive it, else the owner's input.
+    const baseUrl = normalizeRelayBaseUrl(exchangeResult.relayBaseUrl ?? exchangeResult.relayEndpoint ?? relayUrl);
+    await upsertSetting(db, 'relay_url', baseUrl, false);
     const encryptedApiKey = encryptField(exchangeResult.apiKey, fek)!;
     await upsertSetting(db, 'relay_api_key_encrypted', encryptedApiKey, true);
     await upsertSetting(db, 'relay_connection_id', exchangeResult.connectionId, false);
@@ -600,7 +653,7 @@ export async function settingsRoutes(app: FastifyInstance) {
 
     return reply.send({
       ok: true,
-      relayUrl: exchangeResult.relayEndpoint ?? relayUrl,
+      relayUrl: baseUrl,
       connectionId: exchangeResult.connectionId,
     });
   });
@@ -610,7 +663,7 @@ export async function settingsRoutes(app: FastifyInstance) {
     preHandler: [app.requireAuth, app.requireCsrf],
   }, async (req, reply) => {
     const db = app.db;
-    const keysToRemove = ['relay_url', 'relay_api_key_encrypted', 'relay_connection_id', 'relay_last_heartbeat_at'];
+    const keysToRemove = ['relay_url', 'relay_api_key_encrypted', 'relay_connection_id', 'relay_last_heartbeat_at', 'relay_last_heartbeat_error'];
     for (const key of keysToRemove) {
       await db.delete(appSettings).where(eq(appSettings.key, key));
     }
