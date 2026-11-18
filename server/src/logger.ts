@@ -1,5 +1,5 @@
 /**
- * Structured redacted logging configuration for Aegis OSS.
+ * Structured redacted logging configuration for Underwing Core.
  *
  * Wraps Fastify's built-in pino logger with a redact list that prevents
  * sensitive fields from appearing in log output. Pass the result of

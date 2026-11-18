@@ -143,7 +143,7 @@ describe('StorageObjectMetaSchema', () => {
 import { HeartbeatSchema, RelayPacketUploadSchema } from '../src/index.js';
 
 describe('Relay wire contracts', () => {
-  it('accepts the heartbeat body Aegis Core sends', () => {
+  it('accepts the heartbeat body Underwing Core sends', () => {
     expect(HeartbeatSchema.safeParse({
       version: 1,
       relayConnectionId: '0b1f6a3e-0c7c-4f7e-9d0a-2f6c5d4b3a21',

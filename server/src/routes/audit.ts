@@ -81,7 +81,7 @@ export async function auditRoutes(app: FastifyInstance) {
 
     return reply
       .header('Content-Type', 'application/json')
-      .header('Content-Disposition', 'attachment; filename="aegis-audit-log.json"')
+      .header('Content-Disposition', 'attachment; filename="underwing-audit-log.json"')
       .send(JSON.stringify({ exportedAt: new Date().toISOString(), events }, null, 2));
   });
 }

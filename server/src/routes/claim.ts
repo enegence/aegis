@@ -232,7 +232,7 @@ export async function claimRoutes(app: FastifyInstance) {
 
     return reply
       .header('Content-Type', 'application/octet-stream')
-      .header('Content-Disposition', `attachment; filename="aegis-packet-${claim.packetId}.bin"`)
+      .header('Content-Disposition', `attachment; filename="underwing-packet-${claim.packetId}.bin"`)
       .send(fileData);
   });
 

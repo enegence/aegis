@@ -1,5 +1,5 @@
 /**
- * relay-client.ts — Aegis Core → Aegis Relay (SaaS) client.
+ * relay-client.ts — Underwing Core → Underwing Relay (SaaS) client.
  *
  * Sends periodic heartbeats so Relay Monitoring can tell when this instance
  * goes silent. Contract: POST {relayUrl}/api/relay/heartbeat with
@@ -158,12 +158,12 @@ export interface EscrowUploadResult {
   version: number;
   duplicate: boolean;
   keyId: string;
-  /** Base64 AES-256 packet key. Shown to the owner once to escrow in Aegis Relay. */
+  /** Base64 AES-256 packet key. Shown to the owner once to escrow in Underwing Relay. */
   releaseKey: string;
 }
 
 /**
- * Build the switch's current packet and upload its ciphertext to Aegis Relay
+ * Build the switch's current packet and upload its ciphertext to Underwing Relay
  * (POST {relayUrl}/api/relay/packets, contract RelayPacketUploadSchema v1).
  * Returns the packet's base64 key so the owner can paste it into the Relay
  * escrow form; the SaaS never receives the key from this call.

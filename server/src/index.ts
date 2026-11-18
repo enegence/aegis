@@ -158,9 +158,9 @@ async function start() {
     const listenPort = await findAvailablePort(config.port, config.host);
     await app.listen({ port: listenPort, host: config.host });
     if (listenPort !== config.port) {
-      console.warn(`Requested port ${config.port} is unavailable; Aegis server listening on ${config.host}:${listenPort}`);
+      console.warn(`Requested port ${config.port} is unavailable; Underwing Core server listening on ${config.host}:${listenPort}`);
     } else {
-      console.log(`Aegis server listening on ${config.host}:${listenPort}`);
+      console.log(`Underwing Core server listening on ${config.host}:${listenPort}`);
     }
   } catch (err) {
     app.log.error(err);

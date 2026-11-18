@@ -64,8 +64,8 @@ export function encryptTotpSecret(secret: string, fieldKey: string): string {
 }
 
 export function totpOtpauthUrl(secret: string, email: string): string {
-  const label = encodeURIComponent(`Aegis:${email}`);
-  const issuer = encodeURIComponent('Aegis');
+  const label = encodeURIComponent(`Underwing Core:${email}`);
+  const issuer = encodeURIComponent('Underwing Core');
   return `otpauth://totp/${label}?secret=${secret}&issuer=${issuer}&algorithm=SHA1&digits=6&period=30`;
 }
 

@@ -1,5 +1,5 @@
 /**
- * Aegis OSS — Export / Restore Service
+ * Underwing Core — Export / Restore Service
  *
  * Creates and decrypts encrypted export bundles. The bundle format is:
  *   {

@@ -1,5 +1,5 @@
 /**
- * Aegis Core → Aegis Relay heartbeat sender.
+ * Underwing Core → Underwing Relay heartbeat sender.
  *
  * The SaaS route is POST {relayUrl}/api/relay/heartbeat with a Bearer API key
  * and a body matching the shared HeartbeatSchema contract. Without a sender,

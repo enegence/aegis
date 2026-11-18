@@ -51,7 +51,7 @@ export async function sendSmtpNotification(
     const info = await transport.sendMail({
       from: config.fromEmail,
       to: request.to,
-      subject: request.subject ?? `Aegis notification: ${request.purpose}`,
+      subject: request.subject ?? `Underwing notification: ${request.purpose}`,
       text: request.body,
     });
     return { ok: true, externalId: info.messageId };

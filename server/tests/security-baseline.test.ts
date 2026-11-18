@@ -1,5 +1,5 @@
 /**
- * Security Baseline Tests — Aegis OSS
+ * Security Baseline Tests — Underwing Core
  *
  * Verifies that core security invariants are actually implemented.
  *

@@ -463,7 +463,7 @@ export async function settingsRoutes(app: FastifyInstance) {
   });
 
   // POST /api/settings/relay/escrow-upload — upload a relay_escrow switch's
-  // current packet to Aegis Relay and return its key once for the owner to
+  // current packet to Underwing Relay and return its key once for the owner to
   // escrow in the Relay web app (explicit consent stays in Relay).
   app.post('/api/settings/relay/escrow-upload', {
     preHandler: [app.requireAuth, app.requireCsrf],
@@ -541,8 +541,8 @@ export async function settingsRoutes(app: FastifyInstance) {
             channel: 'email',
             purpose: 'test',
             to: config.user,
-            subject: 'Aegis — Test Notification',
-            body: 'This is a test notification from your Aegis instance.',
+            subject: 'Underwing: Test Notification',
+            body: 'This is a test notification from your Underwing Core instance.',
           });
           ok = true;
         }
@@ -555,7 +555,7 @@ export async function settingsRoutes(app: FastifyInstance) {
             channel: 'telegram',
             purpose: 'test',
             to: config.chatId,
-            body: 'This is a test notification from your Aegis instance.',
+            body: 'This is a test notification from your Underwing Core instance.',
           });
           ok = true;
         }

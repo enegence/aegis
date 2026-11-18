@@ -1,10 +1,10 @@
 /**
- * Aegis Core → Aegis Relay escrow packet upload.
+ * Underwing Core → Underwing Relay escrow packet upload.
  *
  * POST /api/settings/relay/escrow-upload builds the switch's current packet,
  * uploads the ciphertext to POST {relayUrl}/api/relay/packets (contract
  * RelayPacketUploadSchema, Bearer key), and returns the packet's base64 key
- * once so the owner can escrow it in Aegis Relay. The key must decrypt the
+ * once so the owner can escrow it in Underwing Relay. The key must decrypt the
  * uploaded bytes, because the hosted claim portal opens them with it.
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';

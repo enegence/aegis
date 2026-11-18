@@ -165,7 +165,7 @@ export function buildNotificationPayload(input: NotificationPayloadInput): {
   const subject = `Important: ${ownerDisplayName} has designated you as a trusted contact`;
 
   const textBody = [
-    `You have been listed as a contact in ${ownerDisplayName}'s Aegis estate plan.`,
+    `You have been listed as a contact in ${ownerDisplayName}'s Underwing estate plan.`,
     ``,
     `Please visit the following secure link to claim your information:`,
     ``,
@@ -182,7 +182,7 @@ export function buildNotificationPayload(input: NotificationPayloadInput): {
     <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 40px 20px;">
       <h2 style="color: #0B1C2C;">You have a pending claim from ${ownerDisplayName}</h2>
       <p style="color: #4A6B8A;">
-        You have been listed as a contact in <strong>${ownerDisplayName}</strong>'s Aegis estate plan.
+        You have been listed as a contact in <strong>${ownerDisplayName}</strong>'s Underwing estate plan.
       </p>
       <p style="color: #4A6B8A;">
         Please visit the following link to claim your information:

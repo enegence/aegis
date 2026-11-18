@@ -288,7 +288,7 @@ export async function runWorkerOnce(
     await progressReleaseRuns(db, now, syncConfig);
   }
 
-  // 5. Aegis Relay heartbeat (at most once per interval; no-op when unlinked).
+  // 5. Underwing Relay heartbeat (at most once per interval; no-op when unlinked).
   if (syncConfig?.fieldEncryptionKey) {
     try {
       const hb = await sendRelayHeartbeatIfDue(db, syncConfig.fieldEncryptionKey, now);

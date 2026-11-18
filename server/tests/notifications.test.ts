@@ -117,7 +117,7 @@ describe('sendSmtpNotification', () => {
     const result = await sendSmtpNotification(TEST_SMTP_CONFIG, {
       to: 'contact@example.com',
       subject: 'Test',
-      body: 'Hello from Aegis',
+      body: 'Hello from Underwing',
       purpose: 'test',
     });
 
@@ -161,7 +161,7 @@ describe('sendTelegramNotification', () => {
 
     const result = await sendTelegramNotification(TEST_TELEGRAM_CONFIG, {
       to: '123456789',
-      body: 'Aegis notification',
+      body: 'Underwing notification',
       purpose: 'reminder',
     });
 
@@ -177,7 +177,7 @@ describe('sendTelegramNotification', () => {
 
     const result = await sendTelegramNotification(TEST_TELEGRAM_CONFIG, {
       to: '123456789',
-      body: 'Aegis notification',
+      body: 'Underwing notification',
       purpose: 'test',
     });
 

@@ -1,8 +1,8 @@
-// Wire contract for POST {relayUrl}/api/relay/packets on Aegis Relay.
+// Wire contract for POST {relayUrl}/api/relay/packets on Underwing Relay.
 // Source of truth: aegis-dms-site packages/contracts/src/relay-packet-upload.ts
 // (validated server-side there). Keep the fields below identical to it.
 //
-// Note: this package's PacketEnvelopeSchema describes Aegis Core's LOCAL packet
+// Note: this package's PacketEnvelopeSchema describes Underwing Core's LOCAL packet
 // metadata (integer ids, storage block) and is intentionally not reused here;
 // the upload envelope uses the SaaS envelope shape spelled out explicitly.
 import { z } from 'zod';
