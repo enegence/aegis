@@ -1,8 +1,8 @@
 # Notifications
 
-Aegis sends contacts a claim link when a switch triggers. The claim portal handles verification, packet download, key view, and acknowledgement. Notification channels should carry the same minimized claim-link payload; they should not split secrets or send estate details.
+Underwing Core sends contacts a claim link when a switch triggers. The claim portal handles verification, packet download, key view, and acknowledgement. Notification channels should carry the same minimized claim-link payload; they should not split secrets or send estate details.
 
-For the OSS self-hosted version, outbound email is configured by bringing your own SMTP relay. Aegis Relay Escrow and Hosted deployments can handle delivery through the managed Aegis service at [aegisdms.life](https://aegisdms.life).
+For the OSS self-hosted version, outbound email is configured by bringing your own SMTP relay. Underwing Relay Escrow and Hosted deployments can handle delivery through the managed Underwing service at [aegisdms.life](https://aegisdms.life).
 
 Configure and test at least one delivery channel before relying on a switch.
 
@@ -19,7 +19,7 @@ Settings → SMTP section:
 | From email | Sender address shown to recipients |
 | TLS/SSL | Enable for port 465 or servers that require it |
 
-`setup.sh` can write these values into `.env` on first install. At startup, Aegis imports those environment values into encrypted app settings if they have not already been configured in the database. Use `AEGIS_SMTP_SECURE=true` for implicit TLS/SSL, usually port 465.
+`setup.sh` can write these values into `.env` on first install. At startup, Underwing Core imports those environment values into encrypted app settings if they have not already been configured in the database. Use `AEGIS_SMTP_SECURE=true` for implicit TLS/SSL, usually port 465.
 
 After saving, use "Send test" to verify delivery before arming.
 
@@ -36,7 +36,7 @@ After saving, use "Send test" to verify delivery before arming.
 | Postmark | smtp.postmarkapp.com | 587 | Requires sending server |
 | SendGrid | smtp.sendgrid.net | 587 | Use "apikey" as username |
 
-If you do not want to manage SMTP credentials, DNS records, or delivery troubleshooting, use Aegis Relay/Hosted managed delivery instead.
+If you do not want to manage SMTP credentials, DNS records, or delivery troubleshooting, use Underwing Relay/Hosted managed delivery instead.
 
 ## Telegram
 

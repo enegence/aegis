@@ -1,8 +1,8 @@
-# Aegis Core
+# Underwing Core
 
 Open-source, self-hosted digital legacy switch (AGPL-3.0-only).
 
-Aegis Core lets you organize your estate information, designate trusted contacts, and configure automated release if you become unavailable or incapacitated.
+Underwing Core lets you organize your estate information, designate trusted contacts, and configure automated release if you become unavailable or incapacitated.
 
 ## What it does
 
@@ -11,14 +11,14 @@ Aegis Core lets you organize your estate information, designate trusted contacts
 - Runs a dead man's switch in **trip** (date-based) or **heartbeat** (check-in) mode
 - Notifies contacts with a claim link when a switch triggers
 - Generates encrypted release packets and delivers decryption keys to verified contacts
-- Optionally integrates with [Aegis Relay](https://aegisdms.life) for cloud monitoring, escrow, and managed delivery
+- Optionally integrates with [Underwing Relay](https://aegisdms.life) for cloud monitoring, escrow, and managed delivery
 
 ## What it is NOT
 
 - Not a password manager — estate data is stored encrypted, not zero-knowledge
-- Not a legal executor — Aegis delivers information; legal authority must be established separately
+- Not a legal executor: Underwing Core delivers information; legal authority must be established separately
 - Not a guaranteed delivery system — see [Deployment modes](#deployment-modes)
-- Not a service — Aegis Core runs on your own infrastructure
+- Not a service: Underwing Core runs on your own infrastructure
 
 ## Deployment modes
 
@@ -26,9 +26,9 @@ Aegis Core lets you organize your estate information, designate trusted contacts
 |------|---------|---------|-------------|
 | **Vault** | Local disk | This host must be reachable | None |
 | **Packet Mirror** | S3-compatible | Packet copy survives host loss | S3 credentials |
-| **Relay Monitoring** | Local or S3 | This host must still execute | Aegis Relay subscription |
-| **Relay Escrow** | Relay server | Relay executes if host is gone | Aegis Relay subscription |
-| **Hosted** | Aegis cloud | Fully managed | Aegis Hosted subscription |
+| **Relay Monitoring** | Local or S3 | This host must still execute | Underwing Relay subscription |
+| **Relay Escrow** | Relay server | Relay executes if host is gone | Underwing Relay subscription |
+| **Hosted** | Underwing cloud | Fully managed | Underwing Hosted subscription |
 
 Vault Mode is the default. **It does not guarantee automated release if this host goes offline.**
 
@@ -64,7 +64,7 @@ node server/dist/index.js
 
 ## First-run setup
 
-On first visit, Aegis prompts you to create an owner account. No config files beyond `.env` are required.
+On first visit, Underwing Core prompts you to create an owner account. No config files beyond `.env` are required.
 
 After setup, the Settings page lets you configure:
 
@@ -132,7 +132,7 @@ See [docs/threat-model.md](docs/threat-model.md) and [docs/key-management.md](do
 | [Packet Mirror](docs/packet-mirror.md) | S3-backed encrypted packet copy |
 | [Release modes](docs/release-modes.md) | Vault, Packet Mirror, Relay, Hosted |
 | [Key management](docs/key-management.md) | Encryption model, release flow |
-| [Threat model](docs/threat-model.md) | What Aegis protects against and doesn't |
+| [Threat model](docs/threat-model.md) | What Underwing Core protects against and doesn't |
 | [Backup and restore](docs/backups.md) | Data protection procedures |
 | [Troubleshooting](docs/troubleshooting.md) | Common issues and fixes |
 | [Upgrading](docs/upgrading.md) | Version upgrade procedure |

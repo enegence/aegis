@@ -1,4 +1,4 @@
-# Key Management — Aegis Core (OSS)
+# Key Management: Underwing Core (OSS)
 
 Last updated: 2026-05-14
 Status: Alpha — Phase 5 baseline
@@ -7,7 +7,7 @@ Status: Alpha — Phase 5 baseline
 
 ## Current Alpha Model
 
-Aegis Core uses **local key management only**. No Shamir Secret Sharing. No HSM. No zero-knowledge claims. The server holds all keys.
+Underwing Core uses **local key management only**. No Shamir Secret Sharing. No HSM. No zero-knowledge claims. The server holds all keys.
 
 ---
 

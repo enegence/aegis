@@ -1,4 +1,4 @@
-# Aegis Core — Alpha Readiness Checklist
+# Underwing Core: Alpha Readiness Checklist
 
 Run this checklist before making an alpha deployment available to yourself or others.
 

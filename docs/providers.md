@@ -1,6 +1,6 @@
 # Provider Configuration Guide
 
-Practical configuration examples for storage and notification providers supported by Aegis.
+Practical configuration examples for storage and notification providers supported by Underwing Core.
 
 ---
 
@@ -15,14 +15,14 @@ Practical configuration examples for storage and notification providers supporte
 | Field            | Value                             |
 |------------------|-----------------------------------|
 | Region           | `us-east-1` (or your bucket's region) |
-| Bucket           | `my-aegis-backups`               |
+| Bucket           | `my-underwing-backups`               |
 | Prefix           | `aegis` (default)                |
 | Access Key ID    | IAM key ID (`AKIA...`)           |
 | Secret Access Key | IAM secret                      |
 | Endpoint         | *(leave blank)*                  |
 | Force Path Style | `false`                          |
 
-**Minimum bucket policy** (restrict to Aegis prefix only):
+**Minimum bucket policy** (restrict to the Underwing Core prefix only):
 
 ```json
 {
@@ -30,7 +30,7 @@ Practical configuration examples for storage and notification providers supporte
   "Statement": [
     {
       "Effect": "Allow",
-      "Principal": { "AWS": "arn:aws:iam::ACCOUNT_ID:user/aegis-user" },
+      "Principal": { "AWS": "arn:aws:iam::ACCOUNT_ID:user/underwing-user" },
       "Action": [
         "s3:PutObject",
         "s3:GetObject",
@@ -38,22 +38,22 @@ Practical configuration examples for storage and notification providers supporte
         "s3:ListBucket"
       ],
       "Resource": [
-        "arn:aws:s3:::my-aegis-backups",
-        "arn:aws:s3:::my-aegis-backups/aegis/*"
+        "arn:aws:s3:::my-underwing-backups",
+        "arn:aws:s3:::my-underwing-backups/aegis/*"
       ]
     }
   ]
 }
 ```
 
-**CORS config** (only needed if you want browser-direct upload — Aegis server-to-server does not require CORS):
+**CORS config** (only needed if you want browser-direct upload. Underwing Core server-to-server does not require CORS):
 
 ```json
 [
   {
     "AllowedHeaders": ["*"],
     "AllowedMethods": ["GET", "PUT"],
-    "AllowedOrigins": ["https://your-aegis-instance.example.com"],
+    "AllowedOrigins": ["https://your-underwing-instance.example.com"],
     "MaxAgeSeconds": 3000
   }
 ]
@@ -81,7 +81,7 @@ Replace `<ACCOUNT_ID>` with your Cloudflare account ID (found in the R2 dashboar
 |------------------|---------------------------------------------------------------|
 | Endpoint         | `https://abc123def456.r2.cloudflarestorage.com`              |
 | Region           | `auto`                                                        |
-| Bucket           | `my-aegis-backups`                                           |
+| Bucket           | `my-underwing-backups`                                           |
 | Access Key ID    | R2 API Token ID                                              |
 | Secret Access Key | R2 API Token secret                                         |
 | Force Path Style | `true`                                                       |
@@ -93,7 +93,7 @@ Replace `<ACCOUNT_ID>` with your Cloudflare account ID (found in the R2 dashboar
 ```json
 [
   {
-    "AllowedOrigins": ["https://your-aegis-instance.example.com"],
+    "AllowedOrigins": ["https://your-underwing-instance.example.com"],
     "AllowedMethods": ["GET", "PUT"],
     "AllowedHeaders": ["*"],
     "MaxAgeSeconds": 3000
@@ -121,7 +121,7 @@ Region examples: `us-west-004`, `eu-central-003`. Find your region in B2 → Buc
 |------------------|-------------------------------------------------|
 | Endpoint         | `https://s3.us-west-004.backblazeb2.com`       |
 | Region           | `us-west-004`                                   |
-| Bucket           | `my-aegis-backups`                             |
+| Bucket           | `my-underwing-backups`                             |
 | Prefix           | `aegis`                                         |
 | Access Key ID    | B2 Application Key ID                          |
 | Secret Access Key | B2 Application Key                            |
@@ -134,8 +134,8 @@ Region examples: `us-west-004`, `eu-central-003`. Find your region in B2 → Buc
 ```json
 [
   {
-    "corsRuleName": "aegis",
-    "allowedOrigins": ["https://your-aegis-instance.example.com"],
+    "corsRuleName": "underwing",
+    "allowedOrigins": ["https://your-underwing-instance.example.com"],
     "allowedHeaders": ["*"],
     "allowedOperations": ["s3_head", "s3_get", "s3_put"],
     "maxAgeSeconds": 3600
@@ -143,7 +143,7 @@ Region examples: `us-west-004`, `eu-central-003`. Find your region in B2 → Buc
 ]
 ```
 
-**Note:** B2 charges for Class B (download) transactions. For Aegis use (infrequent reads), this is typically negligible.
+**Note:** B2 charges for Class B (download) transactions. For Underwing Core use (infrequent reads), this is typically negligible.
 
 ---
 
@@ -164,29 +164,29 @@ https://minio.example.com:9000      # HTTPS (recommended for production)
 |------------------|------------------------------------|
 | Endpoint         | `https://minio.example.com:9000`  |
 | Region           | `us-east-1` (MinIO ignores region, but SDK requires a value) |
-| Bucket           | `aegis`                           |
+| Bucket           | `underwing`                       |
 | Access Key ID    | MinIO access key                  |
 | Secret Access Key | MinIO secret key                 |
 | Force Path Style | `true`                            |
 
-**TLS note:** MinIO in production must use TLS. Use a valid certificate (Let's Encrypt, or a self-signed CA added to your system trust store). The Aegis server uses Node.js's default TLS verification — self-signed certs will fail unless you set `NODE_EXTRA_CA_CERTS` to your CA bundle.
+**TLS note:** MinIO in production must use TLS. Use a valid certificate (Let's Encrypt, or a self-signed CA added to your system trust store). The Underwing Core server uses Node.js's default TLS verification, so self-signed certs will fail unless you set `NODE_EXTRA_CA_CERTS` to your CA bundle.
 
 **Bucket creation:**
 
 ```bash
 mc alias set local https://minio.example.com:9000 ACCESSKEY SECRETKEY
-mc mb local/aegis
-mc anonymous set none local/aegis   # private — no public access
+mc mb local/underwing
+mc anonymous set none local/underwing   # private, no public access
 ```
 
 **CORS config:**
 
 ```bash
-mc cors set local/aegis --config '{
+mc cors set local/underwing --config '{
   "CORSRules": [{
     "AllowedHeaders": ["*"],
     "AllowedMethods": ["GET", "PUT", "HEAD"],
-    "AllowedOrigins": ["https://your-aegis-instance.example.com"],
+    "AllowedOrigins": ["https://your-underwing-instance.example.com"],
     "MaxAgeSeconds": 3000
   }]
 }'
@@ -198,7 +198,7 @@ mc cors set local/aegis --config '{
 
 ### Common Patterns
 
-Aegis Core OSS uses SMTP (STARTTLS or SSL/TLS) for email delivery. Self-hosted users provide their own relay credentials. Aegis Relay Escrow and Hosted deployments can use managed Aegis delivery through [aegisdms.life](https://aegisdms.life).
+Underwing Core uses SMTP (STARTTLS or SSL/TLS) for email delivery. Self-hosted users provide their own relay credentials. Underwing Relay Escrow and Hosted deployments can use managed Underwing delivery through [aegisdms.life](https://aegisdms.life).
 
 The recommended order for self-hosted users is:
 
@@ -206,7 +206,7 @@ The recommended order for self-hosted users is:
 2. Use a transactional SMTP provider if reliability and deliverability matter more than setup simplicity.
 3. Use a self-hosted mail server only if you already know how to operate DNS, SPF, DKIM, DMARC, and mail reputation.
 
-If SMTP setup is not worth your time, use Aegis Relay or Hosted instead. That path is intentionally the low-friction option for people who only need Aegis notifications and do not want to maintain a separate email provider.
+If SMTP setup is not worth your time, use Underwing Relay or Hosted instead. That path is intentionally the low-friction option for people who only need Underwing notifications and do not want to maintain a separate email provider.
 
 All providers below work with standard SMTP settings.
 
@@ -271,7 +271,7 @@ All providers below work with standard SMTP settings.
 | Port       | `587`                                   |
 | User       | `postmaster@mg.yourdomain.com`          |
 | Password   | Mailgun SMTP password                   |
-| From Email | `aegis@mg.yourdomain.com`              |
+| From Email | `underwing@mg.yourdomain.com`              |
 | Secure     | `false`                                 |
 
 **EU region:** Use `smtp.eu.mailgun.org` as the host.
@@ -306,7 +306,7 @@ For fully self-hosted mail. Ensure proper SPF, DKIM, and DMARC records are set o
 | Port       | `587` (STARTTLS) or `25`          |
 | User       | SMTP username                     |
 | Password   | SMTP password                     |
-| From Email | `aegis@yourdomain.com`           |
+| From Email | `underwing@yourdomain.com`           |
 | Secure     | `false`                           |
 
 **Port 25** is blocked by most cloud providers (AWS, GCP, Azure). Use port 587 with STARTTLS or run on a VPS that allows port 25.

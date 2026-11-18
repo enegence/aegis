@@ -1,4 +1,4 @@
-# Aegis Core — Self-Hosting Guide
+# Underwing Core: Self-Hosting Guide
 
 ## Requirements
 
@@ -52,17 +52,17 @@ Notification and storage credentials can be configured during `setup.sh` or late
 
 ## Reverse proxy
 
-Aegis is designed to run behind a reverse proxy (Nginx, Caddy, Traefik) for HTTPS termination.
+Underwing Core is designed to run behind a reverse proxy (Nginx, Caddy, Traefik) for HTTPS termination.
 
 **Nginx example:**
 
 ```nginx
 server {
     listen 443 ssl;
-    server_name aegis.yourdomain.com;
+    server_name underwing.yourdomain.com;
 
-    ssl_certificate /etc/letsencrypt/live/aegis.yourdomain.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/aegis.yourdomain.com/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/underwing.yourdomain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/underwing.yourdomain.com/privkey.pem;
 
     location / {
         proxy_pass http://127.0.0.1:8000;
@@ -77,16 +77,16 @@ server {
 **Caddy example:**
 
 ```caddyfile
-aegis.yourdomain.com {
+underwing.yourdomain.com {
     reverse_proxy localhost:8000
 }
 ```
 
-**Important:** Set `AEGIS_APP_URL=https://aegis.yourdomain.com` in your `.env` so claim notification links are correct.
+**Important:** Set `AEGIS_APP_URL=https://underwing.yourdomain.com` in your `.env` so claim notification links are correct.
 
 ## Unraid
 
-1. In Community Applications, search for Aegis or create a custom Docker container.
+1. In Community Applications, search for Underwing Core or create a custom Docker container.
 2. Map port `8000` to your preferred host port.
 3. Map a host path to `/data` for persistent storage.
 4. Set environment variables: `AEGIS_SECRET_KEY`, `AEGIS_FIELD_ENCRYPTION_KEY`, `AEGIS_APP_URL`, `NODE_ENV=production`.
@@ -98,24 +98,24 @@ Use the Docker Compose file as a reference. Set `restart: unless-stopped` and mo
 
 ## Private access (Tailscale / VPN)
 
-Aegis can be restricted to your Tailscale network for extra security:
+Underwing Core can be restricted to your Tailscale network for extra security:
 
-- Set `AEGIS_HOST=0.0.0.0` and bind Aegis to your Tailscale IP.
-- Or run Aegis on `localhost:8000` and expose only via Tailscale with its built-in reverse proxy.
+- Set `AEGIS_HOST=0.0.0.0` and bind Underwing Core to your Tailscale IP.
+- Or run Underwing Core on `localhost:8000` and expose only via Tailscale with its built-in reverse proxy.
 
 **Important:** If contacts need to open claim URLs from outside your network, those URLs must be publicly reachable (or contacts must also be on your VPN/Tailscale network).
 
 ## Claim URL accessibility
 
-When a switch triggers, Aegis sends contacts a claim URL like:
+When a switch triggers, Underwing Core sends contacts a claim URL like:
 
 ```
-https://aegis.yourdomain.com/claim/<token>
+https://underwing.yourdomain.com/claim/<token>
 ```
 
-This URL must be reachable by the contact without any login. If Aegis is not publicly accessible, contacts cannot open claims. Plan your network accordingly.
+This URL must be reachable by the contact without any login. If Underwing Core is not publicly accessible, contacts cannot open claims. Plan your network accordingly.
 
-## Updating Aegis
+## Updating Underwing Core
 
 See [upgrading.md](upgrading.md) for step-by-step upgrade instructions.
 

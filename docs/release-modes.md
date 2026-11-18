@@ -1,4 +1,4 @@
-# Release Modes — Aegis Core
+# Release Modes: Underwing Core
 
 Last updated: 2026-05-14
 Status: Phase 5 baseline (all modes from Phase 3 onward)
@@ -11,9 +11,9 @@ A **release mode** (also called **deployment mode**) determines where your relea
 
 Mode is set at switch level. Valid values: `vault | dead_drop | relay_monitoring | relay_escrow`
 
-The internal value `dead_drop` currently represents Packet Mirror mode for backwards compatibility. User-facing copy reserves "Dead Drop" for the future managed Aegis API release service.
+The internal value `dead_drop` currently represents Packet Mirror mode for backwards compatibility. User-facing copy reserves "Dead Drop" for the future managed Underwing API release service.
 
-> **Hosted mode** (`hosted`) is managed by Aegis DMS Site (SaaS) and is not available in self-hosted OSS.
+> **Hosted mode** (`hosted`) is managed by Underwing Hosted (SaaS) and is not available in self-hosted OSS.
 
 ---
 
@@ -25,7 +25,7 @@ Your switch information lives entirely on this local server. When the switch tri
 
 **Trust model:** You trust the local server. No third parties involved in storage or release.
 
-**What Aegis stores:** Everything (estate items, contacts, packets) on the local SQLite DB + local filesystem or S3.
+**What Underwing Core stores:** Everything (estate items, contacts, packets) on the local SQLite DB + local filesystem or S3.
 
 **What you retain:** The physical/network access to the server.
 
@@ -50,7 +50,7 @@ Your encrypted packet is mirrored to S3-compatible storage while you are alive. 
 
 **Trust model:** You trust S3/R2 to store ciphertext. You trust no one else with the key.
 
-**What Aegis stores:** Encrypted packet in S3. Packet key on this server (in `encryption_keys`). Contacts/estate on this server.
+**What Underwing Core stores:** Encrypted packet in S3. Packet key on this server (in `encryption_keys`). Contacts/estate on this server.
 
 **What you retain:** The server (for key-view delivery) and S3 credentials.
 
@@ -71,11 +71,11 @@ Your encrypted packet is mirrored to S3-compatible storage while you are alive. 
 
 **`deploymentMode: "relay_monitoring"`**
 
-The Aegis Relay SaaS monitors your heartbeats and alerts contacts if your instance goes silent. Your local server still handles packet storage and key delivery.
+The Underwing Relay SaaS monitors your heartbeats and alerts contacts if your instance goes silent. Your local server still handles packet storage and key delivery.
 
-**Trust model:** You trust Aegis Relay to accurately report offline status. You do not trust it with your keys or data.
+**Trust model:** You trust Underwing Relay to accurately report offline status. You do not trust it with your keys or data.
 
-**What Aegis Relay stores:** Heartbeat timestamps, connection metadata. No keys, no estate data.
+**What Underwing Relay stores:** Heartbeat timestamps, connection metadata. No keys, no estate data.
 
 **What you retain:** Keys, estate data, and the local server.
 
@@ -95,11 +95,11 @@ The Aegis Relay SaaS monitors your heartbeats and alerts contacts if your instan
 
 **`deploymentMode: "relay_escrow"`**
 
-The Aegis Relay SaaS holds an encrypted copy of your release material. If you remain offline beyond the configured threshold, Relay can execute the release directly — without requiring your local server.
+The Underwing Relay SaaS holds an encrypted copy of your release material. If you remain offline beyond the configured threshold, Relay can execute the release directly, without requiring your local server.
 
-**Trust model:** You trust Aegis Relay to hold encrypted material and execute your release policy. This is the highest-trust mode. You are trusting the Aegis DMS SaaS with encrypted data.
+**Trust model:** You trust Underwing Relay to hold encrypted material and execute your release policy. This is the highest-trust mode. You are trusting the Underwing SaaS with encrypted data.
 
-**What Aegis Relay stores:** Encrypted release material (escrow packet), your release policy, escrow contact list.
+**What Underwing Relay stores:** Encrypted release material (escrow packet), your release policy, escrow contact list.
 
 **What you retain:** The encryption key (theoretically). In practice, for v1, Relay can decrypt because it holds both the material and the key (server-side encryption).
 

@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-Aegis Core is currently alpha software. Security fixes are accepted for the default branch and the latest tagged release.
+Underwing Core is currently alpha software. Security fixes are accepted for the default branch and the latest tagged release.
 
 ## Reporting a Vulnerability
 

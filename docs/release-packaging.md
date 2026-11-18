@@ -1,6 +1,6 @@
-# Aegis Core — Release Packaging
+# Underwing Core: Release Packaging
 
-This document describes how to create and publish a versioned release of Aegis Core.
+This document describes how to create and publish a versioned release of Underwing Core.
 
 ---
 
@@ -81,7 +81,7 @@ docker compose -f docker-compose-<previous-version>.yml up -d
 If the upgrade applied database migrations, you may need to restore from a database backup before rolling back. Always take a backup before upgrading:
 
 ```bash
-# SQLite backup (default Aegis Core storage)
+# SQLite backup (default Underwing Core storage)
 cp data/aegis.db data/aegis.db.backup-$(date +%Y%m%d)
 ```
 
@@ -103,7 +103,7 @@ GPG signing of release artifacts is not implemented in beta. It will be added be
 
 ## Version Numbering
 
-Aegis Core follows [Semantic Versioning](https://semver.org/):
+Underwing Core follows [Semantic Versioning](https://semver.org/):
 
 - `v0.x.y-beta` — beta releases (breaking changes possible between minor versions)
 - `v1.x.y` — stable releases (breaking changes only on major version bumps)

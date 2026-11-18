@@ -1,4 +1,4 @@
-# Aegis Core — Troubleshooting
+# Underwing Core: Troubleshooting
 
 ## Server won't start
 
@@ -129,7 +129,7 @@ AEGIS_WORKER_ENABLED=true
 
 ### Database is locked / SQLITE_BUSY
 
-Another process is holding the database. Stop all Aegis instances before running maintenance commands.
+Another process is holding the database. Stop all Underwing Core instances before running maintenance commands.
 
 ### Database corruption
 
@@ -142,9 +142,9 @@ Restore from a backup. See [backups.md](backups.md).
 There is no password reset UI in alpha. To reset:
 
 1. Back up your database and `.env` (even if you can't log in, the data may be recoverable later).
-2. Stop Aegis.
+2. Stop Underwing Core.
 3. Delete `data/aegis.db`.
-4. Restart Aegis — it will prompt for a new owner account.
+4. Restart Underwing Core. It will prompt for a new owner account.
 5. Reconfigure your estate, contacts, and switches from scratch, or restore from a backup.
 
 Alternatively, use the SQLite CLI to update the password hash directly (requires generating an Argon2id hash):
@@ -172,4 +172,4 @@ Then log in with your passphrase.
 ## Getting help
 
 - [GitHub Issues](https://github.com/enegence/aegis/issues)
-- [Aegis DMS Site](https://aegisdms.life) for Relay, Hosted, and managed delivery support
+- [Underwing](https://aegisdms.life) for Relay, Hosted, and managed delivery support

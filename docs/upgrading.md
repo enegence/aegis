@@ -1,4 +1,4 @@
-# Aegis Core — Upgrading
+# Underwing Core: Upgrading
 
 ## Before you upgrade
 
@@ -23,7 +23,7 @@ docker compose up -d
 curl http://localhost:8000/health
 ```
 
-Aegis runs database migrations automatically on startup. If the container starts and the health endpoint returns `"status": "ok"`, the upgrade succeeded.
+Underwing Core runs database migrations automatically on startup. If the container starts and the health endpoint returns `"status": "ok"`, the upgrade succeeded.
 
 ## Manual / source upgrade
 
@@ -60,7 +60,7 @@ sqlite3 data/aegis.db "SELECT * FROM __drizzle_migrations ORDER BY created_at DE
 
 If an upgrade fails:
 
-1. Stop Aegis: `docker compose stop`
+1. Stop Underwing Core: `docker compose stop`
 2. Restore database: `cp backup/aegis.db data/aegis.db`
 3. Restore `.env`: `cp backup/.env .env`
 4. Revert to previous image: edit `docker-compose.yml` to pin the previous version, or `git checkout <previous-tag>`

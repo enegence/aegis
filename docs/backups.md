@@ -1,8 +1,8 @@
-# Aegis Core — Backup and Restore
+# Underwing Core: Backup and Restore
 
 ## What to back up
 
-Aegis Core stores everything in two places:
+Underwing Core stores everything in two places:
 
 | Path | Contents | Required for restore |
 |------|----------|---------------------|
@@ -37,7 +37,7 @@ docker compose start
 
 ### Hot backup (while running)
 
-SQLite supports online backup with the `.backup` command. To create a safe copy while Aegis is running:
+SQLite supports online backup with the `.backup` command. To create a safe copy while Underwing Core is running:
 
 ```bash
 sqlite3 data/aegis.db ".backup 'backup/aegis.db'"
@@ -75,11 +75,11 @@ Back up your S3 bucket separately using your provider's tools (e.g., `aws s3 syn
 ### To a new server
 
 1. Install Docker and Docker Compose on the new server.
-2. Clone or copy the Aegis directory.
+2. Clone or copy the Underwing Core directory.
 3. Restore your `.env`: `cp backup/.env .env`
 4. Restore your database: `mkdir -p data && cp backup/aegis.db data/aegis.db`
 5. Restore packet files (if any): `cp -r backup/packets/ data/packets/`
-6. Start Aegis: `docker compose up -d`
+6. Start Underwing Core: `docker compose up -d`
 7. Verify by logging in and checking that your switches and estate items appear.
 
 ### Recovery checklist
@@ -102,14 +102,14 @@ All credentials are backed up as part of the database, but they are only usable 
 
 ## Upgrade procedure
 
-Before upgrading Aegis to a new version:
+Before upgrading Underwing Core to a new version:
 
 1. Run a full backup.
 2. Pull the new image: `docker compose pull`
 3. Restart: `docker compose up -d`
 4. Check the [CHANGELOG](../CHANGELOG.md) for migration notes.
 
-Aegis runs database migrations automatically on startup. If a migration fails, restore your backup and report the issue.
+Underwing Core runs database migrations automatically on startup. If a migration fails, restore your backup and report the issue.
 
 ## See also
 

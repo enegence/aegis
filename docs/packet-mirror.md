@@ -2,7 +2,7 @@
 
 Packet Mirror mode encrypts your release packet and uploads it to an S3-compatible bucket while you are alive. Your contacts can download the mirrored ciphertext after a release event.
 
-This mode is separate from the future Aegis Dead Drop API service. Packet Mirror is storage-only; Dead Drop is reserved for the managed relay/API release system.
+This mode is separate from the future Underwing Dead Drop API service. Packet Mirror is storage-only; Dead Drop is reserved for the managed relay/API release system.
 
 ## What gets uploaded
 

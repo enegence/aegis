@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Start Aegis with Docker Compose, preferring the configured host port and
+# Start Underwing Core with Docker Compose, preferring the configured host port and
 # temporarily falling forward if that local port is unavailable.
 set -euo pipefail
 
@@ -9,7 +9,7 @@ YELLOW='\033[1;33m'
 GREEN='\033[0;32m'
 RESET='\033[0m'
 
-say()  { echo -e "${CYAN}${BOLD}[aegis]${RESET} $*"; }
+say()  { echo -e "${CYAN}${BOLD}[underwing]${RESET} $*"; }
 warn() { echo -e "${YELLOW}⚠${RESET} $*"; }
 ok()   { echo -e "${GREEN}✓${RESET} $*"; }
 
@@ -71,7 +71,7 @@ if [[ "${HOST_PORT}" != "${REQUESTED_HOST_PORT}" ]]; then
   warn "The configured port remains ${REQUESTED_HOST_PORT}; next start will try it again first."
 fi
 
-say "Building and starting Aegis with Docker Compose..."
+say "Building and starting Underwing Core with Docker Compose..."
 AEGIS_HOST_PORT="${HOST_PORT}" docker compose up -d --build --force-recreate
 
 APP_URL="$(read_env "AEGIS_APP_URL" "http://localhost")"
@@ -83,6 +83,6 @@ elif [[ "${APP_URL}" =~ ^https://(localhost|127\.0\.0\.1|0\.0\.0\.0)$ ]] && [[ "
   OPEN_URL="${APP_URL}:${HOST_PORT}"
 fi
 
-ok "Aegis started on host port ${HOST_PORT} (container port ${CONTAINER_PORT})."
+ok "Underwing Core started on host port ${HOST_PORT} (container port ${CONTAINER_PORT})."
 echo ""
 echo -e "  ${BOLD}Open:${RESET} ${OPEN_URL}"

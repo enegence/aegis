@@ -1,4 +1,4 @@
-# Security Checklist — Aegis Core (OSS)
+# Security Checklist: Underwing Core (OSS)
 
 Last updated: 2026-05-14
 Reviewer: Automated (Claude / Phase 5 Task 1)

@@ -1,6 +1,6 @@
 # Backup and Restore
 
-Aegis OSS provides an encrypted export/restore feature so you can safely back up all your data and move it between instances.
+Underwing Core provides an encrypted export/restore feature so you can safely back up all your data and move it between instances.
 
 ## Overview
 
@@ -139,8 +139,8 @@ Switches are not restored (they contain mode/configuration state that may be inc
 ## Regular backup recommendation
 
 Schedule regular exports as part of your operational routine:
-- Before any Aegis upgrade
+- Before any Underwing Core upgrade
 - After adding significant amounts of data
 - At least monthly for active instances
 
-Store exports in a location separate from your Aegis instance (e.g., encrypted cloud storage, offline USB drive).
+Store exports in a location separate from your Underwing Core instance (e.g., encrypted cloud storage, offline USB drive).

@@ -1,12 +1,12 @@
 # Switches
 
-A switch is the core runtime unit of Aegis Core. It defines when and how your legacy information is released.
+A switch is the core runtime unit of Underwing Core. It defines when and how your legacy information is released.
 
 ## Switch modes
 
 ### Heartbeat mode
 
-You check in on a regular interval (e.g., every 7 days). If a check-in is missed, Aegis enters a warning window and eventually triggers.
+You check in on a regular interval (e.g., every 7 days). If a check-in is missed, Underwing Core enters a warning window and eventually triggers.
 
 - Good for: ongoing monitoring without a fixed end date
 - Requires: regular manual check-ins or automated heartbeat
@@ -50,7 +50,7 @@ draft → armed → (warning) → triggered → cascade_active → completed
 
 ## Readiness checks
 
-Before arming, Aegis checks:
+Before arming, Underwing Core checks:
 
 - Email verified
 - Notification provider configured (SMTP or Telegram)

@@ -1,4 +1,4 @@
-# Threat Model — Aegis Core (OSS)
+# Threat Model: Underwing Core (OSS)
 
 Last updated: 2026-05-14
 Status: Alpha — Phase 5 baseline
@@ -7,7 +7,7 @@ Status: Alpha — Phase 5 baseline
 
 ## Overview
 
-Aegis Core is a single-owner, self-hosted digital legacy release system. The owner configures switches, contacts, and estate information on their private server. When a switch triggers, the system notifies designated contacts and releases an encrypted information packet.
+Underwing Core is a single-owner, self-hosted digital legacy release system. The owner configures switches, contacts, and estate information on their private server. When a switch triggers, the system notifies designated contacts and releases an encrypted information packet.
 
 ---
 

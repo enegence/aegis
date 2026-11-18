@@ -1,4 +1,4 @@
-# Aegis OSS — Operations Guide
+# Underwing Core: Operations Guide
 
 ## Health Checks
 
@@ -89,7 +89,7 @@ ALERT_STUCK_RELEASE_RUN_HOURS=24
 
 ## Log Format
 
-Aegis uses [pino](https://getpino.io/) structured JSON logging (via Fastify's built-in logger).
+Underwing Core uses [pino](https://getpino.io/) structured JSON logging (via Fastify's built-in logger).
 
 ### Log fields
 

@@ -1,8 +1,8 @@
-# Accessibility — Aegis Core
+# Accessibility: Underwing Core
 
 ## Current Accessibility Guarantees
 
-The following accessibility improvements are implemented in Aegis Core as of Phase 5.
+The following accessibility improvements are implemented in Underwing Core as of Phase 5.
 
 ### Form label association
 
@@ -92,4 +92,4 @@ Use [WebAIM Contrast Checker](https://webaim.org/resources/contrastchecker/) or 
 
 ## Alpha Limitation Acknowledgment
 
-Aegis Core is in alpha. Accessibility support is improving but has not been independently audited. Users who depend on assistive technology may encounter gaps not listed above. Feedback and bug reports are welcome.
+Underwing Core is in alpha. Accessibility support is improving but has not been independently audited. Users who depend on assistive technology may encounter gaps not listed above. Feedback and bug reports are welcome.
