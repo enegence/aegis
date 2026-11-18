@@ -267,7 +267,7 @@ export default function Setup({ onSetupComplete }: SetupProps) {
             </h2>
             <p style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '0.82rem', color: t.muted, lineHeight: 1.8, maxWidth: 420, margin: '0 auto 20px' }}>
               Underwing Core is a privacy-first digital legacy release system.<br />
-              Your estate info, delivered to trusted people — automatically.<br />
+              Your estate info, delivered to trusted people, automatically.<br />
               If you don't check in, it knows.
             </p>
 

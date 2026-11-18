@@ -198,13 +198,13 @@ export async function decryptExportBundle(
     const decrypted = Buffer.concat([decipher.update(encryptedData), decipher.final()]);
     plaintext = decrypted.toString('utf8');
   } catch {
-    throw new Error('Decryption failed — incorrect passphrase or corrupted bundle');
+    throw new Error('Decryption failed: incorrect passphrase or corrupted bundle');
   }
 
   // Verify hash
   const actualHash = createHash('sha256').update(plaintext).digest('hex');
   if (actualHash !== bundle.payloadHash) {
-    throw new Error('Payload hash mismatch — bundle may be corrupted');
+    throw new Error('Payload hash mismatch: bundle may be corrupted');
   }
 
   return JSON.parse(plaintext) as ExportPayload;

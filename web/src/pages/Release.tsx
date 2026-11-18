@@ -121,7 +121,7 @@ export default function Release() {
         {status?.activeRun ? (
           <>
             <p style={{ margin: '0 0 6px' }}>
-              Run #{status.activeRun.id} — <StatusBadge status={status.activeRun.status} />
+              Run #{status.activeRun.id}: <StatusBadge status={status.activeRun.status} />
             </p>
             <p style={{ margin: '0 0 4px', fontSize: '0.82rem', color: '#4A6B8A' }}>
               Triggering switch: #{status.activeRun.triggeringSwitchId}
@@ -131,7 +131,7 @@ export default function Release() {
             </p>
             {status.currentClaim && (
               <p style={{ margin: '4px 0', fontSize: '0.82rem', color: '#4A6B8A' }}>
-                Current claim: #{status.currentClaim.id} ({status.currentClaim.status}) —
+                Current claim: #{status.currentClaim.id} ({status.currentClaim.status}),
                 expires {new Date(status.currentClaim.expiresAt).toLocaleString()}
               </p>
             )}

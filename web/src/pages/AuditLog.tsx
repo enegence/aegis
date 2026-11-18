@@ -136,10 +136,10 @@ export default function AuditLog() {
                   </td>
                   <td style={{ padding: '6px 10px', color: '#4A6B8A' }}>{evt.actorType}</td>
                   <td style={{ padding: '6px 10px', color: '#4A6B8A' }}>
-                    {evt.switchId != null ? `#${evt.switchId}` : '—'}
+                    {evt.switchId != null ? `#${evt.switchId}` : 'None'}
                   </td>
                   <td style={{ padding: '6px 10px', maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: T.ink }}>
-                    {evt.metadata ? JSON.stringify(evt.metadata) : '—'}
+                    {evt.metadata ? JSON.stringify(evt.metadata) : 'None'}
                   </td>
                 </tr>
               ))}

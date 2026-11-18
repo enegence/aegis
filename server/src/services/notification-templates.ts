@@ -50,7 +50,7 @@ export function renderTemplate(
     case 'owner_trigger_reached_local_only':
       return {
         subject: `Underwing: Switch '${switchName}' has been triggered`,
-        body: `'${switchName}' has been triggered. Underwing is preparing to notify your contacts (packet/release in Phase 3).`,
+        body: `'${switchName}' has been triggered. Underwing Core is preparing your packet and will send your first contact a claim link. If they do not respond within their confirmation window, the next contact is notified. If this was a mistake, log in and cancel the release on the Release page.`,
       };
 
     case 'contact_claim_notification':

@@ -44,7 +44,7 @@ function Phase3StatusCards({ extra }: { extra: Phase3DashboardExtra }) {
           <>
             <div style={{ fontSize: '0.88rem', color: t.danger }}>⚠ Release in progress</div>
             <div style={{ fontSize: '0.72rem', color: t.muted }}>
-              Run #{extra.activeReleaseRun.id} — {extra.activeReleaseRun.status}
+              Run #{extra.activeReleaseRun.id}: {extra.activeReleaseRun.status}
             </div>
           </>
         ) : (
@@ -131,7 +131,7 @@ export default function Dashboard() {
 
         {!summary.notificationsConfigured && (
           <div style={{ ...toneBadgeStyle(t, 'warning'), marginTop: '16px', padding: '12px 16px', borderRadius: '4px', fontFamily: "'JetBrains Mono',monospace", fontSize: '0.82rem' }}>
-            ⚠ Notifications not configured — go to <strong>Settings</strong> to add SMTP or Telegram.
+            ⚠ Notifications not configured. Go to <strong>Settings</strong> to add SMTP or Telegram.
           </div>
         )}
       </div>

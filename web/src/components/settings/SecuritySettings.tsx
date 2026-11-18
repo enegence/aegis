@@ -100,7 +100,7 @@ export default function SecuritySettings({ data, onSaved }: Props) {
               Two-Factor Authentication
             </div>
             <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '0.78rem', color: data.totpEnabled ? toneTextColor(t, 'success') : toneTextColor(t, 'warning'), marginTop: '2px' }}>
-              {data.totpEnabled ? 'Enabled — TOTP required on login' : 'Not enabled'}
+              {data.totpEnabled ? 'Enabled: TOTP required on login' : 'Not enabled'}
             </div>
           </div>
           {mode === 'idle' && (

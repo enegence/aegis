@@ -1,8 +1,7 @@
 /**
  * The product is Underwing; this self-hosted app is Underwing Core.
- * Messages people read must carry the new name. Identifiers (cookies, env
- * vars, the packet wire value `aegis_core`) keep their old spelling on purpose
- * and are covered by their own tests.
+ * Messages people read must carry the new name. The packet wire value
+ * `aegis_core` keeps its old spelling on purpose and has its own tests.
  */
 import { describe, it, expect } from 'vitest';
 import { renderTemplate, type TemplatePurpose } from '../src/services/notification-templates.js';
@@ -27,6 +26,20 @@ describe('brand name in messages', () => {
     });
     expect(subject.startsWith('Underwing: ')).toBe(true);
     expect(`${subject}\n${body}`).not.toMatch(/aegis/i);
+  });
+
+  it('the triggered notice says what happens next, with no development notes', () => {
+    const { body } = renderTemplate('owner_trigger_reached_local_only', { switchName: 'Main' });
+    expect(body).not.toMatch(/phase\s*\d/i);
+    expect(body).toContain('claim link');
+    expect(body).toContain('cancel the release');
+  });
+
+  it('no message uses an em dash', () => {
+    for (const purpose of PURPOSES) {
+      const { subject, body } = renderTemplate(purpose, { switchName: 'Main', claimUrl: 'https://example.test/claim/token' });
+      expect(`${subject}\n${body}`).not.toContain('\u2014');
+    }
   });
 
   it('claim notification names the Underwing estate plan', () => {

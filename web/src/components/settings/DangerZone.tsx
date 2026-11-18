@@ -88,12 +88,13 @@ export default function DangerZone() {
       <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '0.82rem', color: t.muted, marginBottom: '16px', padding: '12px 14px', background: t.surface, border: `1.5px solid ${t.border}`, borderRadius: '4px', lineHeight: 1.6 }}>
         <strong>Before taking any action below, back up your data.</strong>
         <br />
-        Back up <code>.env</code> and <code>data/aegis.db</code> together — neither is useful without the other.
+        Back up <code>.env</code> and <code>data/underwing.db</code> together. Neither is useful without the other.
+        An install set up before the rename keeps its database at <code>data/aegis.db</code>; use that name instead.
         <br />
         <span style={{ fontSize: '0.75rem' }}>
           Quick backup:{' '}
           <code style={{ background: t.bg, padding: '1px 4px', borderRadius: '2px' }}>
-            sqlite3 data/aegis.db ".backup 'backup/aegis.db'"
+            sqlite3 data/underwing.db ".backup 'backup/underwing.db'"
           </code>
           {' '}and copy <code>.env</code>.
         </span>

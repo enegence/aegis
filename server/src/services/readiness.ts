@@ -179,7 +179,7 @@ function checkStorageConfiguredForDeadDrop(sw: SwitchRecord): ReadinessCheck {
     label: 'Storage configured for Packet Mirror',
     status: 'ready',
     required: false,
-    message: `Deployment mode is '${sw.deploymentMode}' — no external storage required.`,
+    message: `Deployment mode is '${sw.deploymentMode}': no external storage required.`,
   };
 }
 
