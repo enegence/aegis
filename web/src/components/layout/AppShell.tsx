@@ -1,7 +1,7 @@
 import type { ComponentType, CSSProperties, ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTheme, useTweaks } from '../../lib/theme';
-import { AegisLockup } from '../brand';
+import { UnderwingLockup } from '../brand';
 import { IconRelease } from '../icons';
 
 export interface NavItem {
@@ -46,7 +46,7 @@ export default function AppShell({ children, navItems, releaseTo, statusLines, o
       >
         <div className="app-shell__brand" style={{ borderBottom: `1.5px dashed ${t.border}` }}>
           <div onClick={() => navigate(navItems[0]?.to ?? '/')} style={{ cursor: 'pointer' }}>
-            <AegisLockup size={logoSize} color={t.ink} />
+            <UnderwingLockup size={logoSize} color={t.ink} />
           </div>
         </div>
         <nav className="app-shell__nav">

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { apiFetch } from '../lib/api';
 import { useTheme } from '../lib/theme';
 import { SketchCard } from '../components/ui';
-import { AegisLockup } from '../components/brand';
+import { UnderwingLockup } from '../components/brand';
 
 interface LoginProps {
   onAuth: () => void;
@@ -76,7 +76,7 @@ export default function Login({ onAuth }: LoginProps) {
       <form onSubmit={handleSubmit} aria-label="Login form" style={{ width: '100%', maxWidth: 400 }}>
         <SketchCard style={{ padding: '32px 30px' }}>
           <div style={{ marginBottom: 18 }}>
-            <AegisLockup size="sm" color={t.ink} />
+            <UnderwingLockup size="sm" color={t.ink} />
           </div>
           <h1 style={{ fontFamily: "'Caveat', cursive, sans-serif", fontSize: '2rem', fontWeight: 'bold', color: t.ink, marginTop: 0, marginBottom: 20 }}>
             Welcome Back

@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-// NOTE: These tests require a pre-configured Aegis server with an owner account.
+// NOTE: These tests require a pre-configured Underwing Core server with an owner account.
 // They are skipped when running against a fresh install (setup not complete).
 
 test.describe('Core owner flow', () => {

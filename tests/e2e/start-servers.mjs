@@ -105,7 +105,7 @@ try {
   await Promise.all([waitForHealth(8200), waitForHealth(8201)]);
   await seedOwner(8201);
   startReadyServer();
-  console.log('Aegis e2e servers ready');
+  console.log('Underwing Core e2e servers ready');
 } catch (err) {
   console.error(err);
   shutdown(1);

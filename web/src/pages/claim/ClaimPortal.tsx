@@ -122,7 +122,7 @@ export default function ClaimPortal() {
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url; a.download = 'aegis-packet.bin';
+      a.href = url; a.download = 'underwing-packet.bin';
       a.click();
       URL.revokeObjectURL(url);
       await loadClaim();
@@ -196,7 +196,7 @@ export default function ClaimPortal() {
   return (
     <div style={{ minHeight: '100vh', background: T.bg }}>
       <div style={{ background: T.surface, borderBottom: `2px solid ${T.border}`, padding: '0 24px', height: 44, display: 'flex', alignItems: 'center' }}>
-        <span style={{ fontFamily: "'Caveat', cursive, sans-serif", fontSize: '1.2rem', fontWeight: 'bold', color: T.ink }}>Aegis — Trusted Contact Portal</span>
+        <span style={{ fontFamily: "'Caveat', cursive, sans-serif", fontSize: '1.2rem', fontWeight: 'bold', color: T.ink }}>Underwing: Trusted Contact Portal</span>
       </div>
 
       <Section>

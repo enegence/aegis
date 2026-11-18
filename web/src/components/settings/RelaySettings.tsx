@@ -24,13 +24,13 @@ interface EscrowUploadResult {
 }
 
 const UPLOAD_ERRORS: Record<string, string> = {
-  relay_not_linked: 'Link this instance to Aegis Relay first.',
+  relay_not_linked: 'Link this instance to Underwing Relay first.',
   switch_not_relay_escrow: 'That switch is not in Relay Escrow mode.',
   switch_not_found: 'Switch not found.',
   packet_unavailable: 'Could not build a packet for this switch. Check that it has contacts and estate items selected.',
   packet_build_failed: 'Could not build a packet for this switch. Check that it has contacts and estate items selected.',
-  relay_unreachable: 'Aegis Relay could not be reached. Check your connection and try again.',
-  relay_rejected: 'Aegis Relay rejected the upload.',
+  relay_unreachable: 'Underwing Relay could not be reached. Check your connection and try again.',
+  relay_rejected: 'Underwing Relay rejected the upload.',
 };
 
 interface Props {
@@ -147,7 +147,7 @@ export default function RelaySettings({ data, onSaved }: Props) {
       )}
 
       <div style={{ padding: '10px 14px', background: t.surface, border: `1.5px solid ${t.border}`, borderRadius: '3px 8px 3px 8px / 8px 3px 8px 3px', fontFamily: "'JetBrains Mono',monospace", fontSize: '0.78rem', color: t.muted, lineHeight: 1.5 }}>
-        To connect to Aegis Relay: create or log in to an account at{' '}
+        To connect to Underwing Relay: create or log in to an account at{' '}
         <a href="https://aegisdms.life" target="_blank" rel="noreferrer" style={{ color: t.accent }}>
           aegisdms.life
         </a>
@@ -200,8 +200,8 @@ export default function RelaySettings({ data, onSaved }: Props) {
           <div style={{ marginTop: '8px', padding: '10px 14px', border: `1.5px solid ${t.border}`, borderRadius: '3px 8px 3px 8px / 8px 3px 8px 3px' }}>
             <div style={{ fontFamily: "'Caveat',cursive", fontSize: '1.2rem', fontWeight: 700, color: t.ink, marginBottom: '6px' }}>Relay Escrow packet</div>
             <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '0.75rem', color: t.muted, lineHeight: 1.5, marginBottom: '8px' }}>
-              Relay Escrow lets Aegis Relay release your packet if this server goes offline. Upload the current packet for a Relay Escrow switch,
-              then in the Aegis Relay web app open Relay → Escrow, choose this packet, and paste the release key below as the escrow material.
+              Relay Escrow lets Underwing Relay release your packet if this server goes offline. Upload the current packet for a Relay Escrow switch,
+              then in the Underwing Relay web app open Relay → Escrow, choose this packet, and paste the release key below as the escrow material.
               Re-upload and update escrow after you change the switch&apos;s contents.
             </div>
             {escrowSwitches.length === 0 ? (
@@ -227,10 +227,10 @@ export default function RelaySettings({ data, onSaved }: Props) {
                 <div style={{ color: toneTextColor(t, 'success'), marginBottom: '6px' }}>
                   {upload.duplicate ? 'Relay already had this packet.' : `Uploaded as version ${upload.version}.`} Relay packet: {upload.relayPacketId}
                 </div>
-                <label htmlFor="escrow-release-key" style={labelStyle}>Release key (paste into Aegis Relay as escrow material)</label>
+                <label htmlFor="escrow-release-key" style={labelStyle}>Release key (paste into Underwing Relay as escrow material)</label>
                 <input id="escrow-release-key" style={inputStyle} readOnly value={upload.releaseKey} onFocus={(e) => e.currentTarget.select()} />
                 <div style={{ color: t.danger, fontSize: '0.72rem', marginTop: '4px' }}>
-                  Anyone with this key and the packet can read it. Paste it only into Aegis Relay, then close this page.
+                  Anyone with this key and the packet can read it. Paste it only into Underwing Relay, then close this page.
                 </div>
               </div>
             )}

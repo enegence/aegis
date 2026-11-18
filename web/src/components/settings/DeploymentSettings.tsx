@@ -30,7 +30,7 @@ const MODES = [
   {
     id: 'relay_monitoring',
     label: 'Relay Monitoring',
-    description: 'An Aegis Relay service monitors your heartbeats. This does not automatically release — it only tracks.',
+    description: 'An Underwing Relay service monitors your heartbeats. This does not automatically release. It only tracks.',
     limitation: 'Release execution still depends on this host unless Relay Escrow is also configured.',
     tone: 'warning' as const,
   },
@@ -38,7 +38,7 @@ const MODES = [
     id: 'relay_escrow',
     label: 'Relay Escrow',
     description: 'Relay holds encrypted release material and can execute the release if this host is unavailable.',
-    limitation: 'Requires a paired Aegis DMS Site Relay subscription and full escrow setup.',
+    limitation: 'Requires a paired Underwing Relay subscription and full escrow setup.',
     tone: 'danger' as const,
   },
 ];

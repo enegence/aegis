@@ -5,7 +5,7 @@ test.describe('Setup wizard', () => {
     await page.goto('/');
     // On a fresh install, setup wizard or setup route should be visible
     // The app may show setup inline or redirect — check for setup-specific content
-    await expect(page.getByText(/welcome|set up|create.*account|aegis/i).first()).toBeVisible();
+    await expect(page.getByText(/welcome|set up|create.*account|underwing/i).first()).toBeVisible();
   });
 
   test('setup page does not expose auth routes prematurely', async ({ page }) => {

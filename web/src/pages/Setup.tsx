@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { apiFetch } from '../lib/api';
 import { useTheme } from '../lib/theme';
-import { AegisLockup } from '../components/brand';
+import { UnderwingLockup } from '../components/brand';
 import TrustBadges from '../components/brand/TrustBadges';
 import { InkButton } from '../components/ui';
 
@@ -27,13 +27,13 @@ const DEPLOYMENT_MODES = [
   {
     id: 'relay_monitoring',
     label: 'Relay Monitoring',
-    description: 'An Aegis Relay service monitors your heartbeat and alerts if it stops. Does not provide automated release.',
+    description: 'An Underwing Relay service monitors your heartbeat and alerts if it stops. Does not provide automated release.',
     limitation: 'Relay Monitoring tracks heartbeats only. It does not execute release or provide key escrow.',
   },
   {
     id: 'relay_escrow',
     label: 'Relay Escrow',
-    description: 'Encrypted key material is held by an Aegis Relay service and released to contacts on trigger.',
+    description: 'Encrypted key material is held by an Underwing Relay service and released to contacts on trigger.',
     limitation: 'Relay Escrow requires a configured and trusted Relay provider. Your security depends on the Relay operator.',
   },
 ] as const;
@@ -228,10 +228,10 @@ export default function Setup({ onSetupComplete }: SetupProps) {
         {/* Header */}
         <div style={{ marginBottom: 24 }}>
           <div style={{ marginBottom: 10 }}>
-            <AegisLockup size="sm" color={T.ink} />
+            <UnderwingLockup size="sm" color={T.ink} />
           </div>
           <div style={{ fontFamily: "'Caveat', cursive, sans-serif", fontSize: '1.8rem', fontWeight: 'bold', color: T.ink, marginBottom: 4 }}>
-            Aegis Setup
+            Underwing Core Setup
           </div>
           <div role="progressbar" aria-valuenow={step + 1} aria-valuemin={1} aria-valuemax={steps.length} aria-label={`Step ${step + 1} of ${steps.length}: ${steps[step]}`} style={{ display: 'flex', gap: 6, marginTop: 8 }}>
             {steps.map((s, i) => (
@@ -260,13 +260,13 @@ export default function Setup({ onSetupComplete }: SetupProps) {
             </svg>
 
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-              <AegisLockup size="lg" color={t.ink} />
+              <UnderwingLockup size="lg" color={t.ink} />
             </div>
             <h2 style={{ fontFamily: "'Caveat',cursive", fontSize: '2rem', fontWeight: 700, color: t.ink, margin: '0 0 10px' }}>
               What happens after you're gone?
             </h2>
             <p style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '0.82rem', color: t.muted, lineHeight: 1.8, maxWidth: 420, margin: '0 auto 20px' }}>
-              Aegis is a privacy-first digital legacy release system.<br />
+              Underwing Core is a privacy-first digital legacy release system.<br />
               Your estate info, delivered to trusted people — automatically.<br />
               If you don't check in, it knows.
             </p>
@@ -277,7 +277,7 @@ export default function Setup({ onSetupComplete }: SetupProps) {
 
             {/* Retained legal disclaimer */}
             <div style={{ background: t.bg, border: `1.5px dashed ${t.border}`, borderRadius: '3px 10px 3px 10px / 10px 3px 10px 3px', padding: 14, margin: '0 0 20px', fontFamily: "'JetBrains Mono',monospace", fontSize: '0.78rem', color: t.muted, lineHeight: 1.6, textAlign: 'left' }}>
-              <strong style={{ color: t.ink }}>Aegis is not:</strong>
+              <strong style={{ color: t.ink }}>Underwing Core is not:</strong>
               <ul style={{ margin: '6px 0 0', paddingLeft: 18 }}>
                 <li>A will or legal document</li>
                 <li>A password manager</li>
@@ -322,7 +322,7 @@ export default function Setup({ onSetupComplete }: SetupProps) {
           <div>
             <h2 style={{ fontSize: '1.1rem', color: T.ink, marginTop: 0 }}>Security</h2>
             <p style={{ fontSize: '0.82rem', color: T.muted, marginTop: 0 }}>
-              Choose a strong password. Aegis does not have password recovery — if you lose it, you'll need
+              Choose a strong password. Underwing Core does not have password recovery. If you lose it, you'll need
               to reset the database. We recommend a passphrase of 4+ random words.
             </p>
             <div style={{ marginBottom: 14 }}>
@@ -345,7 +345,7 @@ export default function Setup({ onSetupComplete }: SetupProps) {
           <div>
             <h2 style={{ fontSize: '1.1rem', color: T.ink, marginTop: 0 }}>Deployment Mode</h2>
             <p style={{ fontSize: '0.82rem', color: T.muted, marginTop: 0 }}>
-              Choose how Aegis releases your information. You can change this later in Settings.
+              Choose how Underwing Core releases your information. You can change this later in Settings.
             </p>
             <div role="radiogroup" aria-label="Deployment mode" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {DEPLOYMENT_MODES.map(mode => {
@@ -401,7 +401,7 @@ export default function Setup({ onSetupComplete }: SetupProps) {
                 style={{ marginTop: 2, flexShrink: 0 }}
               />
               <span style={{ fontSize: '0.82rem', color: T.ink, lineHeight: 1.5 }}>
-                I understand Aegis is not a will, legal service, password manager, or guarantee of delivery.
+                I understand Underwing Core is not a will, legal service, password manager, or guarantee of delivery.
                 Release reliability depends on the deployment mode and configured services.
               </span>
             </label>

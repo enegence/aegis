@@ -7,9 +7,9 @@ import { createActionButtonStyle, createInputStyle, createLabelStyle, toneTextCo
 const DEPLOYMENT_COPY: Record<string, string> = {
   vault: 'Vault Mode stores and organizes your legacy information locally. It does not guarantee automated release if this machine is offline, destroyed, inaccessible, or unable to notify your contacts.',
   dead_drop: 'Packet Mirror uploads an encrypted packet to S3-compatible storage. Your release material survives server loss, but automated notification may still require this host.',
-  relay_monitoring: 'Relay Monitoring lets Aegis Relay detect when you go offline and send alerts. Final release may still require your local host.',
-  relay_escrow: 'Relay Escrow enables Aegis Relay to execute your release policy if you remain offline beyond your threshold. Requires explicit trust acknowledgement.',
-  hosted: 'Hosted mode delegates full release management to Aegis DMS servers. No local host required.',
+  relay_monitoring: 'Relay Monitoring lets Underwing Relay detect when you go offline and send alerts. Final release may still require your local host.',
+  relay_escrow: 'Relay Escrow enables Underwing Relay to execute your release policy if you remain offline beyond your threshold. Requires explicit trust acknowledgement.',
+  hosted: 'Hosted mode delegates full release management to Underwing servers. No local host required.',
 };
 
 interface Props {
