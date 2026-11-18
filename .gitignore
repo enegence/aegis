@@ -10,3 +10,5 @@ data/
 .DS_Store
 server/static/
 .worktrees/
+test-results/
+playwright-report/
