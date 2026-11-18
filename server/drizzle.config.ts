@@ -5,6 +5,7 @@ export default defineConfig({
   out: './drizzle',
   dialect: 'sqlite',
   dbCredentials: {
-    url: process.env.AEGIS_DB_PATH || './data/aegis.db',
+    // Same rule as the server: new name first, then the old one (see src/env.ts).
+    url: process.env.UNDERWING_DB_PATH || process.env.AEGIS_DB_PATH || './data/underwing.db',
   },
 });

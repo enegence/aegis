@@ -3,6 +3,7 @@ import { drizzle } from 'drizzle-orm/better-sqlite3';
 import * as schema from './schema.js';
 import { mkdirSync } from 'fs';
 import { dirname } from 'path';
+import { DEFAULT_DB_PATH, resolveDbPath } from './path.js';
 
 let db: ReturnType<typeof createDb> | null = null;
 
@@ -16,7 +17,7 @@ function createDb(dbPath: string) {
 
 export function getDb(dbPath?: string): ReturnType<typeof createDb> {
   if (!db) {
-    db = createDb(dbPath || './data/aegis.db');
+    db = createDb(resolveDbPath(dbPath || DEFAULT_DB_PATH));
   }
   return db;
 }

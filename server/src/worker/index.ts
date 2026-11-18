@@ -1,6 +1,7 @@
 import { inArray, eq } from 'drizzle-orm';
 import { switches, releaseRuns, workerHeartbeats } from '../db/schema.js';
 import type { UnderwingDb } from '../db/index.js';
+import { readEnv } from '../env.js';
 import type { SwitchRecord } from '../services/switch-repository.js';
 import { evaluateAndTransition } from '../services/switch-engine.js';
 import { processRemindersForSwitch } from '../services/reminders.js';
@@ -24,7 +25,7 @@ export interface WorkerSyncConfig {
 }
 
 export interface WorkerOptions {
-  intervalMs?: number;       // default: AEGIS_WORKER_INTERVAL_SECONDS * 1000 || 60000
+  intervalMs?: number;       // default: UNDERWING_WORKER_INTERVAL_SECONDS * 1000 || 60000
   runImmediately?: boolean;  // run once on start, default false
   syncConfig?: WorkerSyncConfig;
 }
@@ -308,7 +309,7 @@ export async function runWorkerOnce(
 export function startWorker(db: UnderwingDb, options?: WorkerOptions): WorkerHandle {
   const intervalMs =
     options?.intervalMs ??
-    parseInt(process.env.AEGIS_WORKER_INTERVAL_SECONDS ?? '60') * 1000;
+    parseInt(readEnv('WORKER_INTERVAL_SECONDS') ?? '60') * 1000;
 
   const syncConfig = options?.syncConfig;
   let running = true;

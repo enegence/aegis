@@ -9,6 +9,7 @@ import { existsSync } from 'fs';
 import { createServer } from 'node:net';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { loadConfig, type AppConfig } from './config.js';
+import { readEnv } from './env.js';
 import { getDb, createTestDb, type UnderwingDb } from './db/index.js';
 import { createLoggerConfig } from './logger.js';
 import authPlugin from './auth/plugin.js';
@@ -167,7 +168,7 @@ async function start() {
     process.exit(1);
   }
 
-  if (process.env.AEGIS_WORKER_ENABLED === 'true') {
+  if (readEnv('WORKER_ENABLED') === 'true') {
     workerHandle = startWorker(app.db, {
       syncConfig: {
         fieldEncryptionKey: config.fieldEncryptionKey,

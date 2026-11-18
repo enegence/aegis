@@ -15,8 +15,9 @@ import { eq, inArray } from 'drizzle-orm';
 import type { UnderwingDb } from '../db/index.js';
 import { appSettings, switches } from '../db/schema.js';
 import { decryptField } from './field-encrypt.js';
+import { readEnv } from '../env.js';
 
-const parsedInterval = Number.parseInt(process.env.AEGIS_RELAY_HEARTBEAT_SECONDS ?? '300', 10);
+const parsedInterval = Number.parseInt(readEnv('RELAY_HEARTBEAT_SECONDS') ?? '300', 10);
 export const RELAY_HEARTBEAT_INTERVAL_SECONDS = Number.isFinite(parsedInterval) && parsedInterval >= 60 ? parsedInterval : 300;
 const INTERVAL_HINT_SECONDS = Math.min(RELAY_HEARTBEAT_INTERVAL_SECONDS * 3, 86400);
 const REQUEST_TIMEOUT_MS = 10_000;
