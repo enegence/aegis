@@ -18,7 +18,7 @@ interface SettingsData {
     smtp: { configured: boolean; hasPassword: boolean; host?: string | null; port?: number | null; user?: string | null; fromEmail?: string | null; secure?: boolean };
     telegram: { configured: boolean; hasBotToken: boolean; chatId?: string | null };
   };
-  storage: { s3Configured: boolean; bucket?: string | null; region?: string | null; prefix?: string | null; endpoint?: string | null; hasAccessKey: boolean; lastVerifiedAt?: string | null };
+  storage: { s3Configured: boolean; bucket?: string | null; region?: string | null; prefix?: string | null; endpoint?: string | null; forcePathStyle?: boolean; hasAccessKey: boolean; lastVerifiedAt?: string | null };
   relay: { enabled: boolean; relayUrl?: string | null; apiKeyConfigured: boolean; lastHeartbeatAt?: string | null };
   security: { totpEnabled: boolean };
   packets: { retentionDays: number | null };

@@ -9,6 +9,7 @@ interface StorageData {
   region?: string | null;
   prefix?: string | null;
   endpoint?: string | null;
+  forcePathStyle?: boolean;
   hasAccessKey: boolean;
   lastVerifiedAt?: string | null;
 }
@@ -28,7 +29,7 @@ export default function StorageSettings({ data, onSaved }: Props) {
   const [prefix, setPrefix] = useState(data.prefix ?? 'underwing');
   const [accessKeyId, setAccessKeyId] = useState('');
   const [secretAccessKey, setSecretAccessKey] = useState('');
-  const [forcePathStyle, setForcePathStyle] = useState(false);
+  const [forcePathStyle, setForcePathStyle] = useState(data.forcePathStyle ?? false);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [error, setError] = useState('');

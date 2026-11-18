@@ -9,6 +9,8 @@ type EnvSetting = {
   envName: string;
   key: string;
   encrypted: boolean;
+  /** Stored as 'true' or 'false'; `true` and `1` (any case) turn it on. */
+  boolean?: boolean;
 };
 
 const ENV_SETTINGS: EnvSetting[] = [
@@ -26,7 +28,14 @@ const ENV_SETTINGS: EnvSetting[] = [
   { envName: 'S3_ACCESS_KEY_ID', key: 's3_access_key_id_encrypted', encrypted: true },
   { envName: 'S3_SECRET_ACCESS_KEY', key: 's3_secret_access_key_encrypted', encrypted: true },
   { envName: 'S3_PREFIX', key: 's3_prefix', encrypted: false },
+  // For MinIO and other path-style providers. Read by loadS3Config in dead-drop-sync.ts.
+  { envName: 'S3_FORCE_PATH_STYLE', key: 's3_force_path_style', encrypted: false, boolean: true },
 ];
+
+function normalizeBoolean(raw: string): 'true' | 'false' {
+  const value = raw.trim().toLowerCase();
+  return value === 'true' || value === '1' ? 'true' : 'false';
+}
 
 async function settingExists(db: UnderwingDb, key: string): Promise<boolean> {
   const rows = await db
@@ -47,9 +56,10 @@ export async function seedSettingsFromEnvironment(
     const rawValue = readEnv(setting.envName);
     if (!rawValue || await settingExists(db, setting.key)) continue;
 
+    const plainValue = setting.boolean ? normalizeBoolean(rawValue) : rawValue;
     const value = setting.encrypted
-      ? encryptField(rawValue, fieldEncryptionKey)!
-      : rawValue;
+      ? encryptField(plainValue, fieldEncryptionKey)!
+      : plainValue;
 
     await db.insert(appSettings).values({
       key: setting.key,

@@ -144,6 +144,37 @@ describe('consolidated settings API', () => {
     expect(JSON.parse(check.payload).storage.prefix).toBe('aegis');
   });
 
+  it('GET /api/settings reports the saved path-style choice, and a save that omits it keeps it', async () => {
+    const on = await app.inject({
+      method: 'PUT', url: '/api/settings/storage/s3',
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken, 'content-type': 'application/json' },
+      payload: { region: 'us-east-1', bucket: 'first-bucket', accessKeyId: 'AKIAFIRST', secretAccessKey: 'first-secret', forcePathStyle: true },
+    });
+    expect(on.statusCode).toBe(200);
+    let check = await app.inject({ method: 'GET', url: '/api/settings', headers: { cookie: cookies } });
+    expect(JSON.parse(check.payload).storage.forcePathStyle).toBe(true);
+
+    // No forcePathStyle in the request: the saved choice stays on.
+    const resave = await app.inject({
+      method: 'PUT', url: '/api/settings/storage/s3',
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken, 'content-type': 'application/json' },
+      payload: { region: 'us-east-1', bucket: 'first-bucket' },
+    });
+    expect(resave.statusCode).toBe(200);
+    const rows = await app.db.select().from(appSettings).where(eq(appSettings.key, 's3_force_path_style'));
+    expect(rows[0].value).toBe('true');
+
+    // Turning it off explicitly still works.
+    const off = await app.inject({
+      method: 'PUT', url: '/api/settings/storage/s3',
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken, 'content-type': 'application/json' },
+      payload: { region: 'us-east-1', bucket: 'first-bucket', forcePathStyle: false },
+    });
+    expect(off.statusCode).toBe(200);
+    check = await app.inject({ method: 'GET', url: '/api/settings', headers: { cookie: cookies } });
+    expect(JSON.parse(check.payload).storage.forcePathStyle).toBe(false);
+  });
+
   it('PUT /api/settings/storage/s3 saves encrypted credentials', async () => {
     const res = await app.inject({
       method: 'PUT', url: '/api/settings/storage/s3',

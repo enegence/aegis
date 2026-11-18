@@ -36,7 +36,7 @@ const S3UpdateSchema = z.object({
   prefix: z.string().optional(), // omitted = keep the saved prefix, or the default on first save
   accessKeyId: z.string().optional().default(''),
   secretAccessKey: z.string().optional(), // empty = keep existing
-  forcePathStyle: z.boolean().default(false),
+  forcePathStyle: z.boolean().optional(), // omitted = keep the saved choice (off on first save)
 });
 
 const RelayUpdateSchema = z.object({
@@ -217,6 +217,7 @@ export async function settingsRoutes(app: FastifyInstance) {
     const s3HasAccessKey = (await getSettingRow(db, 's3_access_key_id_encrypted'))?.value != null
       || (await getSettingRow(db, 's3_access_key_id'))?.value != null;
     const s3HasSecretKey = (await getSettingRow(db, 's3_secret_access_key_encrypted'))?.value != null;
+    const s3ForcePathStyle = (await getPlainSetting(db, 's3_force_path_style')) === 'true';
     const s3LastVerified = await getPlainSetting(db, 's3_last_verified_at');
 
     // Relay
@@ -262,6 +263,7 @@ export async function settingsRoutes(app: FastifyInstance) {
         region: s3Region,
         prefix: s3Prefix,
         endpoint: s3Endpoint,
+        forcePathStyle: s3ForcePathStyle,
         hasAccessKey: s3HasAccessKey && s3HasSecretKey,
         lastVerifiedAt: s3LastVerified,
       },
@@ -366,7 +368,8 @@ export async function settingsRoutes(app: FastifyInstance) {
     // rename) is kept when the request does not name one.
     const prefix = body.prefix ?? (await getPlainSetting(db, 's3_prefix')) ?? DEFAULT_S3_PREFIX;
     await upsertSetting(db, 's3_prefix', prefix, false);
-    await upsertSetting(db, 's3_force_path_style', String(body.forcePathStyle), false);
+    const forcePathStyle = body.forcePathStyle ?? (await getPlainSetting(db, 's3_force_path_style')) === 'true';
+    await upsertSetting(db, 's3_force_path_style', String(forcePathStyle), false);
     if (!shouldKeepExistingAccessKey) {
       const encryptedAccessKeyId = encryptField(body.accessKeyId, fek)!;
       await upsertSetting(db, 's3_access_key_id_encrypted', encryptedAccessKeyId, true);

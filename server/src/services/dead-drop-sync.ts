@@ -32,7 +32,8 @@ interface S3Config {
   forcePathStyle?: boolean;
 }
 
-async function loadS3Config(
+/** S3 settings as the storage provider needs them, or null when storage is not configured. */
+export async function loadS3Config(
   db: UnderwingDb,
   fieldEncryptionKey: string,
 ): Promise<S3Config | null> {

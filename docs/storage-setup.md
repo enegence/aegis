@@ -17,7 +17,7 @@ Configure an S3-compatible bucket to enable Packet Mirror mode.
 |-----|-------------|
 | `s3_endpoint` | Custom endpoint URL (for MinIO, Backblaze, Cloudflare R2, etc.) |
 | `s3_prefix` | Key prefix within the bucket (default: `underwing`) |
-| `s3_force_path_style` | `true` for MinIO and other path-style providers |
+| `s3_force_path_style` | `true` for MinIO and other path-style providers. Set it with the checkbox in Settings → Storage, or with `UNDERWING_S3_FORCE_PATH_STYLE=true` in `.env` before the first start |
 | `packet_retention_days` | Packet expiry in days (0 = no expiry) |
 
 ## Object key format

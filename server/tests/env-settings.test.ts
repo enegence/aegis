@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm';
 import { createTestDb } from '../src/db/index.js';
 import { appSettings } from '../src/db/schema.js';
 import { seedSettingsFromEnvironment } from '../src/services/env-settings.js';
+import { loadS3Config } from '../src/services/dead-drop-sync.js';
 import { decryptField } from '../src/services/field-encrypt.js';
 import { resetEnvWarnings } from '../src/env.js';
 
@@ -20,6 +21,8 @@ const ENV_KEYS = [
   'UNDERWING_S3_REGION',
   'UNDERWING_S3_BUCKET',
   'UNDERWING_S3_PREFIX',
+  'UNDERWING_S3_ENDPOINT',
+  'UNDERWING_S3_FORCE_PATH_STYLE',
 ];
 
 afterEach(() => {
@@ -120,5 +123,73 @@ describe('seedSettingsFromEnvironment', () => {
     await seedSettingsFromEnvironment(db, FIELD_KEY);
     const hostRows = await db.select().from(appSettings).where(eq(appSettings.key, 'smtp.host'));
     expect(hostRows[0].value).toBe('smtp.new.example');
+  });
+
+  // MinIO and other path-style providers need this; the storage code reads
+  // the `s3_force_path_style` setting when it builds the S3 client config.
+  describe('S3 path-style setting', () => {
+    function setS3Env(prefix: 'UNDERWING' | 'AEGIS') {
+      process.env[`${prefix}_S3_ENDPOINT`] = 'https://minio.example.test:9000';
+      process.env[`${prefix}_S3_ACCESS_KEY_ID`] = 'access-key';
+      process.env[`${prefix}_S3_SECRET_ACCESS_KEY`] = 'secret-key';
+      process.env[`${prefix}_S3_REGION`] = 'us-east-1';
+      process.env[`${prefix}_S3_BUCKET`] = 'bucket';
+    }
+
+    it('imports UNDERWING_S3_FORCE_PATH_STYLE and the storage config uses it', async () => {
+      const db = createTestDb();
+      migrate(db, { migrationsFolder: './drizzle' });
+      setS3Env('UNDERWING');
+      process.env.UNDERWING_S3_FORCE_PATH_STYLE = 'true';
+
+      await seedSettingsFromEnvironment(db, FIELD_KEY);
+      const rows = await db.select().from(appSettings).where(eq(appSettings.key, 's3_force_path_style'));
+      expect(rows[0].value).toBe('true');
+      expect((await loadS3Config(db, FIELD_KEY))?.forcePathStyle).toBe(true);
+    });
+
+    it('still reads the older AEGIS_S3_FORCE_PATH_STYLE name', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const db = createTestDb();
+      migrate(db, { migrationsFolder: './drizzle' });
+      setS3Env('AEGIS');
+      process.env.AEGIS_S3_FORCE_PATH_STYLE = 'true';
+
+      await seedSettingsFromEnvironment(db, FIELD_KEY);
+      expect((await loadS3Config(db, FIELD_KEY))?.forcePathStyle).toBe(true);
+      expect(warn.mock.calls.map((call) => String(call[0])).join('\n')).toContain('AEGIS_S3_FORCE_PATH_STYLE');
+      warn.mockRestore();
+    });
+
+    it.each(['TRUE', ' true ', '1'])('accepts %j as on', async (value) => {
+      const db = createTestDb();
+      migrate(db, { migrationsFolder: './drizzle' });
+      setS3Env('UNDERWING');
+      process.env.UNDERWING_S3_FORCE_PATH_STYLE = value;
+
+      await seedSettingsFromEnvironment(db, FIELD_KEY);
+      expect((await loadS3Config(db, FIELD_KEY))?.forcePathStyle).toBe(true);
+    });
+
+    it.each(['false', '0', 'no'])('treats %j as off', async (value) => {
+      const db = createTestDb();
+      migrate(db, { migrationsFolder: './drizzle' });
+      setS3Env('UNDERWING');
+      process.env.UNDERWING_S3_FORCE_PATH_STYLE = value;
+
+      await seedSettingsFromEnvironment(db, FIELD_KEY);
+      const rows = await db.select().from(appSettings).where(eq(appSettings.key, 's3_force_path_style'));
+      expect(rows[0].value).toBe('false');
+      expect((await loadS3Config(db, FIELD_KEY))?.forcePathStyle).toBe(false);
+    });
+
+    it('stays off when the variable is not set', async () => {
+      const db = createTestDb();
+      migrate(db, { migrationsFolder: './drizzle' });
+      setS3Env('UNDERWING');
+
+      await seedSettingsFromEnvironment(db, FIELD_KEY);
+      expect((await loadS3Config(db, FIELD_KEY))?.forcePathStyle).toBe(false);
+    });
   });
 });
