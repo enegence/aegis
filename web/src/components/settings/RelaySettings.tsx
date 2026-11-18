@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { get, post, del } from '../../lib/api';
 import { useTheme } from '../../lib/theme';
+import { DEFAULT_RELAY_URL, HOSTED_SITE_HOST, HOSTED_SITE_URL } from '../../lib/brand';
 import { createActionButtonStyle, createInputStyle, createLabelStyle, toneTextColor } from '../../lib/themeStyles';
 
 interface RelayData {
@@ -135,7 +136,7 @@ export default function RelaySettings({ data, onSaved }: Props) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
       <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '0.75rem', color: data.enabled ? toneTextColor(t, 'success') : toneTextColor(t, 'warning') }}>
-        {data.enabled ? `Connected — ${data.relayUrl}` : 'Not connected'}
+        {data.enabled ? `Connected: ${data.relayUrl}` : 'Not connected'}
         {data.connectionId && <span style={{ marginLeft: '12px', color: t.muted }}>connection: {data.connectionId}</span>}
         {data.lastHeartbeatAt && <span style={{ marginLeft: '12px', color: t.muted }}>last heartbeat: {new Date(data.lastHeartbeatAt).toLocaleString()}</span>}
         {data.enabled && data.lastHeartbeatError && <span style={{ marginLeft: '12px', color: t.danger }}>last heartbeat failed: {data.lastHeartbeatError.replace('http_', 'HTTP ')}</span>}
@@ -148,8 +149,8 @@ export default function RelaySettings({ data, onSaved }: Props) {
 
       <div style={{ padding: '10px 14px', background: t.surface, border: `1.5px solid ${t.border}`, borderRadius: '3px 8px 3px 8px / 8px 3px 8px 3px', fontFamily: "'JetBrains Mono',monospace", fontSize: '0.78rem', color: t.muted, lineHeight: 1.5 }}>
         To connect to Underwing Relay: create or log in to an account at{' '}
-        <a href="https://aegisdms.life" target="_blank" rel="noreferrer" style={{ color: t.accent }}>
-          aegisdms.life
+        <a href={HOSTED_SITE_URL} target="_blank" rel="noreferrer" style={{ color: t.accent }}>
+          {HOSTED_SITE_HOST}
         </a>
         , go to your account settings, and generate a link code. Paste the code and the Relay URL below.
         The link code is single-use and expires in 10 minutes.
@@ -159,11 +160,11 @@ export default function RelaySettings({ data, onSaved }: Props) {
         <form onSubmit={handleLinkExchange} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <div>
             <label htmlFor="relay-url" style={labelStyle}>Relay URL</label>
-            <input id="relay-url" style={inputStyle} type="url" value={relayUrl} onChange={e => setRelayUrl(e.target.value)} placeholder="https://relay.aegisdms.life" required />
+            <input id="relay-url" style={inputStyle} type="url" value={relayUrl} onChange={e => setRelayUrl(e.target.value)} placeholder={DEFAULT_RELAY_URL} required />
           </div>
 
           <div>
-            <label htmlFor="relay-link-code" style={labelStyle}>Link Code (from aegisdms.life)</label>
+            <label htmlFor="relay-link-code" style={labelStyle}>Link Code (from {HOSTED_SITE_HOST})</label>
             <input id="relay-link-code" style={inputStyle} type="text" value={linkCode} onChange={e => setLinkCode(e.target.value)} placeholder="Paste your link code here" required />
           </div>
 

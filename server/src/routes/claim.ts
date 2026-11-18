@@ -203,7 +203,7 @@ export async function claimRoutes(app: FastifyInstance) {
     if (!claim) return;
 
     if (!ACCEPTED_OR_LATER.has(claim.status)) {
-      return reply.status(403).send({ error: 'Packet not yet accessible — accept claim first' });
+      return reply.status(403).send({ error: 'Packet not yet accessible. Accept the claim first.' });
     }
 
     const run = await getReleaseRunById(app.db, claim.releaseRunId);
@@ -232,7 +232,7 @@ export async function claimRoutes(app: FastifyInstance) {
 
     return reply
       .header('Content-Type', 'application/octet-stream')
-      .header('Content-Disposition', `attachment; filename="underwing-packet-${claim.packetId}.bin"`)
+      .header('Content-Disposition', `attachment; filename="underwing-packet-${claim.packetId}.underwing.enc"`)
       .send(fileData);
   });
 

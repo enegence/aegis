@@ -11,6 +11,7 @@ import { encryptField, decryptField } from '../services/field-encrypt.js';
 import { writeAuditEvent } from '../services/audit.js';
 import { getSmtpConfig, getTelegramConfig, dispatchNotification } from '../services/notifications.js';
 import { testSmtpConnection } from '../services/providers/smtp.js';
+import { DEFAULT_S3_PREFIX } from '../services/storage/naming.js';
 import {
   SmtpSettingsInputSchema,
   TelegramSettingsInputSchema,
@@ -32,7 +33,7 @@ const S3UpdateSchema = z.object({
   endpoint: z.string().optional(),
   region: z.string().min(1),
   bucket: z.string().min(1),
-  prefix: z.string().default('aegis'),
+  prefix: z.string().optional(), // omitted = keep the saved prefix, or the default on first save
   accessKeyId: z.string().optional().default(''),
   secretAccessKey: z.string().optional(), // empty = keep existing
   forcePathStyle: z.boolean().default(false),
@@ -361,7 +362,10 @@ export async function settingsRoutes(app: FastifyInstance) {
     if (body.endpoint !== undefined) await upsertSetting(db, 's3_endpoint', body.endpoint, false);
     await upsertSetting(db, 's3_region', body.region, false);
     await upsertSetting(db, 's3_bucket', body.bucket, false);
-    await upsertSetting(db, 's3_prefix', body.prefix, false);
+    // A prefix already saved (for example `aegis` on an install from before the
+    // rename) is kept when the request does not name one.
+    const prefix = body.prefix ?? (await getPlainSetting(db, 's3_prefix')) ?? DEFAULT_S3_PREFIX;
+    await upsertSetting(db, 's3_prefix', prefix, false);
     await upsertSetting(db, 's3_force_path_style', String(body.forcePathStyle), false);
     if (!shouldKeepExistingAccessKey) {
       const encryptedAccessKeyId = encryptField(body.accessKeyId, fek)!;

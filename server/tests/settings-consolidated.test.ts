@@ -118,6 +118,32 @@ describe('consolidated settings API', () => {
     expect(res.statusCode).toBe(400);
   });
 
+  it('PUT /api/settings/storage/s3 without a prefix uses the default on first save', async () => {
+    const res = await app.inject({
+      method: 'PUT', url: '/api/settings/storage/s3',
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken, 'content-type': 'application/json' },
+      payload: { region: 'us-east-1', bucket: 'first-bucket', accessKeyId: 'AKIAFIRST', secretAccessKey: 'first-secret' },
+    });
+    expect(res.statusCode).toBe(200);
+    const rows = await app.db.select().from(appSettings).where(eq(appSettings.key, 's3_prefix'));
+    expect(rows[0].value).toBe('underwing');
+  });
+
+  it('PUT /api/settings/storage/s3 without a prefix keeps a prefix saved before the rename', async () => {
+    await app.db.update(appSettings).set({ value: 'aegis' }).where(eq(appSettings.key, 's3_prefix'));
+    const res = await app.inject({
+      method: 'PUT', url: '/api/settings/storage/s3',
+      headers: { cookie: cookies, 'x-csrf-token': csrfToken, 'content-type': 'application/json' },
+      payload: { region: 'us-east-1', bucket: 'first-bucket', accessKeyId: 'AKIAFIRST', secretAccessKey: 'first-secret' },
+    });
+    expect(res.statusCode).toBe(200);
+    const rows = await app.db.select().from(appSettings).where(eq(appSettings.key, 's3_prefix'));
+    expect(rows[0].value).toBe('aegis');
+
+    const check = await app.inject({ method: 'GET', url: '/api/settings', headers: { cookie: cookies } });
+    expect(JSON.parse(check.payload).storage.prefix).toBe('aegis');
+  });
+
   it('PUT /api/settings/storage/s3 saves encrypted credentials', async () => {
     const res = await app.inject({
       method: 'PUT', url: '/api/settings/storage/s3',
@@ -127,7 +153,7 @@ describe('consolidated settings API', () => {
         bucket: 'my-underwing-bucket',
         accessKeyId: 'AKIATEST1234',
         secretAccessKey: 'super-secret-s3-key',
-        prefix: 'aegis',
+        prefix: 'underwing',
       },
     });
     expect(res.statusCode).toBe(200);

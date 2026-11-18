@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { PACKET_DOWNLOAD_NAME, downloadNameFromHeader } from '../../lib/brand';
 
 interface ClaimSummary {
   claimId: number;
@@ -79,7 +80,7 @@ export default function ClaimPortal() {
       setClaim(data);
       setStep(data.status);
     } catch {
-      setError('Network error — please try again');
+      setError('Network error. Please try again.');
     }
     setLoading(false);
   }
@@ -122,7 +123,7 @@ export default function ClaimPortal() {
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url; a.download = 'underwing-packet.bin';
+      a.href = url; a.download = downloadNameFromHeader(res.headers.get('content-disposition'), PACKET_DOWNLOAD_NAME);
       a.click();
       URL.revokeObjectURL(url);
       await loadClaim();
@@ -200,7 +201,7 @@ export default function ClaimPortal() {
       </div>
 
       <Section>
-        <Heading>Legacy Release — Trusted Contact</Heading>
+        <Heading>Legacy Release: Trusted Contact</Heading>
         <p style={{ color: T.ink, fontSize: '0.88rem', marginBottom: 20 }}>
           You have been designated as a trusted contact. Please review and acknowledge your responsibilities below.
           This link expires: <strong>{new Date(claim.expiresAt).toLocaleString()}</strong>.
@@ -219,7 +220,7 @@ export default function ClaimPortal() {
         {!claim.openedAt && (
           <div>
             <p style={{ fontSize: '0.85rem', color: '#4A6B8A' }}>Step 1 of 5: Open claim</p>
-            <Btn onClick={doOpen}>I understand — open claim</Btn>
+            <Btn onClick={doOpen}>I understand, open claim</Btn>
           </div>
         )}
 
@@ -274,7 +275,7 @@ export default function ClaimPortal() {
             <p style={{ fontSize: '0.85rem', color: '#4A6B8A' }}>Step 4 of 5: Access legacy data</p>
             <p style={{ fontSize: '0.85rem', color: T.ink }}>Download the encrypted packet and the decryption key:</p>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 10 }}>
-              <Btn onClick={doDownload}>Download Packet (.bin)</Btn>
+              <Btn onClick={doDownload}>Download Packet (.underwing.enc)</Btn>
               <Btn onClick={doViewKey} disabled={!!keyData}>
                 {keyData ? 'Key Retrieved' : 'View Decryption Key'}
               </Btn>

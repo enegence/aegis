@@ -19,6 +19,7 @@ import { createHash } from 'crypto';
 import { notificationDeliveries } from '../db/schema.js';
 import type { UnderwingDb } from '../db/index.js';
 import { checkOrSetIdempotencyKey } from './idempotency-keys.js';
+import { SUPPORT_URL } from '../brand.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -175,7 +176,7 @@ export function buildNotificationPayload(input: NotificationPayloadInput): {
     ``,
     `If you were not expecting this message, you may safely ignore it.`,
     ``,
-    `For support, visit: https://aegisdms.life/support`,
+    `For support, visit: ${SUPPORT_URL}`,
   ].join('\n');
 
   const htmlBody = `
@@ -195,7 +196,7 @@ export function buildNotificationPayload(input: NotificationPayloadInput): {
       <p style="color: #8AAAC8; font-size: 12px;">This link expires at ${expiryStr}.</p>
       <p style="color: #8AAAC8; font-size: 12px;">
         If you were not expecting this, you may safely ignore this message.<br>
-        For support: <a href="https://aegisdms.life/support">aegisdms.life/support</a>
+        For support: <a href="${SUPPORT_URL}">${SUPPORT_URL.replace('https://', '')}</a>
       </p>
     </div>
   `;

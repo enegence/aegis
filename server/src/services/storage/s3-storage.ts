@@ -14,6 +14,7 @@ import type {
   DownloadPacketInput,
   DeletePacketInput,
 } from './index.js';
+import { PACKET_OBJECT_SUFFIX } from './naming.js';
 
 export interface S3StorageConfig {
   endpoint?: string;
@@ -25,13 +26,14 @@ export interface S3StorageConfig {
   forcePathStyle?: boolean;
 }
 
+/** Key for a NEW upload. Existing objects are always addressed by their stored key (see naming.ts). */
 export function buildObjectKey(
   config: Pick<S3StorageConfig, 'prefix'>,
   switchId: number,
   version: number,
   packetId: number,
 ): string {
-  const base = `${switchId}/${version}/${packetId}.aegis.enc`;
+  const base = `${switchId}/${version}/${packetId}${PACKET_OBJECT_SUFFIX}`;
   return config.prefix ? `${config.prefix}/${base}` : base;
 }
 

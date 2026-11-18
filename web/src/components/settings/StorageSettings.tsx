@@ -25,7 +25,7 @@ export default function StorageSettings({ data, onSaved }: Props) {
   const [endpoint, setEndpoint] = useState(data.endpoint ?? '');
   const [region, setRegion] = useState(data.region ?? 'us-east-1');
   const [bucket, setBucket] = useState(data.bucket ?? '');
-  const [prefix, setPrefix] = useState(data.prefix ?? 'aegis');
+  const [prefix, setPrefix] = useState(data.prefix ?? 'underwing');
   const [accessKeyId, setAccessKeyId] = useState('');
   const [secretAccessKey, setSecretAccessKey] = useState('');
   const [forcePathStyle, setForcePathStyle] = useState(false);
@@ -77,7 +77,7 @@ export default function StorageSettings({ data, onSaved }: Props) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
       <div style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '0.75rem', color: data.s3Configured ? toneTextColor(t, 'success') : toneTextColor(t, 'warning') }}>
-        {data.s3Configured ? `Configured — bucket: ${data.bucket}` : 'Not configured'}
+        {data.s3Configured ? `Configured, bucket: ${data.bucket}` : 'Not configured'}
         {data.lastVerifiedAt && (
           <span style={{ marginLeft: '12px', color: t.muted }}>
             last verified: {new Date(data.lastVerifiedAt).toLocaleDateString()}

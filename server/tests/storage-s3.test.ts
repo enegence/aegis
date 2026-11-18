@@ -40,12 +40,12 @@ const config = {
 describe('buildObjectKey', () => {
   it('includes prefix, switchId, version, packetId', () => {
     const key = buildObjectKey({ prefix: 'pkt' }, 1, 2, 3);
-    expect(key).toBe('pkt/1/2/3.aegis.enc');
+    expect(key).toBe('pkt/1/2/3.underwing.enc');
   });
 
   it('omits prefix when not set', () => {
     const key = buildObjectKey({ prefix: undefined }, 1, 2, 3);
-    expect(key).toBe('1/2/3.aegis.enc');
+    expect(key).toBe('1/2/3.underwing.enc');
   });
 });
 
@@ -76,11 +76,25 @@ describe('S3StorageProvider', () => {
     expect(mockSend).toHaveBeenCalledOnce();
     const call = mockSend.mock.calls[0][0];
     expect(call.Bucket).toBe('test-bucket');
-    expect(call.Key).toBe('packets/1/2/10.aegis.enc');
+    expect(call.Key).toBe('packets/1/2/10.underwing.enc');
     expect(call.Body).toBe(encryptedBytes);
-    expect(result.objectKey).toBe('packets/1/2/10.aegis.enc');
+    expect(result.objectKey).toBe('packets/1/2/10.underwing.enc');
     expect(result.versionId).toBe('v1');
     expect(result.sizeBytes).toBe(encryptedBytes.length);
+  });
+
+  it('uploadPacket keeps the object metadata keys that existing mirrors carry', async () => {
+    mockSend.mockResolvedValueOnce({});
+    await provider.uploadPacket({
+      switchId: 1, packetId: 7, version: 1,
+      encryptedBytes: Buffer.from('x'),
+      encryptedObjectHash: 'hash-abc',
+    });
+    const call = mockSend.mock.calls[0][0];
+    expect(call.Metadata).toEqual({
+      'x-aegis-encrypted-hash': 'hash-abc',
+      'x-aegis-packet-id': '7',
+    });
   });
 
   it('uploadPacket does not include credentials in object metadata', async () => {
@@ -98,7 +112,7 @@ describe('S3StorageProvider', () => {
   it('verifyPacket returns ok when size matches', async () => {
     mockSend.mockResolvedValueOnce({ ContentLength: 100, VersionId: 'v1' });
 
-    const result = await provider.verifyPacket({ objectKey: 'packets/1/1/1.aegis.enc', expectedSizeBytes: 100 });
+    const result = await provider.verifyPacket({ objectKey: 'packets/1/1/1.underwing.enc', expectedSizeBytes: 100 });
     expect(result.ok).toBe(true);
     expect(result.actualSizeBytes).toBe(100);
     expect(result.versionId).toBe('v1');
@@ -122,9 +136,57 @@ describe('S3StorageProvider', () => {
 
   it('deletePacket calls DeleteObject', async () => {
     mockSend.mockResolvedValueOnce({});
-    await provider.deletePacket({ objectKey: 'packets/1/1/1.aegis.enc' });
+    await provider.deletePacket({ objectKey: 'packets/1/1/1.underwing.enc' });
     expect(mockSend).toHaveBeenCalledOnce();
     const call = mockSend.mock.calls[0][0];
-    expect(call.Key).toBe('packets/1/1/1.aegis.enc');
+    expect(call.Key).toBe('packets/1/1/1.underwing.enc');
+  });
+});
+
+// Packets mirrored before the rename sit under the old default prefix with the
+// old suffix. Their exact key is stored on the packet row at upload time, so a
+// provider configured with today's naming must use that stored key untouched.
+describe('packets mirrored before the rename', () => {
+  const LEGACY_KEY = 'aegis/3/1/7.aegis.enc';
+  let provider: S3StorageProvider;
+  let mockSend: ReturnType<typeof vi.fn>;
+
+  beforeEach(async () => {
+    const mod = await import('@aws-sdk/client-s3');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockSend = (mod as any).__mockSend as ReturnType<typeof vi.fn>;
+    mockSend.mockReset();
+    provider = new S3StorageProvider({ ...config, prefix: 'underwing' });
+  });
+
+  it('are verified at their stored key', async () => {
+    mockSend.mockResolvedValueOnce({ ContentLength: 42 });
+    const result = await provider.verifyPacket({ objectKey: LEGACY_KEY, expectedSizeBytes: 42 });
+    expect(result.ok).toBe(true);
+    expect(mockSend.mock.calls[0][0].Key).toBe(LEGACY_KEY);
+  });
+
+  it('are downloaded from their stored key', async () => {
+    async function* body() { yield new Uint8Array([1, 2, 3]); }
+    mockSend.mockResolvedValueOnce({ Body: body() });
+    const bytes = await provider.downloadPacket({ objectKey: LEGACY_KEY });
+    expect([...bytes]).toEqual([1, 2, 3]);
+    expect(mockSend.mock.calls[0][0].Key).toBe(LEGACY_KEY);
+  });
+
+  it('are deleted at their stored key', async () => {
+    mockSend.mockResolvedValueOnce({});
+    await provider.deletePacket({ objectKey: LEGACY_KEY });
+    expect(mockSend.mock.calls[0][0].Key).toBe(LEGACY_KEY);
+  });
+
+  it('new uploads from the same provider use the new suffix', async () => {
+    mockSend.mockResolvedValueOnce({});
+    const result = await provider.uploadPacket({
+      switchId: 3, packetId: 8, version: 2,
+      encryptedBytes: Buffer.from('x'),
+      encryptedObjectHash: 'h',
+    });
+    expect(result.objectKey).toBe('underwing/3/2/8.underwing.enc');
   });
 });
