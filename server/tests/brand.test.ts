@@ -53,6 +53,17 @@ describe('brand name in messages', () => {
     expect(`${payload.subject}\n${payload.textBody}\n${payload.htmlBody}`).not.toMatch(/\bAegis\b/);
   });
 
+  it('claim notification points to the contact page on the hosted site', () => {
+    const payload = buildNotificationPayload({
+      ownerDisplayName: 'Owner',
+      claimUrl: 'https://example.test/claim/token',
+      claimExpiresAt: new Date('2026-12-01T00:00:00.000Z'),
+    });
+    expect(payload.textBody).toContain('https://underwing.life/contact');
+    expect(payload.htmlBody).toContain('href="https://underwing.life/contact"');
+    expect(`${payload.textBody}\n${payload.htmlBody}`).not.toContain('aegisdms');
+  });
+
   it('authenticator entry is labelled Underwing Core', () => {
     const url = new URL(totpOtpauthUrl('JBSWY3DPEHPK3PXP', 'owner@example.test'));
     expect(url.searchParams.get('issuer')).toBe('Underwing Core');

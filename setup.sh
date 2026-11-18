@@ -11,7 +11,7 @@ RED='\033[0;31m'
 RESET='\033[0m'
 
 # The hosted Underwing site (Relay, Hosted, managed delivery).
-HOSTED_SITE_URL="https://aegisdms.life"
+HOSTED_SITE_URL="https://underwing.life"
 
 say()  { echo -e "${CYAN}${BOLD}[underwing]${RESET} $*"; }
 ok()   { echo -e "${GREEN}✓${RESET} $*"; }

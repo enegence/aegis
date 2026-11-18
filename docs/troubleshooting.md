@@ -172,4 +172,4 @@ Then log in with your passphrase.
 ## Getting help
 
 - [GitHub Issues](https://github.com/enegence/aegis/issues)
-- [Underwing](https://aegisdms.life) for Relay, Hosted, and managed delivery support
+- [Underwing](https://underwing.life) for Relay, Hosted, and managed delivery support

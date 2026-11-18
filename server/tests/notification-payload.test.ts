@@ -18,7 +18,7 @@ import {
 
 const SAMPLE_INPUT = {
   ownerDisplayName: 'Jane Smith',
-  claimUrl: 'https://aegisdms.life/claim/abc123',
+  claimUrl: 'https://underwing.life/claim/abc123',
   claimExpiresAt: new Date('2026-06-01T12:00:00Z'),
 };
 

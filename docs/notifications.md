@@ -2,7 +2,7 @@
 
 Underwing Core sends contacts a claim link when a switch triggers. The claim portal handles verification, packet download, key view, and acknowledgement. Notification channels should carry the same minimized claim-link payload; they should not split secrets or send estate details.
 
-For the OSS self-hosted version, outbound email is configured by bringing your own SMTP relay. Underwing Relay Escrow and Hosted deployments can handle delivery through the managed Underwing service at [aegisdms.life](https://aegisdms.life).
+For the OSS self-hosted version, outbound email is configured by bringing your own SMTP relay. Underwing Relay Escrow and Hosted deployments can handle delivery through the managed Underwing service at [underwing.life](https://underwing.life).
 
 Configure and test at least one delivery channel before relying on a switch.
 

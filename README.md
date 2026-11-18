@@ -11,7 +11,7 @@ Underwing Core lets you organize your estate information, designate trusted cont
 - Runs a dead man's switch in **trip** (date-based) or **heartbeat** (check-in) mode
 - Notifies contacts with a claim link when a switch triggers
 - Generates encrypted release packets and delivers decryption keys to verified contacts
-- Optionally integrates with [Underwing Relay](https://aegisdms.life) for cloud monitoring, escrow, and managed delivery
+- Optionally integrates with [Underwing Relay](https://underwing.life) for cloud monitoring, escrow, and managed delivery
 
 ## What it is NOT
 

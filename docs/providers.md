@@ -198,7 +198,7 @@ mc cors set local/underwing --config '{
 
 ### Common Patterns
 
-Underwing Core uses SMTP (STARTTLS or SSL/TLS) for email delivery. Self-hosted users provide their own relay credentials. Underwing Relay Escrow and Hosted deployments can use managed Underwing delivery through [aegisdms.life](https://aegisdms.life).
+Underwing Core uses SMTP (STARTTLS or SSL/TLS) for email delivery. Self-hosted users provide their own relay credentials. Underwing Relay Escrow and Hosted deployments can use managed Underwing delivery through [underwing.life](https://underwing.life).
 
 The recommended order for self-hosted users is:
 

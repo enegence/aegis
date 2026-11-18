@@ -295,13 +295,13 @@ describe('Relay link-exchange and unlink', () => {
 
     it('stores the base URL, not the heartbeat endpoint, and posts to the exchange path once', async () => {
       const { res, mockFetch } = await exchangeWith({
-        relayBaseUrl: 'https://aegisdms.life',
-        relayEndpoint: 'https://aegisdms.life/api/relay/heartbeat',
+        relayBaseUrl: 'https://underwing.life',
+        relayEndpoint: 'https://underwing.life/api/relay/heartbeat',
         apiKey: 'rlk_test', connectionId: '0b1f6a3e-0c7c-4f7e-9d0a-2f6c5d4b3a21',
-      }, 'https://aegisdms.life/api/relay/link/exchange/');
+      }, 'https://underwing.life/api/relay/link/exchange/');
       expect(res.statusCode).toBe(200);
-      expect(mockFetch.mock.calls[0][0]).toBe('https://aegisdms.life/api/relay/link/exchange');
-      expect(await storedRelayUrl()).toBe('https://aegisdms.life');
+      expect(mockFetch.mock.calls[0][0]).toBe('https://underwing.life/api/relay/link/exchange');
+      expect(await storedRelayUrl()).toBe('https://underwing.life');
     });
 
     it('derives the base URL from an older Relay that only returns the heartbeat endpoint', async () => {
@@ -311,6 +311,72 @@ describe('Relay link-exchange and unlink', () => {
       }, 'https://relay.example.org');
       expect(res.statusCode).toBe(200);
       expect(await storedRelayUrl()).toBe('https://relay.example.org');
+    });
+  });
+
+  // The hosted service moved from aegisdms.life to underwing.life. An install
+  // linked before the move has the old base URL stored. It is used exactly as
+  // stored (the old host keeps answering); the owner can point it at the new
+  // host without re-linking, which keeps the API key and the connection id.
+  describe('an install linked before the hosted service moved host', () => {
+    const OLD_HOST = 'https://aegisdms.life';
+    const CONNECTION_ID = '0b1f6a3e-0c7c-4f7e-9d0a-2f6c5d4b3a31';
+
+    async function relaySettings() {
+      const { appSettings } = await import('../src/db/schema.js');
+      const { inArray } = await import('drizzle-orm');
+      const rows = await app.db.select().from(appSettings)
+        .where(inArray(appSettings.key, ['relay_url', 'relay_api_key_encrypted', 'relay_connection_id']));
+      return Object.fromEntries(rows.map((row) => [row.key, row.value]));
+    }
+
+    async function linkedOnOldHost() {
+      const { appSettings } = await import('../src/db/schema.js');
+      const { inArray } = await import('drizzle-orm');
+      const { encryptField } = await import('../src/services/field-encrypt.js');
+      const keys = ['relay_url', 'relay_api_key_encrypted', 'relay_connection_id', 'relay_last_heartbeat_at', 'relay_last_heartbeat_error'];
+      await app.db.delete(appSettings).where(inArray(appSettings.key, keys));
+      const now = new Date();
+      await app.db.insert(appSettings).values([
+        { key: 'relay_url', value: OLD_HOST, encrypted: false, updatedAt: now },
+        { key: 'relay_api_key_encrypted', value: encryptField('rlk_before_move', app.config.fieldEncryptionKey)!, encrypted: true, updatedAt: now },
+        { key: 'relay_connection_id', value: CONNECTION_ID, encrypted: false, updatedAt: now },
+      ]);
+    }
+
+    it('keeps sending heartbeats to the stored host and does not rewrite it', async () => {
+      await linkedOnOldHost();
+      const { sendRelayHeartbeatIfDue } = await import('../src/services/relay-client.js');
+      const fetchMock = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }));
+
+      const result = await sendRelayHeartbeatIfDue(app.db, app.config.fieldEncryptionKey, new Date(), fetchMock as unknown as typeof fetch);
+      expect(result.sent).toBe(true);
+      expect(fetchMock.mock.calls[0][0]).toBe(`${OLD_HOST}/api/relay/heartbeat`);
+      expect((await relaySettings()).relay_url).toBe(OLD_HOST);
+    });
+
+    it('PUT /api/settings/relay moves it to the new host and keeps the key and connection', async () => {
+      await linkedOnOldHost();
+      const before = await relaySettings();
+
+      const res = await app.inject({
+        method: 'PUT', url: '/api/settings/relay',
+        headers: { cookie: cookies, 'x-csrf-token': csrfToken, 'content-type': 'application/json' },
+        payload: { relayUrl: 'https://underwing.life' },
+      });
+      expect(res.statusCode).toBe(200);
+
+      const after = await relaySettings();
+      expect(after.relay_url).toBe('https://underwing.life');
+      expect(after.relay_api_key_encrypted).toBe(before.relay_api_key_encrypted);
+      expect(after.relay_connection_id).toBe(CONNECTION_ID);
+
+      const { sendRelayHeartbeatIfDue } = await import('../src/services/relay-client.js');
+      const fetchMock = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }));
+      await sendRelayHeartbeatIfDue(app.db, app.config.fieldEncryptionKey, new Date(), fetchMock as unknown as typeof fetch);
+      const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(url).toBe('https://underwing.life/api/relay/heartbeat');
+      expect((init.headers as Record<string, string>).Authorization).toBe('Bearer rlk_before_move');
     });
   });
 });

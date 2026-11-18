@@ -9,7 +9,7 @@ export const BRAND_TAGLINE = 'Leave word for the people you love.';
  * self-hosted install links to for Relay. This is the one place the address is
  * written in the web app; it moves when the hosted site changes domain.
  */
-export const HOSTED_SITE_HOST = 'aegisdms.life';
+export const HOSTED_SITE_HOST = 'underwing.life';
 export const HOSTED_SITE_URL = `https://${HOSTED_SITE_HOST}`;
 /** Relay is served from the hosted site itself, so its URL is the site URL. */
 export const DEFAULT_RELAY_URL = HOSTED_SITE_URL;

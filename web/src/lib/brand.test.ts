@@ -29,6 +29,7 @@ describe('brand', () => {
 
 describe('hosted site address', () => {
   it('is written once and the relay URL follows it', () => {
+    expect(HOSTED_SITE_HOST).toBe('underwing.life');
     expect(HOSTED_SITE_URL).toBe(`https://${HOSTED_SITE_HOST}`);
     expect(DEFAULT_RELAY_URL).toBe(HOSTED_SITE_URL);
   });

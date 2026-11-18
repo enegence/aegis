@@ -38,6 +38,7 @@ The line names the variable and never prints its value. To clear the warnings, r
 | `AEGIS_S3_ACCESS_KEY_ID` | `UNDERWING_S3_ACCESS_KEY_ID` |
 | `AEGIS_S3_SECRET_ACCESS_KEY` | `UNDERWING_S3_SECRET_ACCESS_KEY` |
 | `AEGIS_S3_PREFIX` | `UNDERWING_S3_PREFIX` |
+| `AEGIS_S3_FORCE_PATH_STYLE` | `UNDERWING_S3_FORCE_PATH_STYLE` |
 | `AEGIS_WORKER_ENABLED` | `UNDERWING_WORKER_ENABLED` |
 | `AEGIS_WORKER_INTERVAL_SECONDS` | `UNDERWING_WORKER_INTERVAL_SECONDS` |
 | `AEGIS_RELAY_HEARTBEAT_SECONDS` | `UNDERWING_RELAY_HEARTBEAT_SECONDS` |
@@ -53,6 +54,17 @@ The line names the variable and never prints its value. To clear the warnings, r
 **Existing two-factor entries keep working.** New enrolments show up in the authenticator app as "Underwing Core".
 
 **Backups made before the rename restore as before.** The export format has not changed.
+
+**Relay keeps working on the old address.** The hosted service has moved from `aegisdms.life` to `https://underwing.life`. If this install was linked to Relay before the move, it has `https://aegisdms.life` saved as its Relay URL. Nothing rewrites that. The hosted service keeps `aegisdms.life` attached and answering the same API paths during the move, so heartbeats and Relay Escrow uploads carry on with no action from you. Settings → Relay shows the address in use ("Connected: ...").
+
+To point an existing link at the new address, there are two ways:
+
+- *Keep the same connection (do this if you use Relay Escrow).* The address is the `relay_url` setting. Change only that and the API key, the connection and everything escrowed under it stay as they are. While signed in as the owner, send `PUT /api/settings/relay` with the body `{"relayUrl": "https://underwing.life"}` (it needs your session cookie and the `X-CSRF-Token` header from `GET /api/csrf`). Or stop the server and set it in the database: `sqlite3 data/underwing.db "UPDATE app_settings SET value='https://underwing.life' WHERE key='relay_url';"`, then start it again. Afterwards open Settings → Relay, check it says "Connected: https://underwing.life", and press **Send Heartbeat**.
+- *Link again from the interface.* In Settings → Relay press **Unlink Relay**. Sign in at [underwing.life](https://underwing.life), generate a new link code, then enter the Relay URL `https://underwing.life` and the code and press **Link Relay**. This creates a new connection on the hosted side. If you use Relay Escrow you must set it up again for the new connection: upload the packet again from Settings → Relay and enter its release key on the hosted site.
+
+A new link always saves the address the hosted service reports for itself, so anything linked from now on uses `https://underwing.life`.
+
+**If you clone the repository again after it is renamed.** The GitHub repository is being renamed, and the old URL redirects, so an existing clone keeps working with `git pull`. Docker Compose names its containers after the folder it runs in. If you clone into a new folder (for example `underwing-core` instead of `aegis`), Compose there does not know about the containers started from the old folder, and `--remove-orphans` will not remove them. Before the first start in the new folder, run `docker compose down` in the old folder. This stops and removes the old container; it does not touch `data/` or `.env`. Then move `data/` and `.env` into the new folder and start with `./start.sh`.
 
 ## Before you upgrade
 
