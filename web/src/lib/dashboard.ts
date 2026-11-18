@@ -1,4 +1,4 @@
-import type { DashboardSummary } from '@aegis/shared';
+import type { DashboardSummary } from '@underwing/shared';
 import { apiFetch } from './api.js';
 
 export async function getDashboard(): Promise<DashboardSummary> {

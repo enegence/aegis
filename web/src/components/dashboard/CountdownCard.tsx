@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { Switch } from '@aegis/shared';
+import type { Switch } from '@underwing/shared';
 import { useTheme } from '../../lib/theme';
 import { toneTextColor } from '../../lib/themeStyles';
 

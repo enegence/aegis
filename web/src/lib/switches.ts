@@ -1,4 +1,4 @@
-import type { Switch, SwitchReadiness } from '@aegis/shared';
+import type { Switch, SwitchReadiness } from '@underwing/shared';
 import { apiFetch, csrfFetch } from './api.js';
 
 export async function listSwitches(): Promise<Switch[]> {

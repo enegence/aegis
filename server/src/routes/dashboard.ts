@@ -5,7 +5,7 @@ import { listSwitches } from '../services/switch-repository.js';
 import { getSmtpConfig, getTelegramConfig } from '../services/notifications.js';
 import { getActiveReleaseRunFull } from '../repositories/release-run-repository.js';
 import type { SwitchRecord } from '../services/switch-repository.js';
-import type { Switch, HealthStatus, DashboardSummary } from '@aegis/shared';
+import type { Switch, HealthStatus, DashboardSummary } from '@underwing/shared';
 import { APP_VERSION } from '../version.js';
 
 function switchRecordToSwitch(sw: SwitchRecord): Switch {

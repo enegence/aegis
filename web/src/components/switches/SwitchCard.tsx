@@ -1,4 +1,4 @@
-import type { Switch } from '@aegis/shared';
+import type { Switch } from '@underwing/shared';
 import { useTheme } from '../../lib/theme';
 
 function fmt(iso: string | null): string {

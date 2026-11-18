@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { appSettings, owner } from '../db/schema.js';
 import type { AegisDb } from '../db/index.js';
-import type { ReadinessCheck, SwitchReadiness } from '@aegis/shared';
+import type { ReadinessCheck, SwitchReadiness } from '@underwing/shared';
 import type { SwitchRecord } from './switch-repository.js';
 
 // ─── Individual check helpers ─────────────────────────────────────────────────

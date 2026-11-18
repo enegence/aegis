@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { DashboardSummary } from '@aegis/shared';
+import type { DashboardSummary } from '@underwing/shared';
 import { getDashboard } from '../lib/dashboard';
 import CountdownCard from '../components/dashboard/CountdownCard';
 import SystemHealthCard from '../components/dashboard/SystemHealthCard';

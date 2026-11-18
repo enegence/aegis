@@ -1,4 +1,4 @@
-import type { HealthStatus } from '@aegis/shared';
+import type { HealthStatus } from '@underwing/shared';
 import { useTheme } from '../../lib/theme';
 import { toneTextColor } from '../../lib/themeStyles';
 

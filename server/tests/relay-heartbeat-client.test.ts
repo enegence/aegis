@@ -7,7 +7,7 @@
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { eq } from 'drizzle-orm';
-import { HeartbeatSchema } from '@aegis/contracts';
+import { HeartbeatSchema } from '@underwing/contracts';
 import { buildApp } from '../src/index.js';
 import { appSettings, switches } from '../src/db/schema.js';
 import { encryptField } from '../src/services/field-encrypt.js';

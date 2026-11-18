@@ -13,7 +13,7 @@ import { join } from 'path';
 import { tmpdir } from 'os';
 import { createDecipheriv } from 'crypto';
 import { eq } from 'drizzle-orm';
-import { RelayPacketUploadSchema } from '@aegis/contracts';
+import { RelayPacketUploadSchema } from '@underwing/contracts';
 import { buildApp } from '../src/index.js';
 import { encryptField } from '../src/services/field-encrypt.js';
 import { appSettings, auditEvents, contacts, estateItems } from '../src/db/schema.js';

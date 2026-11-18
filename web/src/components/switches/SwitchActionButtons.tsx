@@ -1,5 +1,5 @@
 import { post } from '../../lib/api';
-import type { Switch } from '@aegis/shared';
+import type { Switch } from '@underwing/shared';
 import { useTheme } from '../../lib/theme';
 import { createActionButtonStyle, toneTextColor } from '../../lib/themeStyles';
 

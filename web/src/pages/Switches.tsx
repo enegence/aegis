@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { get, del } from '../lib/api';
-import type { Switch, SwitchReadiness } from '@aegis/shared';
+import type { Switch, SwitchReadiness } from '@underwing/shared';
 import SwitchCard from '../components/switches/SwitchCard';
 import SwitchForm from '../components/switches/SwitchForm';
 import ReadinessChecklist from '../components/switches/ReadinessChecklist';

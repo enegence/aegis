@@ -1,5 +1,5 @@
 {
-  "name": "@aegis/server",
+  "name": "@underwing/server",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -13,7 +13,7 @@
     "db:migrate": "tsx src/db/migrate.ts"
   },
   "dependencies": {
-    "@aegis/shared": "*",
+    "@underwing/shared": "*",
     "@aws-sdk/client-s3": "^3.1046.0",
     "@aws-sdk/lib-storage": "^3.1046.0",
     "@fastify/cookie": "^11.1.2",

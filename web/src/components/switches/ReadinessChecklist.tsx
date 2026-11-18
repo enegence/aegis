@@ -1,4 +1,4 @@
-import type { SwitchReadiness, ReadinessCheck } from '@aegis/shared';
+import type { SwitchReadiness, ReadinessCheck } from '@underwing/shared';
 import { useTheme } from '../../lib/theme';
 import { toneTextColor } from '../../lib/themeStyles';
 
