@@ -160,7 +160,7 @@ describe('Session lifecycle', () => {
     const res = await app.inject({
       method: 'GET',
       url: '/api/auth/me',
-      headers: { cookie: 'aegis_session=totally-fake-session-id-that-does-not-exist' },
+      headers: { cookie: 'underwing_session=totally-fake-session-id-that-does-not-exist' },
     });
     expect(res.statusCode).toBe(401);
   });
@@ -185,7 +185,7 @@ describe('Session lifecycle', () => {
     const res = await app.inject({
       method: 'GET',
       url: '/api/auth/me',
-      headers: { cookie: `aegis_session=${expiredSessionId}` },
+      headers: { cookie: `underwing_session=${expiredSessionId}` },
     });
     expect(res.statusCode).toBe(401);
   });

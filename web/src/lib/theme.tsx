@@ -19,7 +19,14 @@ export const TWEAK_DEFAULTS = {
 export type Tweaks = typeof TWEAK_DEFAULTS & Record<string, unknown>;
 
 /** Ungated localStorage key holding the end-user's theme choice. */
-export const USER_THEME_KEY = 'aegis:theme';
+export const USER_THEME_KEY = 'underwing:theme';
+/** The same key before the rename. Read as a fallback so a saved choice survives; never written. */
+export const LEGACY_USER_THEME_KEY = 'aegis:theme';
+
+/** The saved theme choice: the current key first, then the one from before the rename. */
+export function readStoredUserTheme(storage: Pick<Storage, 'getItem'>): string | null {
+  return storage.getItem(USER_THEME_KEY) ?? storage.getItem(LEGACY_USER_THEME_KEY);
+}
 
 /** Theme names exposed to end users via the Settings → Appearance section. */
 export const USER_THEMES = ['blueprint', 'midnight'] as const;
@@ -29,7 +36,7 @@ export type UserTheme = (typeof USER_THEMES)[number];
  * Resolve the initial Tweaks for the ThemeProvider.
  * Precedence (highest first):
  *  1. dev tweaks state (only when devGate) — preserves the dev TweaksPanel workflow
- *  2. aegis:theme user choice (ungated, any browser)
+ *  2. underwing:theme user choice (ungated, any browser)
  *  3. blueprint default
  */
 export function computeInitialTweaks(env: {
@@ -82,20 +89,20 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const devGate = tweaksPanelEnabled({
     dev: import.meta.env.DEV,
     search: typeof window !== 'undefined' ? window.location.search : '',
-    ls: typeof window !== 'undefined' ? window.localStorage.getItem('aegis:tweaks') : null,
+    ls: typeof window !== 'undefined' ? window.localStorage.getItem('underwing:tweaks') : null,
   });
   const [tweaks, setTweaks] = useState<Tweaks>(() =>
     computeInitialTweaks({
       devGate,
-      devStateRaw: typeof window !== 'undefined' ? window.localStorage.getItem('aegis:tweaks:state') : null,
-      userTheme: typeof window !== 'undefined' ? window.localStorage.getItem(USER_THEME_KEY) : null,
+      devStateRaw: typeof window !== 'undefined' ? window.localStorage.getItem('underwing:tweaks:state') : null,
+      userTheme: typeof window !== 'undefined' ? readStoredUserTheme(window.localStorage) : null,
     }),
   );
   const setTweak = useCallback((k: string, v: unknown) => {
     setTweaks(prev => {
       const next = { ...prev, [k]: v };
       if (devGate && typeof window !== 'undefined') {
-        try { window.localStorage.setItem('aegis:tweaks:state', JSON.stringify(next)); } catch { /* ignore */ }
+        try { window.localStorage.setItem('underwing:tweaks:state', JSON.stringify(next)); } catch { /* ignore */ }
       }
       return next;
     });
@@ -140,6 +147,6 @@ export function useTweaksPanelEnabled(): boolean {
   return tweaksPanelEnabled({
     dev: import.meta.env.DEV,
     search: typeof window !== 'undefined' ? window.location.search : '',
-    ls: typeof window !== 'undefined' ? window.localStorage.getItem('aegis:tweaks') : null,
+    ls: typeof window !== 'undefined' ? window.localStorage.getItem('underwing:tweaks') : null,
   });
 }

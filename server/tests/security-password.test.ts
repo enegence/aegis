@@ -258,7 +258,7 @@ describe('TOTP recovery codes', () => {
     expect(useRes.statusCode).toBe(200);
     expect(JSON.parse(useRes.payload).ok).toBe(true);
     // Should set a session cookie
-    expect(String(useRes.headers['set-cookie'])).toContain('aegis_session');
+    expect(String(useRes.headers['set-cookie'])).toContain('underwing_session');
 
     // Verify audit event
     const { auditEvents } = await import('../src/db/schema.js');

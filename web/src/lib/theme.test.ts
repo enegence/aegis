@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { THEMES, TWEAK_DEFAULTS, resolveTheme, tweaksPanelEnabled, computeInitialTweaks, USER_THEME_KEY } from './theme';
+import { THEMES, TWEAK_DEFAULTS, resolveTheme, tweaksPanelEnabled, computeInitialTweaks, USER_THEME_KEY, readStoredUserTheme } from './theme';
 
 describe('resolveTheme', () => {
   it('returns blueprint by default', () => {
@@ -19,7 +19,24 @@ describe('resolveTheme', () => {
 
 describe('USER_THEME_KEY', () => {
   it('is the ungated user theme localStorage key', () => {
-    expect(USER_THEME_KEY).toBe('aegis:theme');
+    expect(USER_THEME_KEY).toBe('underwing:theme');
+  });
+});
+
+describe('readStoredUserTheme', () => {
+  const storage = (items: Record<string, string>) => ({ getItem: (key: string) => items[key] ?? null });
+
+  it('reads the current key', () => {
+    expect(readStoredUserTheme(storage({ 'underwing:theme': 'midnight' }))).toBe('midnight');
+  });
+  it('falls back to the key from before the rename', () => {
+    expect(readStoredUserTheme(storage({ 'aegis:theme': 'midnight' }))).toBe('midnight');
+  });
+  it('prefers the current key when both exist', () => {
+    expect(readStoredUserTheme(storage({ 'underwing:theme': 'blueprint', 'aegis:theme': 'midnight' }))).toBe('blueprint');
+  });
+  it('returns null when nothing is stored', () => {
+    expect(readStoredUserTheme(storage({}))).toBeNull();
   });
 });
 
@@ -28,7 +45,7 @@ describe('computeInitialTweaks', () => {
     const t = computeInitialTweaks({ devGate: false, devStateRaw: null, userTheme: null });
     expect(t.theme).toBe('blueprint');
   });
-  it('applies user theme from aegis:theme when not dev-gated', () => {
+  it('applies the stored user theme when not dev-gated', () => {
     const t = computeInitialTweaks({ devGate: false, devStateRaw: null, userTheme: 'midnight' });
     expect(t.theme).toBe('midnight');
   });

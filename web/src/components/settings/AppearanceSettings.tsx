@@ -1,5 +1,5 @@
 // Settings → Appearance: end-user theme toggle (Blueprint / Midnight).
-// Persisted ungated via useUserTheme → localStorage 'aegis:theme'. Applies live.
+// Persisted ungated via useUserTheme → localStorage 'underwing:theme'. Applies live.
 // The Settings page wrapper renders the "Appearance" heading, so none here.
 import { THEMES, USER_THEMES, useTheme, useUserTheme, type UserTheme } from '../../lib/theme';
 

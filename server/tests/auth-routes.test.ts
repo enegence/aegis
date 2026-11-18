@@ -57,7 +57,7 @@ describe('Auth routes', () => {
       expect(res.statusCode).toBe(200);
       expect(res.headers['set-cookie']).toBeDefined();
       const cookies = res.headers['set-cookie'];
-      expect(String(cookies)).toContain('aegis_session');
+      expect(String(cookies)).toContain('underwing_session');
     });
 
     it('rejects invalid password', async () => {

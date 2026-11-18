@@ -27,7 +27,7 @@ export async function authRoutes(app: FastifyInstance) {
   app.get('/api/csrf', {
     preHandler: [app.requireAuth],
   }, async (req, reply) => {
-    const sessionId = req.cookies!.aegis_session!;
+    const sessionId = req.cookies!.underwing_session!;
     const csrfToken = deriveCsrfToken(sessionId, app.config.secretKey);
     return reply.send({ csrfToken });
   });
@@ -83,7 +83,7 @@ export async function authRoutes(app: FastifyInstance) {
 
     const sessionId = createSession(app.db, created.id);
 
-    reply.setCookie('aegis_session', sessionId, {
+    reply.setCookie('underwing_session', sessionId, {
       path: '/',
       httpOnly: true,
       sameSite: 'lax',
@@ -145,7 +145,7 @@ export async function authRoutes(app: FastifyInstance) {
 
     const sessionId = createSession(app.db, ownerRow.id);
 
-    reply.setCookie('aegis_session', sessionId, {
+    reply.setCookie('underwing_session', sessionId, {
       path: '/',
       httpOnly: true,
       sameSite: 'lax',
@@ -176,10 +176,10 @@ export async function authRoutes(app: FastifyInstance) {
   });
 
   app.post('/api/auth/logout', async (req, reply) => {
-    const sessionId = req.cookies?.aegis_session;
+    const sessionId = req.cookies?.underwing_session;
     if (sessionId) {
       deleteSession(app.db, sessionId);
-      reply.clearCookie('aegis_session', { path: '/' });
+      reply.clearCookie('underwing_session', { path: '/' });
     }
     return reply.send({ success: true });
   });

@@ -257,7 +257,7 @@ export async function securityRoutes(app: FastifyInstance) {
 
     // Create a session (log them in)
     const sessionId = createSession(db, ownerRow.id);
-    reply.setCookie('aegis_session', sessionId, {
+    reply.setCookie('underwing_session', sessionId, {
       path: '/',
       httpOnly: true,
       sameSite: 'lax',
@@ -295,7 +295,7 @@ export async function securityRoutes(app: FastifyInstance) {
       .where(eq(owner.id, ownerRow.id));
 
     // Invalidate all sessions except current
-    const currentSessionId = req.cookies?.aegis_session;
+    const currentSessionId = req.cookies?.underwing_session;
     if (currentSessionId) {
       await db.delete(sessions)
         .where(
@@ -304,7 +304,7 @@ export async function securityRoutes(app: FastifyInstance) {
       // Re-create the current session so user stays logged in
       // (we deleted it above, so create fresh one)
       const newSessionId = createSession(db, ownerRow.id);
-      reply.setCookie('aegis_session', newSessionId, {
+      reply.setCookie('underwing_session', newSessionId, {
         path: '/',
         httpOnly: true,
         sameSite: 'lax',

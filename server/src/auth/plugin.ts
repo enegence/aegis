@@ -24,7 +24,7 @@ async function authPlugin(app: FastifyInstance) {
       return reply.status(428).send({ error: 'Setup required', code: 'setup_required' });
     }
 
-    const sessionId = req.cookies?.aegis_session;
+    const sessionId = req.cookies?.underwing_session;
     if (!sessionId) {
       return reply.status(401).send({ error: 'Not authenticated' });
     }
@@ -39,7 +39,7 @@ async function authPlugin(app: FastifyInstance) {
   });
 
   app.decorate('requireCsrf', async function (req: FastifyRequest, reply: FastifyReply) {
-    const sessionId = req.cookies?.aegis_session;
+    const sessionId = req.cookies?.underwing_session;
     if (!sessionId) {
       // No session at all — let requireAuth handle the 401
       return reply.status(403).send({ error: 'CSRF token required' });
