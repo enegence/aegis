@@ -4,4 +4,4 @@
  */
 export const HOSTED_SITE_HOST = 'aegisdms.life';
 export const HOSTED_SITE_URL = `https://${HOSTED_SITE_HOST}`;
-export const SUPPORT_URL = `${HOSTED_SITE_URL}/support`;
+export const SUPPORT_URL = `${HOSTED_SITE_URL}/contact`;
