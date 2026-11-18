@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import { createTestDb, type AegisDb } from '../src/db/index.js';
+import { createTestDb, type UnderwingDb } from '../src/db/index.js';
 import { startCascade, checkAndEscalate } from '../src/services/cascade.js';
 import { startOrAttachReleaseRun } from '../src/services/release-run.js';
 import {
@@ -29,13 +29,13 @@ const FIELD_KEY = 'dev-field-key-change-me-32bytes!!';
 const APP_URL = 'http://localhost:8000';
 const CASCADE_CONFIG = { appUrl: APP_URL, fieldEncryptionKey: FIELD_KEY };
 
-function makeDb(): AegisDb {
+function makeDb(): UnderwingDb {
   const db = createTestDb();
   migrate(db, { migrationsFolder: './drizzle' });
   return db;
 }
 
-async function seedOwner(db: AegisDb) {
+async function seedOwner(db: UnderwingDb) {
   await db.insert(owner).values({
     displayName: 'Test Owner',
     email: 'owner@example.com',
@@ -47,7 +47,7 @@ async function seedOwner(db: AegisDb) {
   });
 }
 
-async function seedContact(db: AegisDb, opts: { name: string; email: string; priority: number; windowHours?: number }) {
+async function seedContact(db: UnderwingDb, opts: { name: string; email: string; priority: number; windowHours?: number }) {
   const [row] = await db.insert(contacts).values({
     fullNameEncrypted: encryptField(opts.name, FIELD_KEY)!,
     emailEncrypted: encryptField(opts.email, FIELD_KEY)!,
@@ -58,7 +58,7 @@ async function seedContact(db: AegisDb, opts: { name: string; email: string; pri
   return row;
 }
 
-async function seedPacket(db: AegisDb, switchId: number, releaseRunId: number) {
+async function seedPacket(db: UnderwingDb, switchId: number, releaseRunId: number) {
   const [row] = await db.insert(packets).values({
     switchId,
     releaseRunId,
@@ -70,7 +70,7 @@ async function seedPacket(db: AegisDb, switchId: number, releaseRunId: number) {
   return row;
 }
 
-async function seedSwitch(db: AegisDb, contactIds: number[]) {
+async function seedSwitch(db: UnderwingDb, contactIds: number[]) {
   return createSwitch(db, {
     name: 'Test Switch',
     mode: 'trip',
@@ -80,7 +80,7 @@ async function seedSwitch(db: AegisDb, contactIds: number[]) {
 }
 
 describe('startCascade', () => {
-  let db: AegisDb;
+  let db: UnderwingDb;
 
   beforeEach(() => {
     db = makeDb();
@@ -225,7 +225,7 @@ describe('startCascade', () => {
 });
 
 describe('checkAndEscalate', () => {
-  let db: AegisDb;
+  let db: UnderwingDb;
 
   beforeEach(() => {
     db = makeDb();

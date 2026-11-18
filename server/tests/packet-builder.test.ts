@@ -3,7 +3,7 @@ import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { mkdtempSync, rmSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
-import { createTestDb, type AegisDb } from '../src/db/index.js';
+import { createTestDb, type UnderwingDb } from '../src/db/index.js';
 import { buildPacket, PacketBuildError } from '../src/services/packet-builder.js';
 import { decryptPacketJson, deserializeEncryptedPacket } from '../src/services/packet-crypto.js';
 import { decryptField, encryptField } from '../src/services/field-encrypt.js';
@@ -15,13 +15,13 @@ import { readFileSync } from 'fs';
 
 const FIELD_KEY = '0123456789abcdef0123456789abcdef';
 
-function makeDb(): AegisDb {
+function makeDb(): UnderwingDb {
   const db = createTestDb();
   migrate(db, { migrationsFolder: './drizzle' });
   return db;
 }
 
-async function seedOwner(db: AegisDb) {
+async function seedOwner(db: UnderwingDb) {
   await db.insert(owner).values({
     displayName: 'Test Owner',
     email: 'owner@example.com',
@@ -33,7 +33,7 @@ async function seedOwner(db: AegisDb) {
   });
 }
 
-async function seedSwitch(db: AegisDb, selectedContactIds: number[], selectedItemIds: number[]) {
+async function seedSwitch(db: UnderwingDb, selectedContactIds: number[], selectedItemIds: number[]) {
   const rows = await db
     .insert(switches)
     .values({
@@ -50,7 +50,7 @@ async function seedSwitch(db: AegisDb, selectedContactIds: number[], selectedIte
   return rows[0];
 }
 
-async function seedEstateItem(db: AegisDb) {
+async function seedEstateItem(db: UnderwingDb) {
   const rows = await db
     .insert(estateItems)
     .values({
@@ -66,7 +66,7 @@ async function seedEstateItem(db: AegisDb) {
   return rows[0];
 }
 
-async function seedContact(db: AegisDb) {
+async function seedContact(db: UnderwingDb) {
   const rows = await db
     .insert(contacts)
     .values({
@@ -82,12 +82,12 @@ async function seedContact(db: AegisDb) {
 }
 
 describe('packet builder', () => {
-  let db: AegisDb;
+  let db: UnderwingDb;
   let dataDir: string;
 
   beforeEach(() => {
     db = makeDb();
-    dataDir = mkdtempSync(join(tmpdir(), 'aegis-test-'));
+    dataDir = mkdtempSync(join(tmpdir(), 'underwing-test-'));
   });
 
   it('builds and encrypts a packet with selected items and contacts', async () => {

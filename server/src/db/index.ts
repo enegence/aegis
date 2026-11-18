@@ -27,4 +27,4 @@ export function createTestDb(): ReturnType<typeof createDb> {
   return drizzle(sqlite, { schema });
 }
 
-export type AegisDb = ReturnType<typeof createDb>;
+export type UnderwingDb = ReturnType<typeof createDb>;

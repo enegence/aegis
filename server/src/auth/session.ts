@@ -1,11 +1,11 @@
 import { nanoid } from 'nanoid';
 import { eq, lt } from 'drizzle-orm';
 import { sessions } from '../db/schema.js';
-import type { AegisDb } from '../db/index.js';
+import type { UnderwingDb } from '../db/index.js';
 
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000;
 
-export function createSession(db: AegisDb, ownerId: number): string {
+export function createSession(db: UnderwingDb, ownerId: number): string {
   const id = nanoid(48);
   const now = new Date();
   const expiresAt = new Date(now.getTime() + SESSION_TTL_MS);
@@ -20,7 +20,7 @@ export function createSession(db: AegisDb, ownerId: number): string {
   return id;
 }
 
-export function validateSession(db: AegisDb, sessionId: string): number | null {
+export function validateSession(db: UnderwingDb, sessionId: string): number | null {
   const result = db.select()
     .from(sessions)
     .where(eq(sessions.id, sessionId))
@@ -35,10 +35,10 @@ export function validateSession(db: AegisDb, sessionId: string): number | null {
   return result.ownerId;
 }
 
-export function deleteSession(db: AegisDb, sessionId: string): void {
+export function deleteSession(db: UnderwingDb, sessionId: string): void {
   db.delete(sessions).where(eq(sessions.id, sessionId)).run();
 }
 
-export function cleanExpiredSessions(db: AegisDb): void {
+export function cleanExpiredSessions(db: UnderwingDb): void {
   db.delete(sessions).where(lt(sessions.expiresAt, new Date())).run();
 }

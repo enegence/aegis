@@ -3,7 +3,7 @@ import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { mkdtempSync, rmSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
-import { createTestDb, type AegisDb } from '../src/db/index.js';
+import { createTestDb, type UnderwingDb } from '../src/db/index.js';
 import { syncPacketForSwitch } from '../src/services/dead-drop-sync.js';
 import { encryptField } from '../src/services/field-encrypt.js';
 import { appSettings, owner, switches, contacts, estateItems } from '../src/db/schema.js';
@@ -39,13 +39,13 @@ vi.mock('@aws-sdk/client-s3', () => {
 
 const FIELD_KEY = 'dev-field-key-change-me-32bytes!!';
 
-function makeDb(): AegisDb {
+function makeDb(): UnderwingDb {
   const db = createTestDb();
   migrate(db, { migrationsFolder: './drizzle' });
   return db;
 }
 
-async function seedBase(db: AegisDb, deploymentMode = 'dead_drop') {
+async function seedBase(db: UnderwingDb, deploymentMode = 'dead_drop') {
   await db.insert(owner).values({
     displayName: 'Test', email: 'test@example.com', phone: null,
     timezone: 'UTC', passwordHash: 'x', totpEnabled: false, setupComplete: true,
@@ -75,7 +75,7 @@ async function seedBase(db: AegisDb, deploymentMode = 'dead_drop') {
   return swRows[0];
 }
 
-async function seedS3Settings(db: AegisDb) {
+async function seedS3Settings(db: UnderwingDb) {
   const settings = [
     { key: 's3_region', value: 'us-east-1' },
     { key: 's3_bucket', value: 'test-bucket' },
@@ -88,13 +88,13 @@ async function seedS3Settings(db: AegisDb) {
 }
 
 describe('syncPacketForSwitch', () => {
-  let db: AegisDb;
+  let db: UnderwingDb;
   let dataDir: string;
   let mockSend: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
     db = makeDb();
-    dataDir = mkdtempSync(join(tmpdir(), 'aegis-sync-test-'));
+    dataDir = mkdtempSync(join(tmpdir(), 'underwing-sync-test-'));
     const mod = await import('@aws-sdk/client-s3');
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockSend = (mod as any).__mockSend as ReturnType<typeof vi.fn>;

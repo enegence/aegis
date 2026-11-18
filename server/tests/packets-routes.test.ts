@@ -16,7 +16,7 @@ describe('packet routes', () => {
   let dataDir: string;
 
   beforeAll(async () => {
-    dataDir = mkdtempSync(join(tmpdir(), 'aegis-pkt-test-'));
+    dataDir = mkdtempSync(join(tmpdir(), 'underwing-pkt-test-'));
     app = await buildApp({ testing: true, dbPath: ':memory:', dataDir });
 
     await app.inject({

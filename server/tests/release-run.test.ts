@@ -1,23 +1,23 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import { createTestDb, type AegisDb } from '../src/db/index.js';
+import { createTestDb, type UnderwingDb } from '../src/db/index.js';
 import { startOrAttachReleaseRun } from '../src/services/release-run.js';
 import { getActiveReleaseRunFull, completeReleaseRun, cancelReleaseRun } from '../src/repositories/release-run-repository.js';
 import { createSwitch } from '../src/services/switch-repository.js';
 import { getAuditEvents } from '../src/services/audit.js';
 
-function makeDb(): AegisDb {
+function makeDb(): UnderwingDb {
   const db = createTestDb();
   migrate(db, { migrationsFolder: './drizzle' });
   return db;
 }
 
-async function seedSwitch(db: AegisDb, name: string) {
+async function seedSwitch(db: UnderwingDb, name: string) {
   return createSwitch(db, { name, mode: 'trip', triggerAt: new Date(Date.now() + 86400000) });
 }
 
 describe('startOrAttachReleaseRun', () => {
-  let db: AegisDb;
+  let db: UnderwingDb;
 
   beforeEach(() => { db = makeDb(); });
 

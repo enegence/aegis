@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import { createTestDb, type AegisDb } from '../src/db/index.js';
+import { createTestDb, type UnderwingDb } from '../src/db/index.js';
 import { createSwitch } from '../src/services/switch-repository.js';
 import type { SwitchRecord } from '../src/services/switch-repository.js';
 import { checkSwitchReadiness } from '../src/services/readiness.js';
@@ -38,7 +38,7 @@ function makeSwitchRecord(overrides: Partial<SwitchRecord> = {}): SwitchRecord {
 }
 
 async function createOwnerWithSetupComplete(
-  db: AegisDb,
+  db: UnderwingDb,
   setupComplete = true,
 ): Promise<void> {
   const now = new Date();
@@ -56,7 +56,7 @@ async function createOwnerWithSetupComplete(
 // ─── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('checkSwitchReadiness', () => {
-  let db: AegisDb;
+  let db: UnderwingDb;
 
   beforeEach(() => {
     db = createTestDb();
@@ -294,7 +294,7 @@ describe('checkSwitchReadiness', () => {
 });
 
 describe('armSwitch readiness gate integration', () => {
-  let db: AegisDb;
+  let db: UnderwingDb;
 
   beforeEach(() => {
     db = createTestDb();

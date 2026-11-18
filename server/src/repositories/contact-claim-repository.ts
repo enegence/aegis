@@ -1,7 +1,7 @@
 import { randomBytes, createHash } from 'crypto';
 import { eq, and } from 'drizzle-orm';
 import { contactClaims } from '../db/schema.js';
-import type { AegisDb } from '../db/index.js';
+import type { UnderwingDb } from '../db/index.js';
 
 export type ClaimStatus =
   | 'pending'
@@ -98,7 +98,7 @@ function rowToRecord(row: typeof contactClaims.$inferSelect): ContactClaimRecord
 }
 
 export async function createContactClaim(
-  db: AegisDb,
+  db: UnderwingDb,
   input: CreateClaimInput,
 ): Promise<CreateClaimResult> {
   const rawToken = randomBytes(32).toString('hex');
@@ -121,7 +121,7 @@ export async function createContactClaim(
 }
 
 export async function getClaimById(
-  db: AegisDb,
+  db: UnderwingDb,
   id: number,
 ): Promise<ContactClaimRecord | null> {
   const rows = await db.select().from(contactClaims).where(eq(contactClaims.id, id));
@@ -129,7 +129,7 @@ export async function getClaimById(
 }
 
 export async function getClaimByTokenHash(
-  db: AegisDb,
+  db: UnderwingDb,
   tokenHash: string,
 ): Promise<ContactClaimRecord | null> {
   const rows = await db
@@ -140,7 +140,7 @@ export async function getClaimByTokenHash(
 }
 
 export async function updateClaimStatus(
-  db: AegisDb,
+  db: UnderwingDb,
   id: number,
   fields: UpdateClaimFields,
 ): Promise<void> {
@@ -148,7 +148,7 @@ export async function updateClaimStatus(
 }
 
 export async function getActiveClaimForRun(
-  db: AegisDb,
+  db: UnderwingDb,
   runId: number,
 ): Promise<ContactClaimRecord | null> {
   const rows = await db
@@ -162,7 +162,7 @@ export async function getActiveClaimForRun(
 }
 
 export async function listClaimsForRun(
-  db: AegisDb,
+  db: UnderwingDb,
   runId: number,
 ): Promise<ContactClaimRecord[]> {
   const rows = await db

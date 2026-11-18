@@ -1,6 +1,6 @@
 import { eq, desc, max } from 'drizzle-orm';
 import { packets, encryptionKeys } from '../db/schema.js';
-import type { AegisDb } from '../db/index.js';
+import type { UnderwingDb } from '../db/index.js';
 
 export interface PacketRecord {
   id: number;
@@ -48,7 +48,7 @@ function rowToRecord(row: typeof packets.$inferSelect): PacketRecord {
   };
 }
 
-export async function getNextPacketVersion(db: AegisDb, switchId: number): Promise<number> {
+export async function getNextPacketVersion(db: UnderwingDb, switchId: number): Promise<number> {
   const rows = await db
     .select({ maxVersion: max(packets.version) })
     .from(packets)
@@ -58,7 +58,7 @@ export async function getNextPacketVersion(db: AegisDb, switchId: number): Promi
 }
 
 export async function createPacketRecord(
-  db: AegisDb,
+  db: UnderwingDb,
   data: {
     switchId: number;
     version: number;
@@ -75,12 +75,12 @@ export async function createPacketRecord(
   return rowToRecord(rows[0]);
 }
 
-export async function getPacketById(db: AegisDb, id: number): Promise<PacketRecord | null> {
+export async function getPacketById(db: UnderwingDb, id: number): Promise<PacketRecord | null> {
   const rows = await db.select().from(packets).where(eq(packets.id, id));
   return rows[0] ? rowToRecord(rows[0]) : null;
 }
 
-export async function listPacketsBySwitchId(db: AegisDb, switchId: number): Promise<PacketRecord[]> {
+export async function listPacketsBySwitchId(db: UnderwingDb, switchId: number): Promise<PacketRecord[]> {
   const rows = await db
     .select()
     .from(packets)
@@ -90,7 +90,7 @@ export async function listPacketsBySwitchId(db: AegisDb, switchId: number): Prom
 }
 
 export async function updatePacketStorage(
-  db: AegisDb,
+  db: UnderwingDb,
   id: number,
   data: {
     storageProvider?: string;
@@ -105,7 +105,7 @@ export async function updatePacketStorage(
 }
 
 export async function storePacketKey(
-  db: AegisDb,
+  db: UnderwingDb,
   keyId: string,
   encryptedKeyMaterial: string,
 ): Promise<void> {
@@ -121,7 +121,7 @@ export async function storePacketKey(
 }
 
 export async function loadPacketKey(
-  db: AegisDb,
+  db: UnderwingDb,
   keyId: string,
 ): Promise<string | null> {
   const rows = await db

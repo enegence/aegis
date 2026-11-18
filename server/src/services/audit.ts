@@ -1,6 +1,6 @@
 import { desc, eq } from 'drizzle-orm';
 import { auditEvents } from '../db/schema.js';
-import type { AegisDb } from '../db/index.js';
+import type { UnderwingDb } from '../db/index.js';
 import type { AuditEvent } from '../../../packages/shared/src/types.js';
 
 export interface AuditInput {
@@ -26,7 +26,7 @@ function assertNoPhiKeys(metadata: Record<string, unknown>): void {
   }
 }
 
-export async function writeAuditEvent(db: AegisDb, input: AuditInput): Promise<void> {
+export async function writeAuditEvent(db: UnderwingDb, input: AuditInput): Promise<void> {
   if (input.metadata) {
     assertNoPhiKeys(input.metadata);
   }
@@ -41,7 +41,7 @@ export async function writeAuditEvent(db: AegisDb, input: AuditInput): Promise<v
 }
 
 export async function getAuditEvents(
-  db: AegisDb,
+  db: UnderwingDb,
   options?: { switchId?: number; limit?: number },
 ): Promise<AuditEvent[]> {
   const query = db

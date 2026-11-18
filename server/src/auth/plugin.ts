@@ -54,4 +54,4 @@ async function authPlugin(app: FastifyInstance) {
   });
 }
 
-export default fp(authPlugin, { name: 'aegis-auth' });
+export default fp(authPlugin, { name: 'underwing-auth' });

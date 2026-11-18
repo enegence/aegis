@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import { createTestDb, type AegisDb } from '../src/db/index.js';
+import { createTestDb, type UnderwingDb } from '../src/db/index.js';
 import { createSwitch, markSwitchStatus, getActiveReleaseRun, createReleaseRun } from '../src/services/switch-repository.js';
 import type { SwitchRecord } from '../src/services/switch-repository.js';
 import {
@@ -163,7 +163,7 @@ describe('evaluateSwitch — heartbeat mode', () => {
 // ─── Stateful action tests ─────────────────────────────────────────────────────
 
 describe('evaluateAndTransition', () => {
-  let db: AegisDb;
+  let db: UnderwingDb;
 
   beforeAll(() => {
     db = createTestDb();
@@ -228,7 +228,7 @@ describe('evaluateAndTransition', () => {
 });
 
 describe('checkIn', () => {
-  let db: AegisDb;
+  let db: UnderwingDb;
 
   beforeAll(() => {
     db = createTestDb();

@@ -3,7 +3,7 @@ import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { mkdtempSync, rmSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
-import { createTestDb, type AegisDb } from '../src/db/index.js';
+import { createTestDb, type UnderwingDb } from '../src/db/index.js';
 import { runWorkerOnce } from '../src/worker/index.js';
 import { startOrAttachReleaseRun } from '../src/services/release-run.js';
 import {
@@ -24,13 +24,13 @@ vi.mock('../src/services/notifications.js', () => ({
 const FIELD_KEY = 'dev-field-key-change-me-32bytes!!';
 const APP_URL = 'http://localhost:8000';
 
-function makeDb(): AegisDb {
+function makeDb(): UnderwingDb {
   const db = createTestDb();
   migrate(db, { migrationsFolder: './drizzle' });
   return db;
 }
 
-async function seedBase(db: AegisDb) {
+async function seedBase(db: UnderwingDb) {
   await db.insert(owner).values({
     displayName: 'Owner', email: 'owner@x.com', phone: null,
     timezone: 'UTC', passwordHash: 'x', totpEnabled: false, setupComplete: true,
@@ -54,7 +54,7 @@ async function seedBase(db: AegisDb) {
   return { c1, c2, sw };
 }
 
-async function seedPacket(db: AegisDb, switchId: number, runId: number) {
+async function seedPacket(db: UnderwingDb, switchId: number, runId: number) {
   const [pkt] = await db.insert(packets).values({
     switchId, releaseRunId: runId, version: 1,
     keyId: `key-${Date.now()}`, contentHash: 'abc', encryptedObjectHash: 'def',
@@ -63,12 +63,12 @@ async function seedPacket(db: AegisDb, switchId: number, runId: number) {
 }
 
 describe('worker cascade integration', () => {
-  let db: AegisDb;
+  let db: UnderwingDb;
   let dataDir: string;
 
   beforeEach(() => {
     db = makeDb();
-    dataDir = mkdtempSync(join(tmpdir(), 'aegis-worker-test-'));
+    dataDir = mkdtempSync(join(tmpdir(), 'underwing-worker-test-'));
   });
 
   it('starts cascade when release run has active packet and no claim', async () => {

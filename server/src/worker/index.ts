@@ -1,6 +1,6 @@
 import { inArray, eq } from 'drizzle-orm';
 import { switches, releaseRuns, workerHeartbeats } from '../db/schema.js';
-import type { AegisDb } from '../db/index.js';
+import type { UnderwingDb } from '../db/index.js';
 import type { SwitchRecord } from '../services/switch-repository.js';
 import { evaluateAndTransition } from '../services/switch-engine.js';
 import { processRemindersForSwitch } from '../services/reminders.js';
@@ -43,7 +43,7 @@ export interface WorkerRunResult {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-async function loadEvaluableSwitches(db: AegisDb): Promise<SwitchRecord[]> {
+async function loadEvaluableSwitches(db: UnderwingDb): Promise<SwitchRecord[]> {
   const rows = await db
     .select()
     .from(switches)
@@ -89,7 +89,7 @@ async function loadEvaluableSwitches(db: AegisDb): Promise<SwitchRecord[]> {
  * The actual deduplication for notifications/uploads is enforced by idempotency
  * keys checked in the cascade/packet build layers.
  */
-export async function recoverActiveReleaseRuns(db: AegisDb): Promise<number> {
+export async function recoverActiveReleaseRuns(db: UnderwingDb): Promise<number> {
   const rows = await db
     .select()
     .from(releaseRuns)
@@ -119,7 +119,7 @@ export async function recoverActiveReleaseRuns(db: AegisDb): Promise<number> {
 
 // ─── Release run cascade helpers ──────────────────────────────────────────────
 
-async function loadActiveReleaseRuns(db: AegisDb): Promise<ReleaseRunRecord[]> {
+async function loadActiveReleaseRuns(db: UnderwingDb): Promise<ReleaseRunRecord[]> {
   const rows = await db
     .select()
     .from(releaseRuns)
@@ -148,7 +148,7 @@ async function loadActiveReleaseRuns(db: AegisDb): Promise<ReleaseRunRecord[]> {
 }
 
 async function progressReleaseRuns(
-  db: AegisDb,
+  db: UnderwingDb,
   now: Date,
   syncConfig: WorkerSyncConfig,
 ): Promise<void> {
@@ -194,7 +194,7 @@ async function progressReleaseRuns(
 
 // ─── Heartbeat persistence ─────────────────────────────────────────────────────
 
-async function upsertHeartbeatTick(db: AegisDb, now: Date): Promise<void> {
+async function upsertHeartbeatTick(db: UnderwingDb, now: Date): Promise<void> {
   try {
     await db
       .insert(workerHeartbeats)
@@ -208,7 +208,7 @@ async function upsertHeartbeatTick(db: AegisDb, now: Date): Promise<void> {
   }
 }
 
-async function upsertHeartbeatSuccess(db: AegisDb, now: Date, durationMs: number): Promise<void> {
+async function upsertHeartbeatSuccess(db: UnderwingDb, now: Date, durationMs: number): Promise<void> {
   try {
     await db
       .insert(workerHeartbeats)
@@ -222,7 +222,7 @@ async function upsertHeartbeatSuccess(db: AegisDb, now: Date, durationMs: number
   }
 }
 
-async function upsertHeartbeatError(db: AegisDb, now: Date, errorRedacted: string): Promise<void> {
+async function upsertHeartbeatError(db: UnderwingDb, now: Date, errorRedacted: string): Promise<void> {
   try {
     await db
       .insert(workerHeartbeats)
@@ -239,7 +239,7 @@ async function upsertHeartbeatError(db: AegisDb, now: Date, errorRedacted: strin
 // ─── runWorkerOnce ─────────────────────────────────────────────────────────────
 
 export async function runWorkerOnce(
-  db: AegisDb,
+  db: UnderwingDb,
   now: Date = new Date(),
   syncConfig?: WorkerSyncConfig,
 ): Promise<WorkerRunResult> {
@@ -305,7 +305,7 @@ export async function runWorkerOnce(
 
 // ─── startWorker ──────────────────────────────────────────────────────────────
 
-export function startWorker(db: AegisDb, options?: WorkerOptions): WorkerHandle {
+export function startWorker(db: UnderwingDb, options?: WorkerOptions): WorkerHandle {
   const intervalMs =
     options?.intervalMs ??
     parseInt(process.env.AEGIS_WORKER_INTERVAL_SECONDS ?? '60') * 1000;

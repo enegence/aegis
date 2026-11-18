@@ -1,4 +1,4 @@
-import type { AegisDb } from '../db/index.js';
+import type { UnderwingDb } from '../db/index.js';
 import {
   getSwitchById,
   markSwitchStatus,
@@ -119,7 +119,7 @@ export function evaluateSwitch(sw: SwitchRecord, now: Date): SwitchEvaluation {
 
 // ─── Stateful action functions ─────────────────────────────────────────────────
 
-export async function armSwitch(db: AegisDb, id: number): Promise<SwitchRecord> {
+export async function armSwitch(db: UnderwingDb, id: number): Promise<SwitchRecord> {
   const sw = await getSwitchById(db, id);
   if (!sw) throw new Error(`Switch ${id} not found`);
   if (sw.status !== 'draft' && sw.status !== 'paused') {
@@ -162,7 +162,7 @@ export async function armSwitch(db: AegisDb, id: number): Promise<SwitchRecord> 
   return updated;
 }
 
-export async function pauseSwitch(db: AegisDb, id: number): Promise<SwitchRecord> {
+export async function pauseSwitch(db: UnderwingDb, id: number): Promise<SwitchRecord> {
   const sw = await getSwitchById(db, id);
   if (!sw) throw new Error(`Switch ${id} not found`);
   if (sw.status !== 'armed' && sw.status !== 'warning') {
@@ -182,7 +182,7 @@ export async function pauseSwitch(db: AegisDb, id: number): Promise<SwitchRecord
   return updated;
 }
 
-export async function cancelSwitch(db: AegisDb, id: number): Promise<SwitchRecord> {
+export async function cancelSwitch(db: UnderwingDb, id: number): Promise<SwitchRecord> {
   const sw = await getSwitchById(db, id);
   if (!sw) throw new Error(`Switch ${id} not found`);
 
@@ -204,7 +204,7 @@ export async function cancelSwitch(db: AegisDb, id: number): Promise<SwitchRecor
   return updated;
 }
 
-export async function checkIn(db: AegisDb, id: number): Promise<SwitchRecord> {
+export async function checkIn(db: UnderwingDb, id: number): Promise<SwitchRecord> {
   const sw = await getSwitchById(db, id);
   if (!sw) throw new Error(`Switch ${id} not found`);
   if (sw.status !== 'armed' && sw.status !== 'warning') {
@@ -233,7 +233,7 @@ export async function checkIn(db: AegisDb, id: number): Promise<SwitchRecord> {
 }
 
 export async function evaluateAndTransition(
-  db: AegisDb,
+  db: UnderwingDb,
   id: number,
   now: Date = new Date(),
 ): Promise<SwitchRecord> {

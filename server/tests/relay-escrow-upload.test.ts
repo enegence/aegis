@@ -42,7 +42,7 @@ describe('relay escrow upload', () => {
 
   beforeAll(async () => {
     vi.stubGlobal('fetch', fetchMock);
-    dataDir = mkdtempSync(join(tmpdir(), 'aegis-escrow-upload-'));
+    dataDir = mkdtempSync(join(tmpdir(), 'underwing-escrow-upload-'));
     app = await buildApp({ testing: true, dbPath: ':memory:', dataDir });
     await app.inject({ method: 'POST', url: '/api/auth/setup', payload: { displayName: 'Owner', email: 'owner@test.com', password: 'testpass1234', timezone: 'UTC' } });
     const login = await app.inject({ method: 'POST', url: '/api/auth/login', payload: { password: 'testpass1234' } });

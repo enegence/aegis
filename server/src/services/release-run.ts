@@ -1,4 +1,4 @@
-import type { AegisDb } from '../db/index.js';
+import type { UnderwingDb } from '../db/index.js';
 import {
   getActiveReleaseRunFull,
   createReleaseRunFull,
@@ -16,7 +16,7 @@ export interface ReleaseRunStartResult {
 }
 
 export async function startOrAttachReleaseRun(
-  db: AegisDb,
+  db: UnderwingDb,
   input: {
     triggeringSwitchId: number;
     reason: ReleaseRunReason;

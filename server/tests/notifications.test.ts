@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import { createTestDb, type AegisDb } from '../src/db/index.js';
+import { createTestDb, type UnderwingDb } from '../src/db/index.js';
 import { appSettings, notificationEvents } from '../src/db/schema.js';
 import { renderTemplate } from '../src/services/notification-templates.js';
 import {
@@ -189,7 +189,7 @@ describe('sendTelegramNotification', () => {
 // ─── Dispatch notification tests ─────────────────────────────────────────────
 
 describe('dispatchNotification', () => {
-  let db: AegisDb;
+  let db: UnderwingDb;
 
   beforeAll(() => {
     db = createTestDb();

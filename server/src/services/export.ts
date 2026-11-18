@@ -22,7 +22,7 @@ import {
   createHash,
   randomBytes,
 } from 'crypto';
-import type { AegisDb } from '../db/index.js';
+import type { UnderwingDb } from '../db/index.js';
 import {
   owner,
   estateItems,
@@ -212,7 +212,7 @@ export async function decryptExportBundle(
 
 /** Gather all exportable data from the DB, decrypting fields for re-encryption. */
 export async function gatherExportPayload(
-  db: AegisDb,
+  db: UnderwingDb,
   fieldKey: string,
   includeConfig: boolean,
 ): Promise<ExportPayload> {

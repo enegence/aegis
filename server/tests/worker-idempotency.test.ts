@@ -12,7 +12,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import { createTestDb, type AegisDb } from '../src/db/index.js';
+import { createTestDb, type UnderwingDb } from '../src/db/index.js';
 import {
   checkIdempotencyKey,
   setIdempotencyKey,
@@ -29,18 +29,18 @@ vi.mock('../src/services/notifications.js', () => ({
   dispatchNotification: vi.fn().mockResolvedValue(undefined),
 }));
 
-function makeDb(): AegisDb {
+function makeDb(): UnderwingDb {
   const db = createTestDb();
   migrate(db, { migrationsFolder: './drizzle' });
   return db;
 }
 
-async function seedSwitch(db: AegisDb, name = 'Switch A') {
+async function seedSwitch(db: UnderwingDb, name = 'Switch A') {
   return createSwitch(db, { name, mode: 'trip', triggerAt: new Date(Date.now() + 86400000) });
 }
 
 describe('Idempotency key service', () => {
-  let db: AegisDb;
+  let db: UnderwingDb;
 
   beforeEach(() => {
     db = makeDb();
@@ -148,7 +148,7 @@ describe('Idempotency key service', () => {
 });
 
 describe('Worker idempotency: duplicate ticks', () => {
-  let db: AegisDb;
+  let db: UnderwingDb;
 
   beforeEach(() => {
     db = makeDb();

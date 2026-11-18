@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto';
 import { writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { eq, inArray } from 'drizzle-orm';
-import type { AegisDb } from '../db/index.js';
+import type { UnderwingDb } from '../db/index.js';
 import { owner, switches, estateItems, contacts } from '../db/schema.js';
 import { decryptField } from './field-encrypt.js';
 import { encryptField } from './field-encrypt.js';
@@ -65,7 +65,7 @@ export class PacketBuildError extends Error {
 }
 
 export async function buildPacket(
-  db: AegisDb,
+  db: UnderwingDb,
   fieldEncryptionKey: string,
   dataDir: string,
   switchId: number,

@@ -17,7 +17,7 @@
 import { eq, and, lte } from 'drizzle-orm';
 import { createHash } from 'crypto';
 import { notificationDeliveries } from '../db/schema.js';
-import type { AegisDb } from '../db/index.js';
+import type { UnderwingDb } from '../db/index.js';
 import { checkOrSetIdempotencyKey } from './idempotency-keys.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -256,7 +256,7 @@ export function assertPayloadMinimized(payload: string): void {
  * Create a notification_deliveries row with status=queued.
  */
 export async function createDelivery(
-  db: AegisDb,
+  db: UnderwingDb,
   input: CreateDeliveryInput,
 ): Promise<NotificationDeliveryRecord> {
   const rows = await db
@@ -285,7 +285,7 @@ export async function createDelivery(
  * - On permanent failure or max attempts: 'failed_permanent'
  */
 export async function attemptDelivery(
-  db: AegisDb,
+  db: UnderwingDb,
   deliveryId: string,
   sendFn: () => Promise<SendResult>,
 ): Promise<void> {
@@ -411,7 +411,7 @@ export async function attemptDelivery(
  * Used by the worker to recover and retry failed deliveries.
  */
 export async function findRetryableDeliveries(
-  db: AegisDb,
+  db: UnderwingDb,
   now: Date = new Date(),
 ): Promise<NotificationDeliveryRecord[]> {
   const rows = await db
@@ -431,7 +431,7 @@ export async function findRetryableDeliveries(
  * Find all queued deliveries ready to send.
  */
 export async function findQueuedDeliveries(
-  db: AegisDb,
+  db: UnderwingDb,
 ): Promise<NotificationDeliveryRecord[]> {
   const rows = await db
     .select()

@@ -6,7 +6,7 @@ import type { FastifyInstance } from 'fastify';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { appSettings, owner } from '../db/schema.js';
-import type { AegisDb } from '../db/index.js';
+import type { UnderwingDb } from '../db/index.js';
 import { encryptField, decryptField } from '../services/field-encrypt.js';
 import { writeAuditEvent } from '../services/audit.js';
 import { getSmtpConfig, getTelegramConfig, dispatchNotification } from '../services/notifications.js';
@@ -54,7 +54,7 @@ const PacketsUpdateSchema = z.object({
 });
 
 async function upsertSetting(
-  db: AegisDb,
+  db: UnderwingDb,
   key: string,
   value: string,
   encrypted: boolean,
@@ -703,7 +703,7 @@ export async function settingsRoutes(app: FastifyInstance) {
 // ─── Internal helpers ─────────────────────────────────────────────────────────
 
 async function getSettingRow(
-  db: AegisDb,
+  db: UnderwingDb,
   key: string,
 ): Promise<{ value: string | null; encrypted: boolean } | null> {
   const rows = await db
@@ -714,7 +714,7 @@ async function getSettingRow(
   return rows[0];
 }
 
-async function getPlainSetting(db: AegisDb, key: string): Promise<string | null> {
+async function getPlainSetting(db: UnderwingDb, key: string): Promise<string | null> {
   const row = await getSettingRow(db, key);
   return row?.value ?? null;
 }

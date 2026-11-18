@@ -9,7 +9,7 @@ import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { mkdtempSync, rmSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
-import { createTestDb, type AegisDb } from '../src/db/index.js';
+import { createTestDb, type UnderwingDb } from '../src/db/index.js';
 import { createSwitch, markSwitchStatus } from '../src/services/switch-repository.js';
 import { evaluateAndTransition } from '../src/services/switch-engine.js';
 import { startOrAttachReleaseRun } from '../src/services/release-run.js';
@@ -41,19 +41,19 @@ vi.mock('../src/services/notifications.js', () => ({
 const FIELD_KEY = 'dev-field-key-change-me-32bytes!!';
 const APP_URL = 'http://localhost:8000';
 
-function makeDb(): AegisDb {
+function makeDb(): UnderwingDb {
   const db = createTestDb();
   migrate(db, { migrationsFolder: './drizzle' });
   return db;
 }
 
 describe('phase 3 full release flow', () => {
-  let db: AegisDb;
+  let db: UnderwingDb;
   let dataDir: string;
 
   beforeEach(() => {
     db = makeDb();
-    dataDir = mkdtempSync(join(tmpdir(), 'aegis-e2e-'));
+    dataDir = mkdtempSync(join(tmpdir(), 'underwing-e2e-'));
   });
 
   it('complete release lifecycle: trigger → cascade → acknowledge', async () => {

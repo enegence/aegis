@@ -124,7 +124,7 @@ describe('consolidated settings API', () => {
       headers: { cookie: cookies, 'x-csrf-token': csrfToken, 'content-type': 'application/json' },
       payload: {
         region: 'us-east-1',
-        bucket: 'my-aegis-bucket',
+        bucket: 'my-underwing-bucket',
         accessKeyId: 'AKIATEST1234',
         secretAccessKey: 'super-secret-s3-key',
         prefix: 'aegis',
@@ -135,7 +135,7 @@ describe('consolidated settings API', () => {
     const check = await app.inject({ method: 'GET', url: '/api/settings', headers: { cookie: cookies } });
     const body = JSON.parse(check.payload);
     expect(body.storage.s3Configured).toBe(true);
-    expect(body.storage.bucket).toBe('my-aegis-bucket');
+    expect(body.storage.bucket).toBe('my-underwing-bucket');
 
     const rows = await app.db
       .select()

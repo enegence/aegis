@@ -9,7 +9,7 @@ import { existsSync } from 'fs';
 import { createServer } from 'node:net';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { loadConfig, type AppConfig } from './config.js';
-import { getDb, createTestDb, type AegisDb } from './db/index.js';
+import { getDb, createTestDb, type UnderwingDb } from './db/index.js';
 import { createLoggerConfig } from './logger.js';
 import authPlugin from './auth/plugin.js';
 import { healthRoutes } from './routes/health.js';
@@ -31,7 +31,7 @@ import { seedSettingsFromEnvironment } from './services/env-settings.js';
 declare module 'fastify' {
   interface FastifyInstance {
     config: AppConfig;
-    db: AegisDb;
+    db: UnderwingDb;
     requireAuth: (req: import('fastify').FastifyRequest, reply: import('fastify').FastifyReply) => Promise<void>;
     requireCsrf: (req: import('fastify').FastifyRequest, reply: import('fastify').FastifyReply) => Promise<void>;
   }

@@ -1,12 +1,12 @@
 import { eq } from 'drizzle-orm';
 import { appSettings, owner } from '../db/schema.js';
-import type { AegisDb } from '../db/index.js';
+import type { UnderwingDb } from '../db/index.js';
 import type { ReadinessCheck, SwitchReadiness } from '@underwing/shared';
 import type { SwitchRecord } from './switch-repository.js';
 
 // ─── Individual check helpers ─────────────────────────────────────────────────
 
-async function checkOwnerSetupComplete(db: AegisDb): Promise<ReadinessCheck> {
+async function checkOwnerSetupComplete(db: UnderwingDb): Promise<ReadinessCheck> {
   const rows = await db.select({ setupComplete: owner.setupComplete }).from(owner);
   const isComplete = rows.length > 0 && rows[0].setupComplete === true;
   return {
@@ -94,7 +94,7 @@ function checkSwitchScheduleValid(sw: SwitchRecord): ReadinessCheck {
   };
 }
 
-async function checkNotificationProviderConfigured(db: AegisDb): Promise<ReadinessCheck> {
+async function checkNotificationProviderConfigured(db: UnderwingDb): Promise<ReadinessCheck> {
   // Check for SMTP host setting OR Telegram chatId setting
   const smtpRow = await db
     .select({ value: appSettings.value })
@@ -127,7 +127,7 @@ async function checkNotificationProviderConfigured(db: AegisDb): Promise<Readine
 }
 
 async function checkModeLimitationsAcknowledged(
-  db: AegisDb,
+  db: UnderwingDb,
   sw: SwitchRecord,
 ): Promise<ReadinessCheck> {
   if (sw.deploymentMode !== 'vault') {
@@ -208,7 +208,7 @@ function checkClaimPortalReachableOrAcknowledged(): ReadinessCheck {
 // ─── Aggregate readiness check ─────────────────────────────────────────────────
 
 export async function checkSwitchReadiness(
-  db: AegisDb,
+  db: UnderwingDb,
   sw: SwitchRecord,
 ): Promise<SwitchReadiness> {
   const checks: ReadinessCheck[] = await Promise.all([
@@ -244,7 +244,7 @@ export async function checkSwitchReadiness(
 
 // ─── Arming gate ───────────────────────────────────────────────────────────────
 
-export async function assertReadyToArm(db: AegisDb, sw: SwitchRecord): Promise<void> {
+export async function assertReadyToArm(db: UnderwingDb, sw: SwitchRecord): Promise<void> {
   const readiness = await checkSwitchReadiness(db, sw);
 
   if (readiness.status === 'not_ready') {

@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { createServer } from 'node:http';
 
 const root = process.cwd();
-const tempRoot = mkdtempSync(join(tmpdir(), 'aegis-e2e-'));
+const tempRoot = mkdtempSync(join(tmpdir(), 'underwing-e2e-'));
 const children = new Set();
 let readyServer;
 let shuttingDown = false;
@@ -19,7 +19,7 @@ const commonEnv = {
   AEGIS_FIELD_ENCRYPTION_KEY: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
 };
 
-function startAegis(name, port) {
+function startUnderwing(name, port) {
   const dataDir = join(tempRoot, name);
   const child = spawn('node', ['server/dist/index.js'], {
     cwd: root,
@@ -100,8 +100,8 @@ process.once('SIGINT', () => shutdown(0));
 process.once('SIGTERM', () => shutdown(0));
 
 try {
-  startAegis('fresh', 8200);
-  startAegis('owner', 8201);
+  startUnderwing('fresh', 8200);
+  startUnderwing('owner', 8201);
   await Promise.all([waitForHealth(8200), waitForHealth(8201)]);
   await seedOwner(8201);
   startReadyServer();

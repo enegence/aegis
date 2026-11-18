@@ -1,6 +1,6 @@
 import { and, desc, eq, gte } from 'drizzle-orm';
 import { notificationEvents, owner } from '../db/schema.js';
-import type { AegisDb } from '../db/index.js';
+import type { UnderwingDb } from '../db/index.js';
 import type { SwitchRecord } from './switch-repository.js';
 import { markSwitchStatus } from './switch-repository.js';
 import { dispatchNotification } from './notifications.js';
@@ -22,7 +22,7 @@ function isOlderThan24Hours(date: Date | null, now: Date): boolean {
   return now.getTime() - date.getTime() > TWENTY_FOUR_HOURS_MS;
 }
 
-async function getOwnerEmail(db: AegisDb): Promise<string | null> {
+async function getOwnerEmail(db: UnderwingDb): Promise<string | null> {
   const rows = await db
     .select({ email: owner.email })
     .from(owner)
@@ -31,7 +31,7 @@ async function getOwnerEmail(db: AegisDb): Promise<string | null> {
 }
 
 async function hasRecentNotificationEvent(
-  db: AegisDb,
+  db: UnderwingDb,
   switchId: number,
   purpose: string,
   since: Date,
@@ -53,7 +53,7 @@ async function hasRecentNotificationEvent(
 // ─── Main export ──────────────────────────────────────────────────────────────
 
 export async function processRemindersForSwitch(
-  db: AegisDb,
+  db: UnderwingDb,
   sw: SwitchRecord,
   now: Date,
 ): Promise<{ sent: number; skipped: number }> {

@@ -31,7 +31,7 @@ describe('claim routes', () => {
   let packetId: number;
 
   beforeAll(async () => {
-    dataDir = mkdtempSync(join(tmpdir(), 'aegis-claim-test-'));
+    dataDir = mkdtempSync(join(tmpdir(), 'underwing-claim-test-'));
     app = await buildApp({ testing: true, dbPath: ':memory:', dataDir });
 
     // Seed owner

@@ -38,7 +38,7 @@ port_is_in_use() {
   fi
 }
 
-port_is_used_by_current_aegis() {
+port_is_used_by_current_underwing() {
   local port="$1"
   local container_id
   container_id="$(docker compose ps -q aegis 2>/dev/null || true)"
@@ -56,7 +56,7 @@ if [[ ! "${HOST_PORT}" =~ ^[0-9]+$ ]] || (( HOST_PORT < 1 || HOST_PORT > 65535 )
 fi
 
 while port_is_in_use "${HOST_PORT}"; do
-  if port_is_used_by_current_aegis "${HOST_PORT}"; then
+  if port_is_used_by_current_underwing "${HOST_PORT}"; then
     break
   fi
   HOST_PORT=$((HOST_PORT + 1))

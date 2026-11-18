@@ -18,7 +18,7 @@
 
 import { eq } from 'drizzle-orm';
 import { releaseRuns } from '../db/schema.js';
-import type { AegisDb } from '../db/index.js';
+import type { UnderwingDb } from '../db/index.js';
 import { getReleaseRunById, type ReleaseRunRecord } from '../repositories/release-run-repository.js';
 import { writeAuditEvent } from './audit.js';
 
@@ -70,7 +70,7 @@ const TERMINAL_STATES = new Set(['completed', 'cancelled']);
  * - On success: update DB, emit audit event, return updated record.
  */
 export async function transitionReleaseRun(
-  db: AegisDb,
+  db: UnderwingDb,
   runId: number,
   from: ReleaseRunStatus,
   to: ReleaseRunStatus,

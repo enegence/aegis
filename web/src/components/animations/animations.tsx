@@ -1,5 +1,5 @@
 // Mortality scenes — stick figure mortality vignettes with watercolor washes.
-// Ported from the original aegis-animations.jsx (geometry/math byte-identical).
+// Ported from the original prototype animations (geometry/math byte-identical).
 import { useState, useEffect, type CSSProperties } from 'react';
 import { useTheme } from '../../lib/theme';
 

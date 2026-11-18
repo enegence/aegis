@@ -12,7 +12,7 @@
  */
 
 import { eq, inArray } from 'drizzle-orm';
-import type { AegisDb } from '../db/index.js';
+import type { UnderwingDb } from '../db/index.js';
 import { appSettings, switches } from '../db/schema.js';
 import { decryptField } from './field-encrypt.js';
 
@@ -29,12 +29,12 @@ export type HeartbeatResult =
   | { sent: true }
   | { sent: false; reason: 'not_linked' | 'not_due' | 'network_error' | `http_${number}` };
 
-async function getSetting(db: AegisDb, key: string): Promise<string | null> {
+async function getSetting(db: UnderwingDb, key: string): Promise<string | null> {
   const [row] = await db.select({ value: appSettings.value }).from(appSettings).where(eq(appSettings.key, key));
   return row?.value ?? null;
 }
 
-async function putSetting(db: AegisDb, key: string, value: string): Promise<void> {
+async function putSetting(db: UnderwingDb, key: string, value: string): Promise<void> {
   const now = new Date();
   const existing = await db.select({ key: appSettings.key }).from(appSettings).where(eq(appSettings.key, key));
   if (existing.length > 0) {
@@ -62,7 +62,7 @@ export interface RelayCredentials {
 }
 
 /** Linked Relay credentials, or null when this instance is not linked. */
-export async function getRelayCredentials(db: AegisDb, fieldEncryptionKey: string): Promise<RelayCredentials | null> {
+export async function getRelayCredentials(db: UnderwingDb, fieldEncryptionKey: string): Promise<RelayCredentials | null> {
   const [relayUrl, keyEnc, connectionId] = await Promise.all([
     getSetting(db, 'relay_url'),
     getSetting(db, 'relay_api_key_encrypted'),
@@ -75,7 +75,7 @@ export async function getRelayCredentials(db: AegisDb, fieldEncryptionKey: strin
 }
 
 /** Build the contract body. Exported for the settings "test" button. */
-export async function buildHeartbeatBody(db: AegisDb, connectionId: string, now: Date) {
+export async function buildHeartbeatBody(db: UnderwingDb, connectionId: string, now: Date) {
   const live = await db.select({ deploymentMode: switches.deploymentMode }).from(switches)
     .where(inArray(switches.status, ['armed', 'warning']));
   let mode: Mode = 'relay_monitoring';
@@ -118,7 +118,7 @@ export async function postHeartbeat(
  * `relay_last_heartbeat_error` code on failure (never the key or response body).
  */
 export async function sendRelayHeartbeatIfDue(
-  db: AegisDb,
+  db: UnderwingDb,
   fieldEncryptionKey: string,
   now: Date = new Date(),
   fetchImpl: typeof fetch = fetch,
@@ -170,11 +170,11 @@ export interface EscrowUploadResult {
  */
 export async function uploadPacketForEscrow(
   deps: {
-    db: AegisDb;
+    db: UnderwingDb;
     fieldEncryptionKey: string;
     dataDir: string;
-    buildPacket: (db: AegisDb, fek: string, dataDir: string, switchId: number) => Promise<{ id: number; keyId: string; contentHash: string; localCiphertextPath: string | null; createdAt: Date }>;
-    loadPacketKey: (db: AegisDb, keyId: string) => Promise<string | null>;
+    buildPacket: (db: UnderwingDb, fek: string, dataDir: string, switchId: number) => Promise<{ id: number; keyId: string; contentHash: string; localCiphertextPath: string | null; createdAt: Date }>;
+    loadPacketKey: (db: UnderwingDb, keyId: string) => Promise<string | null>;
     readFile: (path: string) => Buffer;
     fetchImpl?: typeof fetch;
   },

@@ -1,6 +1,6 @@
 import { and, eq, isNull } from 'drizzle-orm';
 import { switches, releaseRuns } from '../db/schema.js';
-import type { AegisDb } from '../db/index.js';
+import type { UnderwingDb } from '../db/index.js';
 
 export interface SwitchRecord {
   id: number;
@@ -112,18 +112,18 @@ function rowToReleaseRunRecord(row: typeof releaseRuns.$inferSelect): ReleaseRun
   };
 }
 
-export async function listSwitches(db: AegisDb): Promise<SwitchRecord[]> {
+export async function listSwitches(db: UnderwingDb): Promise<SwitchRecord[]> {
   const rows = await db.select().from(switches);
   return rows.map(rowToSwitchRecord);
 }
 
-export async function getSwitchById(db: AegisDb, id: number): Promise<SwitchRecord | null> {
+export async function getSwitchById(db: UnderwingDb, id: number): Promise<SwitchRecord | null> {
   const rows = await db.select().from(switches).where(eq(switches.id, id));
   if (rows.length === 0) return null;
   return rowToSwitchRecord(rows[0]);
 }
 
-export async function createSwitch(db: AegisDb, input: CreateSwitchData): Promise<SwitchRecord> {
+export async function createSwitch(db: UnderwingDb, input: CreateSwitchData): Promise<SwitchRecord> {
   const result = await db
     .insert(switches)
     .values({
@@ -143,7 +143,7 @@ export async function createSwitch(db: AegisDb, input: CreateSwitchData): Promis
 }
 
 export async function updateSwitch(
-  db: AegisDb,
+  db: UnderwingDb,
   id: number,
   input: UpdateSwitchData,
 ): Promise<SwitchRecord> {
@@ -174,12 +174,12 @@ export async function updateSwitch(
   return rowToSwitchRecord(result[0]);
 }
 
-export async function deleteSwitch(db: AegisDb, id: number): Promise<void> {
+export async function deleteSwitch(db: UnderwingDb, id: number): Promise<void> {
   await db.delete(switches).where(eq(switches.id, id));
 }
 
 export async function markSwitchStatus(
-  db: AegisDb,
+  db: UnderwingDb,
   id: number,
   status: string,
   patch?: MarkSwitchStatusPatch,
@@ -207,7 +207,7 @@ export async function markSwitchStatus(
   return rowToSwitchRecord(result[0]);
 }
 
-export async function getActiveReleaseRun(db: AegisDb): Promise<ReleaseRunRecord | null> {
+export async function getActiveReleaseRun(db: UnderwingDb): Promise<ReleaseRunRecord | null> {
   const rows = await db
     .select()
     .from(releaseRuns)
@@ -217,7 +217,7 @@ export async function getActiveReleaseRun(db: AegisDb): Promise<ReleaseRunRecord
   return rowToReleaseRunRecord(rows[0]);
 }
 
-export async function createReleaseRun(db: AegisDb, switchId: number): Promise<ReleaseRunRecord> {
+export async function createReleaseRun(db: UnderwingDb, switchId: number): Promise<ReleaseRunRecord> {
   const result = await db
     .insert(releaseRuns)
     .values({ triggeringSwitchId: switchId })

@@ -1,6 +1,6 @@
 import { eq, isNull, or } from 'drizzle-orm';
 import { releaseRuns } from '../db/schema.js';
-import type { AegisDb } from '../db/index.js';
+import type { UnderwingDb } from '../db/index.js';
 
 export interface ReleaseRunRecord {
   id: number;
@@ -42,12 +42,12 @@ function rowToRecord(row: typeof releaseRuns.$inferSelect): ReleaseRunRecord {
   };
 }
 
-export async function getReleaseRunById(db: AegisDb, id: number): Promise<ReleaseRunRecord | null> {
+export async function getReleaseRunById(db: UnderwingDb, id: number): Promise<ReleaseRunRecord | null> {
   const rows = await db.select().from(releaseRuns).where(eq(releaseRuns.id, id));
   return rows[0] ? rowToRecord(rows[0]) : null;
 }
 
-export async function getActiveReleaseRunFull(db: AegisDb): Promise<ReleaseRunRecord | null> {
+export async function getActiveReleaseRunFull(db: UnderwingDb): Promise<ReleaseRunRecord | null> {
   const rows = await db
     .select()
     .from(releaseRuns)
@@ -62,7 +62,7 @@ export async function getActiveReleaseRunFull(db: AegisDb): Promise<ReleaseRunRe
 }
 
 export async function createReleaseRunFull(
-  db: AegisDb,
+  db: UnderwingDb,
   triggeringSwitchId: number,
 ): Promise<ReleaseRunRecord> {
   const rows = await db
@@ -73,7 +73,7 @@ export async function createReleaseRunFull(
 }
 
 export async function addSuppressedSwitchId(
-  db: AegisDb,
+  db: UnderwingDb,
   runId: number,
   switchId: number,
 ): Promise<void> {
@@ -90,7 +90,7 @@ export async function addSuppressedSwitchId(
 }
 
 export async function setActivePacket(
-  db: AegisDb,
+  db: UnderwingDb,
   runId: number,
   packetId: number,
 ): Promise<void> {
@@ -101,7 +101,7 @@ export async function setActivePacket(
 }
 
 export async function setCurrentContactClaim(
-  db: AegisDb,
+  db: UnderwingDb,
   runId: number,
   claimId: number | null,
 ): Promise<void> {
@@ -111,14 +111,14 @@ export async function setCurrentContactClaim(
     .where(eq(releaseRuns.id, runId));
 }
 
-export async function completeReleaseRun(db: AegisDb, runId: number): Promise<void> {
+export async function completeReleaseRun(db: UnderwingDb, runId: number): Promise<void> {
   await db
     .update(releaseRuns)
     .set({ status: 'completed', completedAt: new Date(), updatedAt: new Date() })
     .where(eq(releaseRuns.id, runId));
 }
 
-export async function cancelReleaseRun(db: AegisDb, runId: number): Promise<void> {
+export async function cancelReleaseRun(db: UnderwingDb, runId: number): Promise<void> {
   await db
     .update(releaseRuns)
     .set({ status: 'cancelled', cancelledAt: new Date(), updatedAt: new Date() })
@@ -126,7 +126,7 @@ export async function cancelReleaseRun(db: AegisDb, runId: number): Promise<void
 }
 
 export async function activateRunCascade(
-  db: AegisDb,
+  db: UnderwingDb,
   runId: number,
   claimId: number,
 ): Promise<void> {
@@ -136,7 +136,7 @@ export async function activateRunCascade(
     .where(eq(releaseRuns.id, runId));
 }
 
-export async function failReleaseRun(db: AegisDb, runId: number): Promise<void> {
+export async function failReleaseRun(db: UnderwingDb, runId: number): Promise<void> {
   await db
     .update(releaseRuns)
     .set({ status: 'failed', updatedAt: new Date() })

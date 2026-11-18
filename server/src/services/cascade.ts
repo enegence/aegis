@@ -1,6 +1,6 @@
 import { asc, eq } from 'drizzle-orm';
 import { contacts } from '../db/schema.js';
-import type { AegisDb } from '../db/index.js';
+import type { UnderwingDb } from '../db/index.js';
 import { decryptField } from './field-encrypt.js';
 import { writeAuditEvent } from './audit.js';
 import { dispatchNotification } from './notifications.js';
@@ -42,14 +42,14 @@ export interface EscalateResult {
 
 type ContactRow = typeof contacts.$inferSelect;
 
-async function getContactsByIds(db: AegisDb, ids: number[]): Promise<ContactRow[]> {
+async function getContactsByIds(db: UnderwingDb, ids: number[]): Promise<ContactRow[]> {
   if (ids.length === 0) return [];
   const rows = await db.select().from(contacts).orderBy(asc(contacts.priorityOrder));
   return rows.filter((r) => ids.includes(r.id));
 }
 
 async function notifyContact(
-  db: AegisDb,
+  db: UnderwingDb,
   config: CascadeConfig,
   contact: ContactRow,
   claimUrl: string,
@@ -89,7 +89,7 @@ async function notifyContact(
 }
 
 export async function startCascade(
-  db: AegisDb,
+  db: UnderwingDb,
   config: CascadeConfig,
   runId: number,
 ): Promise<StartCascadeResult> {
@@ -151,7 +151,7 @@ export async function startCascade(
 }
 
 export async function checkAndEscalate(
-  db: AegisDb,
+  db: UnderwingDb,
   config: CascadeConfig,
   runId: number,
   now: Date = new Date(),

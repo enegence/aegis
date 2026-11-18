@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { appSettings, notificationEvents } from '../db/schema.js';
-import type { AegisDb } from '../db/index.js';
+import type { UnderwingDb } from '../db/index.js';
 import { decryptField } from './field-encrypt.js';
 import { sendSmtpNotification, type SmtpConfig } from './providers/smtp.js';
 import { sendTelegramNotification, type TelegramConfig } from './providers/telegram.js';
@@ -17,7 +17,7 @@ export interface NotificationDispatchRequest {
 }
 
 async function getSettingValue(
-  db: AegisDb,
+  db: UnderwingDb,
   key: string,
 ): Promise<{ value: string | null; encrypted: boolean } | null> {
   const rows = await db
@@ -29,7 +29,7 @@ async function getSettingValue(
   return { value: rows[0].value, encrypted: rows[0].encrypted };
 }
 
-async function getDecryptedSetting(db: AegisDb, key: string): Promise<string | null> {
+async function getDecryptedSetting(db: UnderwingDb, key: string): Promise<string | null> {
   const row = await getSettingValue(db, key);
   if (!row || !row.value) return null;
 
@@ -41,12 +41,12 @@ async function getDecryptedSetting(db: AegisDb, key: string): Promise<string | n
   return row.value;
 }
 
-async function getPlainSetting(db: AegisDb, key: string): Promise<string | null> {
+async function getPlainSetting(db: UnderwingDb, key: string): Promise<string | null> {
   const row = await getSettingValue(db, key);
   return row?.value ?? null;
 }
 
-export async function getSmtpConfig(db: AegisDb): Promise<SmtpConfig | null> {
+export async function getSmtpConfig(db: UnderwingDb): Promise<SmtpConfig | null> {
   const host = await getPlainSetting(db, 'smtp.host');
   if (!host) return null;
 
@@ -68,7 +68,7 @@ export async function getSmtpConfig(db: AegisDb): Promise<SmtpConfig | null> {
   };
 }
 
-export async function getTelegramConfig(db: AegisDb): Promise<TelegramConfig | null> {
+export async function getTelegramConfig(db: UnderwingDb): Promise<TelegramConfig | null> {
   const botToken = await getDecryptedSetting(db, 'telegram.botToken');
   if (!botToken) return null;
 
@@ -79,7 +79,7 @@ export async function getTelegramConfig(db: AegisDb): Promise<TelegramConfig | n
 }
 
 export async function dispatchNotification(
-  db: AegisDb,
+  db: UnderwingDb,
   req: NotificationDispatchRequest,
 ): Promise<void> {
   // Insert a queued record first

@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm';
-import type { AegisDb } from '../db/index.js';
+import type { UnderwingDb } from '../db/index.js';
 import { appSettings } from '../db/schema.js';
 import { encryptField } from './field-encrypt.js';
 
@@ -26,7 +26,7 @@ const ENV_SETTINGS: EnvSetting[] = [
   { envName: 'AEGIS_S3_PREFIX', key: 's3_prefix', encrypted: false },
 ];
 
-async function settingExists(db: AegisDb, key: string): Promise<boolean> {
+async function settingExists(db: UnderwingDb, key: string): Promise<boolean> {
   const rows = await db
     .select({ key: appSettings.key })
     .from(appSettings)
@@ -36,7 +36,7 @@ async function settingExists(db: AegisDb, key: string): Promise<boolean> {
 }
 
 export async function seedSettingsFromEnvironment(
-  db: AegisDb,
+  db: UnderwingDb,
   fieldEncryptionKey: string,
 ): Promise<number> {
   let inserted = 0;

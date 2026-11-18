@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import { createTestDb, type AegisDb } from '../src/db/index.js';
+import { createTestDb, type UnderwingDb } from '../src/db/index.js';
 import { owner, appSettings, notificationEvents, switches } from '../src/db/schema.js';
 import { createSwitch, markSwitchStatus, getSwitchById } from '../src/services/switch-repository.js';
 import type { SwitchRecord } from '../src/services/switch-repository.js';
@@ -52,7 +52,7 @@ function makeSwitchRecord(overrides: Partial<SwitchRecord> = {}): SwitchRecord {
   };
 }
 
-async function insertOwner(db: AegisDb): Promise<void> {
+async function insertOwner(db: UnderwingDb): Promise<void> {
   await db.insert(owner).values({
     displayName: 'Test Owner',
     email: 'owner@example.com',
@@ -60,7 +60,7 @@ async function insertOwner(db: AegisDb): Promise<void> {
   });
 }
 
-async function insertSmtpConfig(db: AegisDb): Promise<void> {
+async function insertSmtpConfig(db: UnderwingDb): Promise<void> {
   const TEST_FIELD_KEY = 'dev-field-key-change-me-32bytes!!';
   await db.insert(appSettings).values([
     { key: 'smtp.host', value: 'smtp.example.com', encrypted: false },
@@ -74,7 +74,7 @@ async function insertSmtpConfig(db: AegisDb): Promise<void> {
 // ─── Test suite ───────────────────────────────────────────────────────────────
 
 describe('processRemindersForSwitch', () => {
-  let db: AegisDb;
+  let db: UnderwingDb;
 
   beforeAll(async () => {
     db = createTestDb();

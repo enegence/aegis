@@ -17,7 +17,7 @@
 
 import { eq, and, lt } from 'drizzle-orm';
 import { idempotencyKeys } from '../db/schema.js';
-import type { AegisDb } from '../db/index.js';
+import type { UnderwingDb } from '../db/index.js';
 
 export interface IdempotencyKeyResult {
   found: boolean;
@@ -30,7 +30,7 @@ export interface IdempotencyKeyResult {
  * If not found or expired, returns { found: false }.
  */
 export async function checkIdempotencyKey(
-  db: AegisDb,
+  db: UnderwingDb,
   key: string,
 ): Promise<IdempotencyKeyResult> {
   const now = new Date();
@@ -57,7 +57,7 @@ export async function checkIdempotencyKey(
  * If the key already exists, this is a no-op (the existing record wins).
  */
 export async function setIdempotencyKey(
-  db: AegisDb,
+  db: UnderwingDb,
   key: string,
   scope: string,
   resultJson?: unknown,
@@ -90,7 +90,7 @@ export async function setIdempotencyKey(
  * Only the first inserter gets found: false. All subsequent callers get found: true.
  */
 export async function checkOrSetIdempotencyKey(
-  db: AegisDb,
+  db: UnderwingDb,
   key: string,
   scope: string,
   opts?: { resultJson?: unknown; ttlMs?: number },
@@ -140,14 +140,14 @@ export async function checkOrSetIdempotencyKey(
 /**
  * Delete an idempotency key (e.g. for testing or explicit retry).
  */
-export async function deleteIdempotencyKey(db: AegisDb, key: string): Promise<void> {
+export async function deleteIdempotencyKey(db: UnderwingDb, key: string): Promise<void> {
   await db.delete(idempotencyKeys).where(eq(idempotencyKeys.key, key));
 }
 
 /**
  * Purge all expired idempotency keys (called by maintenance worker tick).
  */
-export async function purgeExpiredIdempotencyKeys(db: AegisDb): Promise<number> {
+export async function purgeExpiredIdempotencyKeys(db: UnderwingDb): Promise<number> {
   const now = new Date();
   const rows = await db
     .delete(idempotencyKeys)

@@ -8,7 +8,7 @@
  */
 
 import { eq, count, and, lte, inArray } from 'drizzle-orm';
-import type { AegisDb } from '../db/index.js';
+import type { UnderwingDb } from '../db/index.js';
 import { workerHeartbeats, notificationDeliveries, releaseRuns, appSettings } from '../db/schema.js';
 
 export interface Alert {
@@ -27,7 +27,7 @@ const STUCK_RELEASE_RUN_HOURS = parseInt(process.env.ALERT_STUCK_RELEASE_RUN_HOU
  * Returns active operational alerts derived from current DB state.
  * No in-memory state — all conditions evaluated from DB on each call.
  */
-export async function getActiveAlerts(db: AegisDb): Promise<Alert[]> {
+export async function getActiveAlerts(db: UnderwingDb): Promise<Alert[]> {
   const alerts: Alert[] = [];
   const now = new Date();
 

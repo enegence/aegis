@@ -13,7 +13,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import { createTestDb, type AegisDb } from '../src/db/index.js';
+import { createTestDb, type UnderwingDb } from '../src/db/index.js';
 import { notificationDeliveries } from '../src/db/schema.js';
 import { eq } from 'drizzle-orm';
 import {
@@ -26,7 +26,7 @@ import {
   type SendResult,
 } from '../src/services/notification-delivery.js';
 
-function makeDb(): AegisDb {
+function makeDb(): UnderwingDb {
   const db = createTestDb();
   migrate(db, { migrationsFolder: './drizzle' });
   return db;
@@ -93,7 +93,7 @@ describe('classifyFailure', () => {
 });
 
 describe('createDelivery and findQueuedDeliveries', () => {
-  let db: AegisDb;
+  let db: UnderwingDb;
 
   beforeEach(() => {
     db = makeDb();
@@ -123,7 +123,7 @@ describe('createDelivery and findQueuedDeliveries', () => {
 });
 
 describe('attemptDelivery', () => {
-  let db: AegisDb;
+  let db: UnderwingDb;
 
   beforeEach(() => {
     db = makeDb();
@@ -311,7 +311,7 @@ describe('attemptDelivery', () => {
 });
 
 describe('findRetryableDeliveries', () => {
-  let db: AegisDb;
+  let db: UnderwingDb;
 
   beforeEach(() => {
     db = makeDb();

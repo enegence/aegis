@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm';
-import type { AegisDb } from '../db/index.js';
+import type { UnderwingDb } from '../db/index.js';
 import { appSettings, switches, packets } from '../db/schema.js';
 import { decryptField } from './field-encrypt.js';
 import { buildPacket } from './packet-builder.js';
@@ -33,7 +33,7 @@ interface S3Config {
 }
 
 async function loadS3Config(
-  db: AegisDb,
+  db: UnderwingDb,
   fieldEncryptionKey: string,
 ): Promise<S3Config | null> {
   const rows = await db.select().from(appSettings);
@@ -80,7 +80,7 @@ function isStale(
 }
 
 export async function syncPacketForSwitch(
-  db: AegisDb,
+  db: UnderwingDb,
   switchId: number,
   fieldEncryptionKey: string,
   dataDir: string,
