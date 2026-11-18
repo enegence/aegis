@@ -13,7 +13,7 @@ Underwing Core uses **local key management only**. No Shamir Secret Sharing. No 
 
 ## Keys in Use
 
-### Field Encryption Key (`AEGIS_FIELD_ENCRYPTION_KEY`)
+### Field Encryption Key (`UNDERWING_FIELD_ENCRYPTION_KEY`)
 
 - **Purpose:** Encrypts all PII fields in the database (contact names, emails, phones, estate institution names, executor notes, etc.)
 - **Format:** Must be exactly 64 hex characters (32 bytes) in production
@@ -31,7 +31,7 @@ Underwing Core uses **local key management only**. No Shamir Secret Sharing. No 
   - `app_settings`: S3 access key ID, secret access key (marked `encrypted = true`)
   - `encryption_keys`: keyMaterialEncrypted (per-packet keys)
 
-### Secret Key (`AEGIS_SECRET_KEY`)
+### Secret Key (`UNDERWING_SECRET_KEY`)
 
 - **Purpose:** HMAC for CSRF token derivation and cookie signing
 - **Format:** Minimum 64 characters in production
@@ -123,8 +123,8 @@ Owner (device) ──────► Server Process
 
 ## Security Non-Negotiables
 
-1. `AEGIS_FIELD_ENCRYPTION_KEY` is NEVER written to the database, logs, or audit events.
-2. `AEGIS_SECRET_KEY` is NEVER returned in any API response.
+1. `UNDERWING_FIELD_ENCRYPTION_KEY` is NEVER written to the database, logs, or audit events.
+2. `UNDERWING_SECRET_KEY` is NEVER returned in any API response.
 3. Packet keys are NEVER stored decrypted. They are decrypted transiently in memory for key-view delivery only.
 4. Claim tokens are NEVER stored as plaintext. SHA-256 hash only.
 5. TOTP secrets are NEVER returned after initial setup (only the derived otpauth URL is shown again).

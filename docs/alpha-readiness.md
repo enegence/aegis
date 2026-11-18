@@ -61,7 +61,7 @@ Using a fresh database (or `docker compose down -v && docker compose up -d`):
 
 ## Packet generation
 
-- [ ] Worker generates packet after estate items seeded (may require `AEGIS_WORKER_ENABLED=true`)
+- [ ] Worker generates packet after estate items seeded (may require `UNDERWING_WORKER_ENABLED=true`)
 - [ ] Packet appears in dashboard/packets list
 - [ ] Packet file exists on disk in `data/packets/`
 

@@ -39,14 +39,16 @@ Key variables:
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `AEGIS_SECRET_KEY` | Yes | Session secret (min 64 chars). Generate with `openssl rand -hex 64`. |
-| `AEGIS_FIELD_ENCRYPTION_KEY` | Yes | Field encryption key (exactly 64 hex chars = 32 bytes). Generate with `openssl rand -hex 32`. |
-| `AEGIS_DB_PATH` | Yes | SQLite database path. Default: `/data/aegis.db` (inside container). |
-| `AEGIS_DATA_DIR` | Yes | Data directory for packet files. Default: `/data`. |
-| `AEGIS_APP_URL` | Yes | Your public-facing URL, used in claim notification links. |
-| `AEGIS_PORT` | No | Port to listen on. Default: `8000`. |
-| `AEGIS_HOST_PORT` | No | Docker host port to publish. Defaults to `AEGIS_PORT`. |
-| `AEGIS_HOST` | No | Bind address. Default: `0.0.0.0`. |
+| `UNDERWING_SECRET_KEY` | Yes | Session secret (min 64 chars). Generate with `openssl rand -hex 64`. |
+| `UNDERWING_FIELD_ENCRYPTION_KEY` | Yes | Field encryption key (exactly 64 hex chars = 32 bytes). Generate with `openssl rand -hex 32`. |
+| `UNDERWING_DB_PATH` | Yes | SQLite database path. Default: `/data/underwing.db` (inside container). |
+| `UNDERWING_DATA_DIR` | Yes | Data directory for packet files. Default: `/data`. |
+| `UNDERWING_APP_URL` | Yes | Your public-facing URL, used in claim notification links. |
+| `UNDERWING_PORT` | No | Port to listen on. Default: `8000`. |
+| `UNDERWING_HOST_PORT` | No | Docker host port to publish. Defaults to `UNDERWING_PORT`. |
+| `UNDERWING_HOST` | No | Bind address. Default: `0.0.0.0`. |
+
+The older `AEGIS_*` names for these settings still work. See [upgrading.md](upgrading.md#upgrading-from-aegis-core).
 
 Notification and storage credentials can be configured during `setup.sh` or later in the Settings UI.
 
@@ -82,14 +84,14 @@ underwing.yourdomain.com {
 }
 ```
 
-**Important:** Set `AEGIS_APP_URL=https://underwing.yourdomain.com` in your `.env` so claim notification links are correct.
+**Important:** Set `UNDERWING_APP_URL=https://underwing.yourdomain.com` in your `.env` so claim notification links are correct.
 
 ## Unraid
 
 1. In Community Applications, search for Underwing Core or create a custom Docker container.
 2. Map port `8000` to your preferred host port.
 3. Map a host path to `/data` for persistent storage.
-4. Set environment variables: `AEGIS_SECRET_KEY`, `AEGIS_FIELD_ENCRYPTION_KEY`, `AEGIS_APP_URL`, `NODE_ENV=production`.
+4. Set environment variables: `UNDERWING_SECRET_KEY`, `UNDERWING_FIELD_ENCRYPTION_KEY`, `UNDERWING_APP_URL`, `NODE_ENV=production`.
 5. Start the container and visit the mapped port.
 
 ## TrueNAS Scale / Kubernetes
@@ -100,7 +102,7 @@ Use the Docker Compose file as a reference. Set `restart: unless-stopped` and mo
 
 Underwing Core can be restricted to your Tailscale network for extra security:
 
-- Set `AEGIS_HOST=0.0.0.0` and bind Underwing Core to your Tailscale IP.
+- Set `UNDERWING_HOST=0.0.0.0` and bind Underwing Core to your Tailscale IP.
 - Or run Underwing Core on `localhost:8000` and expose only via Tailscale with its built-in reverse proxy.
 
 **Important:** If contacts need to open claim URLs from outside your network, those URLs must be publicly reachable (or contacts must also be on your VPN/Tailscale network).

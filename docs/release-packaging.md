@@ -16,7 +16,7 @@ git push origin v0.1.0-beta
 This triggers the `.github/workflows/release.yml` CI workflow, which:
 
 1. Runs all unit and integration tests
-2. Builds the Docker image tagged `aegis-core:v0.1.0-beta`
+2. Builds the Docker image tagged `underwing-core:v0.1.0-beta`
 3. Creates release artifact files (see below)
 4. Opens a **draft** GitHub Release with those artifacts attached
 
@@ -82,7 +82,7 @@ If the upgrade applied database migrations, you may need to restore from a datab
 
 ```bash
 # SQLite backup (default Underwing Core storage)
-cp data/aegis.db data/aegis.db.backup-$(date +%Y%m%d)
+cp data/underwing.db data/underwing.db.backup-$(date +%Y%m%d)
 ```
 
 ---
@@ -94,7 +94,7 @@ Docker Hub image digests serve as the artifact integrity mechanism in beta. Each
 To verify you are running the expected image:
 
 ```bash
-docker inspect aegis-core:<version> | grep -i digest
+docker inspect underwing-core:<version> | grep -i digest
 ```
 
 GPG signing of release artifacts is not implemented in beta. It will be added before the stable 1.0 release.

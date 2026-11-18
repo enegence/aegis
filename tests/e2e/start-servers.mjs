@@ -13,10 +13,10 @@ let shuttingDown = false;
 const commonEnv = {
   ...process.env,
   NODE_ENV: 'test',
-  AEGIS_HOST: '127.0.0.1',
-  AEGIS_WORKER_ENABLED: 'false',
-  AEGIS_SECRET_KEY: 'e2e-secret-key-0123456789abcdef0123456789abcdef0123456789abcdef',
-  AEGIS_FIELD_ENCRYPTION_KEY: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+  UNDERWING_HOST: '127.0.0.1',
+  UNDERWING_WORKER_ENABLED: 'false',
+  UNDERWING_SECRET_KEY: 'e2e-secret-key-0123456789abcdef0123456789abcdef0123456789abcdef',
+  UNDERWING_FIELD_ENCRYPTION_KEY: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
 };
 
 function startUnderwing(name, port) {
@@ -25,10 +25,10 @@ function startUnderwing(name, port) {
     cwd: root,
     env: {
       ...commonEnv,
-      AEGIS_PORT: String(port),
-      AEGIS_APP_URL: `http://127.0.0.1:${port}`,
-      AEGIS_DB_PATH: join(dataDir, 'aegis.db'),
-      AEGIS_DATA_DIR: dataDir,
+      UNDERWING_PORT: String(port),
+      UNDERWING_APP_URL: `http://127.0.0.1:${port}`,
+      UNDERWING_DB_PATH: join(dataDir, 'underwing.db'),
+      UNDERWING_DATA_DIR: dataDir,
     },
     stdio: ['ignore', 'pipe', 'pipe'],
   });

@@ -10,6 +10,9 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 RESET='\033[0m'
 
+# The hosted Underwing site (Relay, Hosted, managed delivery).
+HOSTED_SITE_URL="https://aegisdms.life"
+
 say()  { echo -e "${CYAN}${BOLD}[underwing]${RESET} $*"; }
 ok()   { echo -e "${GREEN}✓${RESET} $*"; }
 warn() { echo -e "${YELLOW}⚠${RESET} $*"; }
@@ -24,7 +27,7 @@ print_smtp_guidance() {
   echo "  • Other SMTP-friendly options: SMTP2GO, Resend, Brevo, MailerSend,"
   echo "    SendGrid, Mailgun, and Postmark."
   echo "  • If you do not want to manage SMTP at all, Underwing Relay/Hosted includes"
-  echo "    managed delivery. See: https://aegisdms.life"
+  echo "    managed delivery. See: ${HOSTED_SITE_URL}"
   echo ""
 }
 
@@ -50,17 +53,36 @@ read_env_value() {
   fi
 }
 
-EXISTING_SECRET_KEY="$(read_env_value "AEGIS_SECRET_KEY")"
-EXISTING_FIELD_KEY="$(read_env_value "AEGIS_FIELD_ENCRYPTION_KEY")"
+# Settings are named UNDERWING_*. A .env written before the rename uses
+# AEGIS_* for the same settings, so read the new name first, then the old one.
+read_setting() {
+  local name="$1"
+  local value
+  value="$(read_env_value "UNDERWING_${name}")"
+  if [[ -z "${value}" ]]; then
+    value="$(read_env_value "AEGIS_${name}")"
+  fi
+  printf '%s' "${value}"
+}
+
+EXISTING_SECRET_KEY="$(read_setting "SECRET_KEY")"
+EXISTING_FIELD_KEY="$(read_setting "FIELD_ENCRYPTION_KEY")"
+
+# New installs use data/underwing.db. An install set up before the rename has
+# data/aegis.db: keep pointing at that file, never start a second database.
+DB_FILE="underwing.db"
 EXISTING_DB=false
-if [[ -f "./data/aegis.db" || -f "./data/aegis.db-wal" || -f "./data/aegis.db-shm" ]]; then
+if [[ -f "./data/underwing.db" || -f "./data/underwing.db-wal" || -f "./data/underwing.db-shm" ]]; then
   EXISTING_DB=true
+elif [[ -f "./data/aegis.db" || -f "./data/aegis.db-wal" || -f "./data/aegis.db-shm" ]]; then
+  EXISTING_DB=true
+  DB_FILE="aegis.db"
 fi
 
 if [[ -f ".env" ]]; then
   warn ".env already exists."
   if [[ "${EXISTING_DB}" == "true" ]]; then
-    warn "Existing data/aegis.db found. Setup will preserve existing encryption/session secrets."
+    warn "Existing data/${DB_FILE} found. Setup will preserve existing encryption/session secrets."
   fi
   read -rp "  Overwrite it? [y/N] " overwrite
   if [[ ! "${overwrite}" =~ ^[Yy]$ ]]; then
@@ -94,8 +116,8 @@ if [[ -n "${EXISTING_FIELD_KEY}" ]]; then
   FIELD_KEY="${EXISTING_FIELD_KEY}"
   FIELD_KEY_STATUS="preserved from existing .env"
 fi
-ok "AEGIS_SECRET_KEY ${SECRET_STATUS}"
-ok "AEGIS_FIELD_ENCRYPTION_KEY ${FIELD_KEY_STATUS}"
+ok "UNDERWING_SECRET_KEY ${SECRET_STATUS}"
+ok "UNDERWING_FIELD_ENCRYPTION_KEY ${FIELD_KEY_STATUS}"
 
 # ── App URL and port ──────────────────────────────────────────────────────────
 
@@ -145,20 +167,20 @@ if [[ "${do_smtp}" =~ ^[Yy]$ ]]; then
   if [[ ! "${SMTP_SECURE}" =~ ^(true|false)$ ]]; then
     die "SMTP SSL/TLS must be true or false."
   fi
-  SMTP_SECTION="AEGIS_SMTP_HOST=${SMTP_HOST}
-AEGIS_SMTP_PORT=${SMTP_PORT}
-AEGIS_SMTP_USER=${SMTP_USER}
-AEGIS_SMTP_PASSWORD=${SMTP_PASS}
-AEGIS_SMTP_FROM=${SMTP_FROM}
-AEGIS_SMTP_SECURE=${SMTP_SECURE}"
+  SMTP_SECTION="UNDERWING_SMTP_HOST=${SMTP_HOST}
+UNDERWING_SMTP_PORT=${SMTP_PORT}
+UNDERWING_SMTP_USER=${SMTP_USER}
+UNDERWING_SMTP_PASSWORD=${SMTP_PASS}
+UNDERWING_SMTP_FROM=${SMTP_FROM}
+UNDERWING_SMTP_SECURE=${SMTP_SECURE}"
   ok "SMTP configured"
 else
-  SMTP_SECTION="# AEGIS_SMTP_HOST=
-# AEGIS_SMTP_PORT=587
-# AEGIS_SMTP_USER=
-# AEGIS_SMTP_PASSWORD=
-# AEGIS_SMTP_FROM=
-# AEGIS_SMTP_SECURE=false"
+  SMTP_SECTION="# UNDERWING_SMTP_HOST=
+# UNDERWING_SMTP_PORT=587
+# UNDERWING_SMTP_USER=
+# UNDERWING_SMTP_PASSWORD=
+# UNDERWING_SMTP_FROM=
+# UNDERWING_SMTP_SECURE=false"
   warn "SMTP skipped. Configure it in Settings → Notifications after first login, or use Underwing Relay/Hosted for managed delivery."
 fi
 
@@ -168,13 +190,13 @@ if [[ "${do_telegram}" =~ ^[Yy]$ ]]; then
   read -rsp "    Telegram bot token: " TG_TOKEN
   echo ""
   read -rp "    Telegram chat ID: " TG_CHAT
-  TG_SECTION="AEGIS_TELEGRAM_BOT_TOKEN=${TG_TOKEN}
-AEGIS_TELEGRAM_CHAT_ID=${TG_CHAT}"
+  TG_SECTION="UNDERWING_TELEGRAM_BOT_TOKEN=${TG_TOKEN}
+UNDERWING_TELEGRAM_CHAT_ID=${TG_CHAT}"
   ok "Telegram configured"
 else
-  TG_SECTION="# AEGIS_TELEGRAM_BOT_TOKEN=
-# AEGIS_TELEGRAM_CHAT_ID="
-  warn "Telegram skipped — configure in Settings → Notifications after first login"
+  TG_SECTION="# UNDERWING_TELEGRAM_BOT_TOKEN=
+# UNDERWING_TELEGRAM_CHAT_ID="
+  warn "Telegram skipped. Configure it in Settings → Notifications after first login."
 fi
 
 S3_SECTION=""
@@ -187,23 +209,23 @@ if [[ "${do_s3}" =~ ^[Yy]$ ]]; then
   read -rp "    S3 access key ID: " S3_KEY_ID
   read -rsp "    S3 secret access key: " S3_SECRET
   echo ""
-  read -rp "    S3 key prefix [aegis]: " S3_PREFIX
-  S3_PREFIX="${S3_PREFIX:-aegis}"
-  S3_SECTION="AEGIS_S3_ENDPOINT=${S3_ENDPOINT}
-AEGIS_S3_REGION=${S3_REGION}
-AEGIS_S3_BUCKET=${S3_BUCKET}
-AEGIS_S3_ACCESS_KEY_ID=${S3_KEY_ID}
-AEGIS_S3_SECRET_ACCESS_KEY=${S3_SECRET}
-AEGIS_S3_PREFIX=${S3_PREFIX}"
+  read -rp "    S3 key prefix [underwing]: " S3_PREFIX
+  S3_PREFIX="${S3_PREFIX:-underwing}"
+  S3_SECTION="UNDERWING_S3_ENDPOINT=${S3_ENDPOINT}
+UNDERWING_S3_REGION=${S3_REGION}
+UNDERWING_S3_BUCKET=${S3_BUCKET}
+UNDERWING_S3_ACCESS_KEY_ID=${S3_KEY_ID}
+UNDERWING_S3_SECRET_ACCESS_KEY=${S3_SECRET}
+UNDERWING_S3_PREFIX=${S3_PREFIX}"
   ok "S3 storage configured"
 else
-  S3_SECTION="# AEGIS_S3_ENDPOINT=
-# AEGIS_S3_REGION=us-east-1
-# AEGIS_S3_BUCKET=
-# AEGIS_S3_ACCESS_KEY_ID=
-# AEGIS_S3_SECRET_ACCESS_KEY=
-# AEGIS_S3_PREFIX=aegis"
-  warn "S3 skipped — configure in Settings → Storage after first login"
+  S3_SECTION="# UNDERWING_S3_ENDPOINT=
+# UNDERWING_S3_REGION=us-east-1
+# UNDERWING_S3_BUCKET=
+# UNDERWING_S3_ACCESS_KEY_ID=
+# UNDERWING_S3_SECRET_ACCESS_KEY=
+# UNDERWING_S3_PREFIX=underwing"
+  warn "S3 skipped. Configure it in Settings → Storage after first login."
 fi
 
 # ── Write .env ────────────────────────────────────────────────────────────────
@@ -214,16 +236,16 @@ cat > .env <<EOF
 # Keep this file private. Back it up securely.
 NODE_ENV=production
 
-AEGIS_PORT=${APP_PORT}
-AEGIS_HOST_PORT=${APP_PORT}
-AEGIS_HOST=0.0.0.0
-AEGIS_APP_URL=${APP_URL}
-AEGIS_DB_PATH=/data/aegis.db
-AEGIS_DATA_DIR=/data
+UNDERWING_PORT=${APP_PORT}
+UNDERWING_HOST_PORT=${APP_PORT}
+UNDERWING_HOST=0.0.0.0
+UNDERWING_APP_URL=${APP_URL}
+UNDERWING_DB_PATH=/data/${DB_FILE}
+UNDERWING_DATA_DIR=/data
 
-# Secrets — never share these
-AEGIS_SECRET_KEY=${SECRET_KEY}
-AEGIS_FIELD_ENCRYPTION_KEY=${FIELD_KEY}
+# Secrets: never share these
+UNDERWING_SECRET_KEY=${SECRET_KEY}
+UNDERWING_FIELD_ENCRYPTION_KEY=${FIELD_KEY}
 
 # Notifications
 ${SMTP_SECTION}
@@ -245,7 +267,8 @@ ok "./data directory created"
 
 RUNNING_COMPOSE_CONTAINER=false
 if command -v docker &>/dev/null; then
-  if docker compose ps --services --filter status=running 2>/dev/null | grep -qx "aegis"; then
+  # The compose service is "underwing"; it was "aegis" before the rename.
+  if docker compose ps --services --filter status=running 2>/dev/null | grep -qxE "underwing|aegis"; then
     RUNNING_COMPOSE_CONTAINER=true
   fi
 fi
@@ -272,8 +295,8 @@ echo -e "${YELLOW}${BOLD}Important security reminders:${RESET}"
 echo -e "  ${YELLOW}•${RESET} Your .env contains secrets. Keep it private and back it up securely."
 echo -e "  ${YELLOW}•${RESET} Your database and data directory contain encrypted but sensitive application state."
 echo -e "  ${YELLOW}•${RESET} Vault Mode alone does not guarantee automated release if this host goes offline."
-echo -e "  ${YELLOW}•${RESET} Back up your .env and data/ together — neither is useful without the other."
+echo -e "  ${YELLOW}•${RESET} Back up your .env and data/ together. Neither is useful without the other."
 echo -e "  ${YELLOW}•${RESET} If SMTP setup is more work than you want, Underwing Relay/Hosted includes managed delivery:"
-echo -e "    https://aegisdms.life"
+echo -e "    ${HOSTED_SITE_URL}"
 echo ""
 echo -e "${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"

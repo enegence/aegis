@@ -2,7 +2,7 @@
 
 ## Server won't start
 
-### FATAL: AEGIS_SECRET_KEY is not set or too short
+### FATAL: UNDERWING_SECRET_KEY is not set or too short
 
 Generate a strong key:
 
@@ -13,10 +13,10 @@ openssl rand -hex 64
 Add to `.env`:
 
 ```
-AEGIS_SECRET_KEY=<output from above>
+UNDERWING_SECRET_KEY=<output from above>
 ```
 
-### FATAL: AEGIS_FIELD_ENCRYPTION_KEY must be exactly 64 hex characters
+### FATAL: UNDERWING_FIELD_ENCRYPTION_KEY must be exactly 64 hex characters
 
 Generate a 32-byte key:
 
@@ -31,7 +31,7 @@ It must be exactly 64 hex characters (a-f, 0-9). Do not use the base64 form.
 Change the port in `.env`:
 
 ```
-AEGIS_PORT=8080
+UNDERWING_PORT=8080
 ```
 
 Update your reverse proxy or open the new port.
@@ -94,7 +94,7 @@ Readiness checks must all pass before a switch can be armed. Common blockers:
 
 - **No contacts configured**: Add at least one contact in the Contacts section.
 - **No estate items**: Add at least one estate item.
-- **No packet generated**: The worker must have run at least once to build a packet. Check that `AEGIS_WORKER_ENABLED=true` in your `.env`.
+- **No packet generated**: The worker must have run at least once to build a packet. Check that `UNDERWING_WORKER_ENABLED=true` in your `.env`.
 - **No storage configured** (Packet Mirror mode): Configure S3 credentials in Settings → Storage.
 
 ### Heartbeat not updating
@@ -108,7 +108,7 @@ Readiness checks must all pass before a switch can be armed. Common blockers:
 Verify in your docker-compose.yml or environment:
 
 ```
-AEGIS_WORKER_ENABLED=true
+UNDERWING_WORKER_ENABLED=true
 ```
 
 ---
@@ -143,7 +143,7 @@ There is no password reset UI in alpha. To reset:
 
 1. Back up your database and `.env` (even if you can't log in, the data may be recoverable later).
 2. Stop Underwing Core.
-3. Delete `data/aegis.db`.
+3. Delete `data/underwing.db`.
 4. Restart Underwing Core. It will prompt for a new owner account.
 5. Reconfigure your estate, contacts, and switches from scratch, or restore from a backup.
 
@@ -151,7 +151,7 @@ Alternatively, use the SQLite CLI to update the password hash directly (requires
 
 ```bash
 # This is an advanced operation — back up first
-sqlite3 data/aegis.db "UPDATE owner SET password_hash='<new-hash>' WHERE id=1;"
+sqlite3 data/underwing.db "UPDATE owner SET password_hash='<new-hash>' WHERE id=1;"
 ```
 
 ---
@@ -162,7 +162,7 @@ If you lose access to your authenticator app:
 
 ```bash
 # Disable TOTP directly in the database
-sqlite3 data/aegis.db "UPDATE owner SET totp_enabled=0, totp_secret_encrypted=NULL WHERE id=1;"
+sqlite3 data/underwing.db "UPDATE owner SET totp_enabled=0, totp_secret_encrypted=NULL WHERE id=1;"
 ```
 
 Then log in with your passphrase.

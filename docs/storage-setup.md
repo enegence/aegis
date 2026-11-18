@@ -16,7 +16,7 @@ Configure an S3-compatible bucket to enable Packet Mirror mode.
 | Key | Description |
 |-----|-------------|
 | `s3_endpoint` | Custom endpoint URL (for MinIO, Backblaze, Cloudflare R2, etc.) |
-| `s3_prefix` | Key prefix within the bucket (default: `aegis`) |
+| `s3_prefix` | Key prefix within the bucket (default: `underwing`) |
 | `s3_force_path_style` | `true` for MinIO and other path-style providers |
 | `packet_retention_days` | Packet expiry in days (0 = no expiry) |
 
@@ -25,8 +25,10 @@ Configure an S3-compatible bucket to enable Packet Mirror mode.
 Packet objects are stored at:
 
 ```
-{prefix}/{switchId}/{version}/{packetId}.aegis.enc
+{prefix}/{switchId}/{version}/{packetId}.underwing.enc
 ```
+
+Packets mirrored before the rename to Underwing Core keep the keys they were uploaded with (default prefix `aegis`, suffix `.aegis.enc`). Each packet's exact key is stored in the database, so those objects are still found, verified and deleted at their original keys. A prefix you saved earlier stays in effect until you change it.
 
 ## Bucket policy
 

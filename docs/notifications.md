@@ -19,7 +19,7 @@ Settings → SMTP section:
 | From email | Sender address shown to recipients |
 | TLS/SSL | Enable for port 465 or servers that require it |
 
-`setup.sh` can write these values into `.env` on first install. At startup, Underwing Core imports those environment values into encrypted app settings if they have not already been configured in the database. Use `AEGIS_SMTP_SECURE=true` for implicit TLS/SSL, usually port 465.
+`setup.sh` can write these values into `.env` on first install. At startup, Underwing Core imports those environment values into encrypted app settings if they have not already been configured in the database. Use `UNDERWING_SMTP_SECURE=true` for implicit TLS/SSL, usually port 465.
 
 After saving, use "Send test" to verify delivery before arming.
 

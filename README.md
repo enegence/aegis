@@ -79,14 +79,16 @@ See [`.env.example`](.env.example) for all available variables.
 
 | Variable | Required | Default |
 |----------|----------|---------|
-| `AEGIS_SECRET_KEY` | Yes | — |
-| `AEGIS_FIELD_ENCRYPTION_KEY` | Yes | — |
-| `AEGIS_DB_PATH` | Yes | `/data/aegis.db` |
-| `AEGIS_DATA_DIR` | Yes | `/data` |
-| `AEGIS_APP_URL` | Yes | `http://localhost:8000` |
-| `AEGIS_PORT` | No | `8000` |
-| `AEGIS_HOST_PORT` | No | `8000` |
-| `AEGIS_HOST` | No | `0.0.0.0` |
+| `UNDERWING_SECRET_KEY` | Yes | — |
+| `UNDERWING_FIELD_ENCRYPTION_KEY` | Yes | — |
+| `UNDERWING_DB_PATH` | Yes | `/data/underwing.db` |
+| `UNDERWING_DATA_DIR` | Yes | `/data` |
+| `UNDERWING_APP_URL` | Yes | `http://localhost:8000` |
+| `UNDERWING_PORT` | No | `8000` |
+| `UNDERWING_HOST_PORT` | No | `8000` |
+| `UNDERWING_HOST` | No | `0.0.0.0` |
+
+Upgrading from Aegis Core? The old `AEGIS_*` names and `data/aegis.db` keep working. See [docs/upgrading.md](docs/upgrading.md#upgrading-from-aegis-core).
 
 Generate secrets with `./setup.sh` or manually:
 
@@ -100,19 +102,19 @@ openssl rand -hex 32
 
 ## Backup
 
-**Back up `.env` and `data/aegis.db` together.** Either alone is not recoverable.
+**Back up `.env` and `data/underwing.db` together.** Either alone is not recoverable.
 
 ```bash
 # Hot backup while running
 cp .env backup/.env
-sqlite3 data/aegis.db ".backup 'backup/aegis.db'"
+sqlite3 data/underwing.db ".backup 'backup/underwing.db'"
 ```
 
 See [docs/backups.md](docs/backups.md) for full backup, restore, and upgrade procedures.
 
 ## Security model
 
-- All PII stored encrypted at rest using AES-256-GCM (`AEGIS_FIELD_ENCRYPTION_KEY`)
+- All PII stored encrypted at rest using AES-256-GCM (`UNDERWING_FIELD_ENCRYPTION_KEY`)
 - Session cookies are HttpOnly, SameSite=Lax, Secure in production
 - CSRF protection on all state-changing endpoints
 - Password hashed with Argon2id

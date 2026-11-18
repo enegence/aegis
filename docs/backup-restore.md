@@ -27,7 +27,7 @@ Export creates a single encrypted JSON file containing:
 
 ```http
 POST /api/export
-Cookie: aegis_session=<your-session>
+Cookie: underwing_session=<your-session>
 X-CSRF-Token: <csrf-token>
 Content-Type: application/json
 
@@ -70,7 +70,7 @@ Before performing a restore, you can preview what would be imported without maki
 
 ```http
 POST /api/export/preview-restore
-Cookie: aegis_session=<your-session>
+Cookie: underwing_session=<your-session>
 X-CSRF-Token: <csrf-token>
 Content-Type: application/json
 
@@ -98,7 +98,7 @@ No database changes are made during preview.
 
 ```http
 POST /api/export/restore
-Cookie: aegis_session=<your-session>
+Cookie: underwing_session=<your-session>
 X-CSRF-Token: <csrf-token>
 Content-Type: application/json
 

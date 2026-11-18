@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 
-export const BASE = process.env.AEGIS_APP_URL ?? 'http://localhost:8000';
+export const BASE = process.env.UNDERWING_APP_URL ?? 'http://localhost:8000';
 
 export async function completeSetup(page: Page, opts: {
   displayName?: string;

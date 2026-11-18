@@ -1,15 +1,17 @@
+# Settings are read from .env. Names start with UNDERWING_; the older AEGIS_
+# names from before the rename still work.
 services:
-  aegis:
+  underwing:
     build: .
     restart: unless-stopped
     ports:
-      - "${AEGIS_HOST_PORT:-8000}:${AEGIS_PORT:-8000}"
+      - "${UNDERWING_HOST_PORT:-${AEGIS_HOST_PORT:-8000}}:${UNDERWING_PORT:-${AEGIS_PORT:-8000}}"
     volumes:
       - ./data:/data
     env_file:
       - .env
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:${AEGIS_PORT:-8000}/health"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:${UNDERWING_PORT:-${AEGIS_PORT:-8000}}/health"]
       interval: 30s
       timeout: 5s
       start_period: 15s

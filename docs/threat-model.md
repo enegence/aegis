@@ -98,7 +98,7 @@ Underwing Core is a single-owner, self-hosted digital legacy release system. The
 2. **TOTP recovery codes implemented (Phase 5 Task 10).** Single-use codes generated at TOTP setup, stored hashed, can be regenerated.
 3. **No password reset flow.** Lost password requires manual DB reset.
 4. **Claim PIN rate limit is in-memory.** Server restart resets the counter.
-5. **Single field encryption key.** Compromise of `AEGIS_FIELD_ENCRYPTION_KEY` decrypts all fields for all users.
+5. **Single field encryption key.** Compromise of `UNDERWING_FIELD_ENCRYPTION_KEY` decrypts all fields for all users.
 6. **Deterministic CSRF tokens.** Not time-bounded; valid for the session lifetime.
 7. **OSS has no relay link security model yet.** Auth-code exchange is Phase 5.
 

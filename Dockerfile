@@ -37,11 +37,14 @@ COPY server/drizzle ./server/drizzle
 COPY packages/shared ./packages/shared
 
 VOLUME /data
-ENV AEGIS_DB_PATH=/data/aegis.db
-ENV AEGIS_DATA_DIR=/data
 EXPOSE 8000
 
+# The old AEGIS_* names are still honoured, here and in the server (server/src/env.ts).
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-  CMD /bin/sh -c 'wget -qO- "http://127.0.0.1:${AEGIS_PORT:-8000}/health" || exit 1'
+  CMD /bin/sh -c 'wget -qO- "http://127.0.0.1:${UNDERWING_PORT:-${AEGIS_PORT:-8000}}/health" || exit 1'
 
-CMD ["node", "server/dist/index.js"]
+# Data lives on the /data volume unless the environment says otherwise.
+# These defaults are applied at start, not with ENV, so that a value set under
+# the old AEGIS_* name in an existing .env is not overridden by an image default.
+# The server keeps using /data/aegis.db when that file already exists.
+CMD ["/bin/sh", "-c", "export UNDERWING_DATA_DIR=\"${UNDERWING_DATA_DIR:-${AEGIS_DATA_DIR:-/data}}\" UNDERWING_DB_PATH=\"${UNDERWING_DB_PATH:-${AEGIS_DB_PATH:-/data/underwing.db}}\"; exec node server/dist/index.js"]

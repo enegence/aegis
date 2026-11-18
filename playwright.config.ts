@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const externalBaseURL = process.env.AEGIS_APP_URL;
+const externalBaseURL = process.env.UNDERWING_APP_URL;
 const useManagedServers = !externalBaseURL;
 
 export default defineConfig({

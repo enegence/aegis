@@ -16,7 +16,7 @@ Practical configuration examples for storage and notification providers supporte
 |------------------|-----------------------------------|
 | Region           | `us-east-1` (or your bucket's region) |
 | Bucket           | `my-underwing-backups`               |
-| Prefix           | `aegis` (default)                |
+| Prefix           | `underwing` (default)            |
 | Access Key ID    | IAM key ID (`AKIA...`)           |
 | Secret Access Key | IAM secret                      |
 | Endpoint         | *(leave blank)*                  |
@@ -39,7 +39,7 @@ Practical configuration examples for storage and notification providers supporte
       ],
       "Resource": [
         "arn:aws:s3:::my-underwing-backups",
-        "arn:aws:s3:::my-underwing-backups/aegis/*"
+        "arn:aws:s3:::my-underwing-backups/underwing/*"
       ]
     }
   ]
@@ -122,12 +122,12 @@ Region examples: `us-west-004`, `eu-central-003`. Find your region in B2 → Buc
 | Endpoint         | `https://s3.us-west-004.backblazeb2.com`       |
 | Region           | `us-west-004`                                   |
 | Bucket           | `my-underwing-backups`                             |
-| Prefix           | `aegis`                                         |
+| Prefix           | `underwing`                                     |
 | Access Key ID    | B2 Application Key ID                          |
 | Secret Access Key | B2 Application Key                            |
 | Force Path Style | `false`                                         |
 
-**Creating application keys:** B2 Console → App Keys → Add a New Application Key. Restrict key to the specific bucket and prefix (`aegis/`) for least privilege.
+**Creating application keys:** B2 Console → App Keys → Add a New Application Key. Restrict key to the specific bucket and prefix (`underwing/`) for least privilege.
 
 **CORS:** Set in B2 bucket settings via `b2 update-bucket` CLI or API:
 

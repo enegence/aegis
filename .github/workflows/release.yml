@@ -29,11 +29,11 @@ jobs:
       - name: Build full application
         run: npm run build
       - name: Build Docker image
-        run: docker build -t aegis-core:${{ github.ref_name }} .
+        run: docker build -t underwing-core:${{ github.ref_name }} .
       - name: Create pinned docker-compose release artifact
         # Replace "build: ." with the tagged image so the release artifact is pinned
         run: |
-          sed 's|build: \.|image: ghcr.io/${{ github.repository_owner }}/aegis-core:${{ github.ref_name }}|g' \
+          sed 's|build: \.|image: ghcr.io/${{ github.repository_owner }}/underwing-core:${{ github.ref_name }}|g' \
             docker-compose.yml > docker-compose-${{ github.ref_name }}.yml
           cp .env.example .env.example-${{ github.ref_name }}
       - name: Create GitHub Release

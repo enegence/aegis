@@ -80,7 +80,7 @@ The Underwing Relay SaaS monitors your heartbeats and alerts contacts if your in
 **What you retain:** Keys, estate data, and the local server.
 
 **Release path (via Relay monitoring):**
-1. Your OSS instance sends periodic heartbeats to Relay SaaS (the worker posts to `{relayUrl}/api/relay/heartbeat` every `AEGIS_RELAY_HEARTBEAT_SECONDS`, default 300, with a Bearer API key; see `server/src/services/relay-client.ts`). Settings → Relay shows the last heartbeat and the last error, and **Send Heartbeat** sends one immediately.
+1. Your OSS instance sends periodic heartbeats to Relay SaaS (the worker posts to `{relayUrl}/api/relay/heartbeat` every `UNDERWING_RELAY_HEARTBEAT_SECONDS`, default 300, with a Bearer API key; see `server/src/services/relay-client.ts`). Settings → Relay shows the last heartbeat and the last error, and **Send Heartbeat** sends one immediately.
 2. If heartbeats stop, Relay sends offline alerts to configured contacts
 3. Contacts use those alerts as a cue to contact each other or follow up
 4. Actual packet release still requires this server to be accessible

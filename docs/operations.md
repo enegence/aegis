@@ -56,7 +56,7 @@ The background worker writes a single-row upsert to `worker_heartbeats` (id = `s
 - `degraded` — worker ticked before, but `lastTickAt` is beyond the stale threshold
 - `unknown` — no heartbeat row exists (worker has never run, or table is new)
 
-To enable the worker: set `AEGIS_WORKER_ENABLED=true`.
+To enable the worker: set `UNDERWING_WORKER_ENABLED=true`.
 
 ---
 
@@ -81,7 +81,7 @@ ALERT_STUCK_RELEASE_RUN_HOURS=24
 
 **Resolving alerts:**
 
-- `worker_stale` / `worker_never_ticked` — Check that `AEGIS_WORKER_ENABLED=true` and the process is running. Check server logs for `[worker] tick error:` entries.
+- `worker_stale` / `worker_never_ticked` — Check that `UNDERWING_WORKER_ENABLED=true` and the process is running. Check server logs for `[worker] tick error:` entries.
 - `notification_failures_threshold` — Check `notification_deliveries` table for `status='failed_permanent'` rows. Investigate `last_error_code` and `last_error_message_redacted`. Likely a provider API key issue.
 - `stuck_release_run` — Check `release_runs` table for active/cascade_active rows older than 24h. May indicate a cascade loop. Review audit events for the run.
 

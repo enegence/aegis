@@ -30,4 +30,4 @@ jobs:
       - name: Build full application (TypeScript + Vite)
         run: npm run build
       - name: Build Docker image
-        run: docker build -t aegis-core:ci .
+        run: docker build -t underwing-core:ci .
